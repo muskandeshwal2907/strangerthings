@@ -105,7 +105,7 @@ export default function Hud() {
               fontWeight: "bold",
             }}
           >
-            {activeChapterId} / 4
+            {activeChapterId} / 7
           </span>
         </button>
 

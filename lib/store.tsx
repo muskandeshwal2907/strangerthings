@@ -189,8 +189,8 @@ interface Ctx {
   solveRadiometerPin: (pinIndex: number, points: number) => void;
   submitRadiometerCode: (code: string) => boolean;
   radiometerPinCount: number;
-  activeChapterId: 1 | 2 | 3 | 4;
-  setActiveChapterId: (id: 1 | 2 | 3 | 4) => void;
+  activeChapterId: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  setActiveChapterId: (id: 1 | 2 | 3 | 4 | 5 | 6 | 7) => void;
   chapterModalOpen: boolean;
   setChapterModalOpen: (open: boolean) => void;
 }
@@ -213,13 +213,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [soundOn, setSoundOnState] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
-  const [activeChapterId, setActiveChapterId] = useState<1 | 2 | 3 | 4>(() => {
+  const [activeChapterId, setActiveChapterId] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(() => {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("hawkins_active_chapter");
         if (saved) {
           const num = parseInt(saved, 10);
-          if ([1, 2, 3, 4].includes(num)) return num as 1 | 2 | 3 | 4;
+          if ([1, 2, 3, 4, 5, 6, 7].includes(num)) return num as 1 | 2 | 3 | 4 | 5 | 6 | 7;
         }
       } catch {}
     }

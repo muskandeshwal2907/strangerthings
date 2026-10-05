@@ -15,6 +15,9 @@ import {
   TASK_ANGLES,
 } from "@/lib/radiometer";
 import { sfx } from "@/lib/audio";
+import CharacterStage, { ReactionType } from "./CharacterStage";
+import { CHARACTERS } from "@/lib/characters";
+import { getPipLine } from "@/lib/dialogue";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -268,6 +271,7 @@ function TaskModal({
   sabotage,
   onSolve,
   onClose,
+  onFail,
 }: {
   task: RadiometerTask;
   pinIndex: number;
@@ -275,6 +279,7 @@ function TaskModal({
   sabotage: import("@/lib/store").Sabotage | null;
   onSolve: (pinIndex: number, points: number) => void;
   onClose: () => void;
+  onFail?: () => void;
 }) {
   const [val, setVal] = useState("");
   const [shake, setShake] = useState(0);
@@ -303,6 +308,7 @@ function TaskModal({
       sfx("err");
       setShake((n) => n + 1);
       setFails((n) => n + 1);
+      if (onFail) onFail();
     }
   };
 
@@ -458,7 +464,7 @@ function TaskModal({
 // ─────────────────────────────────────────────────────────────────────────────
 // Keypad — final code entry (only shows when all 5 pins solved)
 // ─────────────────────────────────────────────────────────────────────────────
-function Keypad() {
+function Keypad({ onFail }: { onFail?: () => void }) {
   const { s, submitRadiometerCode, say } = useGame();
   const [code, setCode] = useState("");
   const [shake, setShake] = useState(0);
@@ -473,6 +479,7 @@ function Keypad() {
     } else {
       setShake((n) => n + 1);
       setFails((n) => n + 1);
+      if (onFail) onFail();
     }
   };
 
@@ -624,22 +631,40 @@ export default function Radiometer() {
   const rm = s.radiometer;
   const [openTask, setOpenTask] = useState<number | null>(null);
   const [cinematicPin, setCinematicPin] = useState<number | null>(null);
+  const [pipCustomText, setPipCustomText] = useState<string>("");
+  const [pipReaction, setPipReaction] = useState<ReactionType>("idle");
 
   const jammed = sabotage?.kind === "SIGNAL_JAM";
   const allSolved = radiometerPinCount === 5;
 
+  useEffect(() => {
+    if (allSolved) {
+      setPipCustomText(getPipLine("taskComplete"));
+      setPipReaction("happy");
+    }
+  }, [allSolved]);
+
   const openModal = useCallback((taskIdx: number) => {
     sfx("click");
     setOpenTask(taskIdx);
+    setPipCustomText(`Let's tune Pin ${taskIdx + 1}! Sweep the frequency and look for harmonic resonance!`);
+    setPipReaction("talking");
   }, []);
 
   const closeModal = useCallback(() => setOpenTask(null), []);
+
+  const handleFail = useCallback(() => {
+    setPipCustomText(getPipLine("wrong"));
+    setPipReaction("wrong");
+  }, []);
 
   const handleSolve = (pinIndex: number, points: number) => {
     setOpenTask(null);
     setCinematicPin(pinIndex);
     solveRadiometerPin(pinIndex, points);
     say(`PIN ${pinIndex + 1} RESTORED  +${points} PTS`);
+    setPipCustomText(getPipLine("correct"));
+    setPipReaction("happy");
     setTimeout(() => {
       sfx("click");
     }, 450);
@@ -661,6 +686,17 @@ export default function Radiometer() {
         </div>
         <PinProgressBadge />
       </div>
+
+      {/* ── character stage (Pip in fixed bottom strip) ──────────────── */}
+      <CharacterStage
+        character={CHARACTERS.radiokid}
+        overrideText={pipCustomText}
+        reaction={pipReaction}
+        onHintClick={() => {
+          setPipCustomText(getPipLine("hint"));
+          setPipReaction("thinking");
+        }}
+      />
 
       {/* ── instrument + task buttons ─────────────────────────────────── */}
       <div className="rm-layout">
@@ -702,7 +738,7 @@ export default function Radiometer() {
                 ◉ ACCESS CODE RESTORED
               </motion.div>
             </div>
-            <Keypad />
+            <Keypad onFail={handleFail} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -721,6 +757,7 @@ export default function Radiometer() {
               sabotage={sabotage}
               onSolve={handleSolve}
               onClose={closeModal}
+              onFail={handleFail}
             />
           );
         })()}

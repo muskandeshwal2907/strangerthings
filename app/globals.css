@@ -785,7 +785,7 @@ label.lbl {
 /* ── root layout ─────────────────────────────────────────────────── */
 .rm-root {
   display: flex; flex-direction: column; gap: 24px;
-  padding: 4px 0;
+  padding: 4px 0 clamp(140px, 28vh, 300px);
 }
 .rm-stage-section {
   /* wrapper in StageView so it fills the right column */
@@ -1148,4 +1148,129 @@ label.lbl {
   75% { transform: translate(-2px, -3px); filter: hue-rotate(-15deg); }
   100% { transform: translate(1px, 2px); filter: hue-rotate(0deg); }
 }
-/* end */
+
+/* ── Character Stage & Pixel-Art Sprite ──────────────────────────── */
+.character-stage-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 16px;
+  background: linear-gradient(180deg, rgba(20, 6, 10, 0.90) 0%, rgba(8, 2, 4, 0.96) 100%);
+  border: 1px solid rgba(255, 45, 58, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+/* ══════════════════════════════════════════════════════════════════════
+   CHARACTER & DIALOGUE BOTTOM STRIP SYSTEM
+   Fixed to very bottom of viewport; feet touching bottom edge
+   Dialogue box directly to the right; RPG double border; VT323 CRT glow
+   ══════════════════════════════════════════════════════════════════════ */
+.character-bottom-strip {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  z-index: 850;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 0 clamp(10px, 2vw, 24px) 0 clamp(6px, 1.2vw, 16px);
+  pointer-events: none;
+  box-sizing: border-box;
+  gap: clamp(10px, 1.8vw, 20px);
+}
+
+.character-sprite-anchor {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  align-self: flex-end;
+  line-height: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  pointer-events: auto;
+}
+
+.character-sprite-img {
+  height: clamp(100px, 20vh, 210px);
+  width: auto;
+  display: block;
+  object-fit: contain;
+  object-position: bottom left;
+  margin-bottom: 0;
+  vertical-align: bottom;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor;
+}
+
+.character-silhouette-wrap {
+  height: clamp(100px, 20vh, 210px);
+  width: clamp(70px, 15vh, 150px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 0;
+  line-height: 0;
+}
+
+.character-dialogue-box {
+  flex: 1;
+  min-width: 0;
+  align-self: flex-end;
+  margin-bottom: clamp(4px, 0.8vh, 8px);
+  margin-right: clamp(8px, 1.5vw, 24px);
+  position: relative;
+  pointer-events: auto;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.character-dialogue-text {
+  font-family: var(--font-term), "VT323", monospace;
+  font-size: clamp(15px, 1.9vh, 20px);
+  line-height: 1.35;
+  color: #ffffff;
+  letter-spacing: .04em;
+  word-break: break-word;
+  min-height: clamp(30px, 3.8vh, 44px);
+}
+
+.crt-glow, .character-dialogue-text {
+  text-shadow: 0 0 5px rgba(255,255,255,0.7), 0 0 12px currentColor !important;
+}
+
+/* On mobile: sprite ~14vh tall with dialogue box beside it using smaller text */
+@media (max-width: 640px) {
+  .character-bottom-strip {
+    padding: 0 8px 0 4px;
+    gap: 8px;
+  }
+  .character-sprite-img {
+    height: clamp(75px, 14vh, 115px) !important;
+  }
+  .character-silhouette-wrap {
+    height: clamp(75px, 14vh, 115px) !important;
+    width: clamp(55px, 11vh, 85px) !important;
+  }
+  .character-dialogue-box {
+    padding: 8px 12px !important;
+    margin-bottom: 4px !important;
+    margin-right: 4px !important;
+  }
+  .character-dialogue-text {
+    font-size: clamp(13px, 1.6vh, 16px) !important;
+    min-height: 28px !important;
+    line-height: 1.25 !important;
+    padding-right: 40px !important;
+  }
+}
+
+
