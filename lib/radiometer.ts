@@ -4,7 +4,7 @@
  * Edit this file to change any task question, answer, digit value or the
  * final 5-digit access code.
  *
- * ⚠  NOTE: In production, move answer validation server-side. The RegExp
+ * NOTE: In production, move answer validation server-side. The RegExp
  *    answers here are visible to the client. See store.tsx for the
  *    submit() function where server validation would be wired in.
  *

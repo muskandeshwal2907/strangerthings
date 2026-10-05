@@ -160,7 +160,7 @@ function PatchBay({
               onClick={() => setDragging(dragging === pr.from ? null : pr.from)}
               aria-pressed={dragging === pr.from}
             >
-              {connected[pr.from] ? "✔ " : ""}{pr.from}
+              {connected[pr.from] ? "[OK] " : ""}{pr.from}
             </button>
           ))}
         </div>
@@ -175,7 +175,6 @@ function PatchBay({
                 x2="100%" y2={`${(i / pairs.length) * 100 + 12.5}%`}
                 stroke="var(--accent2)" strokeWidth="2"
                 strokeDasharray="4 2"
-                style={{ filter: "drop-shadow(0 0 4px var(--accent2))" }}
               />
             ) : null;
           })}
@@ -191,7 +190,7 @@ function PatchBay({
               onClick={() => dragging && connect(dragging, pr.to)}
               aria-label={`Connect to ${pr.to}`}
             >
-              {Object.values(connected).includes(pr.to) ? "✔ " : ""}{pr.to}
+              {Object.values(connected).includes(pr.to) ? "[OK] " : ""}{pr.to}
             </button>
           ))}
         </div>
@@ -336,7 +335,7 @@ function TaskModal({
           <span style={{ marginLeft: "auto", color: "var(--dim)", fontSize: 16 }}>
             PIN {pinIndex + 1}/5 · {task.points} PTS
           </span>
-          <button className="btn sm ghost" style={{ marginLeft: 12 }} onClick={onClose} aria-label="Close">✕</button>
+          <button className="btn sm ghost" style={{ marginLeft: 12, padding: "4px 10px", fontSize: 12 }} onClick={onClose} aria-label="Close">[CLOSE]</button>
         </div>
 
         <div className="panel-body rm-modal__body">
@@ -346,7 +345,7 @@ function TaskModal({
           {/* already solved state */}
           {alreadySolved ? (
             <div className="term" style={{ color: "var(--accent2)", fontSize: 22 }}>
-              ✔ PIN {pinIndex + 1} RESTORED — ACCESS GRANTED
+              [RESTORED] PIN {pinIndex + 1} RESTORED — ACCESS GRANTED
             </div>
           ) : (
             <>
@@ -355,7 +354,7 @@ function TaskModal({
                 <div>
                   {jammed ? (
                     <div className="term" style={{ color: "var(--danger)" }}>
-                      ⚡ SIGNAL JAMMED — TUNING DIAL OFFLINE
+                      [ALERT] SIGNAL JAMMED — TUNING DIAL OFFLINE
                     </div>
                   ) : (
                     <>
@@ -497,7 +496,7 @@ function Keypad() {
             LAB ACCESS GRANTED
           </motion.div>
           <div className="term" style={{ color: "var(--accent2)" }}>
-            ✔ DOOR UNLOCKED · PROCEED TO HAWKINS LAB
+            [ACCESS GRANTED] DOOR UNLOCKED · PROCEED TO HAWKINS LAB
           </div>
         </div>
       </motion.div>
@@ -592,11 +591,11 @@ function TaskButton({
   onClick: () => void;
 }) {
   const icons: Record<string, string> = {
-    radio: "📻",
-    series: "〰",
-    connection: "⛓",
-    rearrange: "🗂",
-    debug: "⌨",
+    radio: "RAD",
+    series: "SIG",
+    connection: "LNK",
+    rearrange: "ORD",
+    debug: "LOG",
   };
   const disabled = solved || jammed || locked;
   return (
@@ -608,7 +607,7 @@ function TaskButton({
       whileTap={!disabled ? { scale: 0.97 } : undefined}
       aria-label={`${task.objectLabel}${solved ? " – complete" : locked ? " – locked by vecna" : jammed ? " – jammed" : ""}`}
     >
-      <span className="rm-taskbtn__icon">{solved ? "✔" : locked ? "🔒" : icons[task.type] ?? "◎"}</span>
+      <span className="rm-taskbtn__icon">{solved ? "[OK]" : locked ? "[LOCK]" : icons[task.type] ?? "◎"}</span>
       <span className="rm-taskbtn__name">{task.objectLabel}</span>
       {solved && <span className="rm-taskbtn__solved">SOLVED</span>}
       {locked && <span className="rm-taskbtn__jammed">LOCKED</span>}
@@ -698,9 +697,7 @@ export default function Radiometer() {
             <div className="rm-banner-restored">
               <motion.div
                 className="title-xl"
-                style={{ fontSize: "clamp(18px,3vw,32px)", textAlign: "center" }}
-                animate={{ textShadow: ["0 0 14px var(--accent), 0 0 40px var(--accent)", "0 0 30px var(--accent), 0 0 80px var(--accent)"] }}
-                transition={{ repeat: Infinity, duration: 1.6, repeatType: "reverse" }}
+                style={{ fontSize: "clamp(18px,3vw,32px)", textAlign: "center", color: "var(--accent)" }}
               >
                 ◉ ACCESS CODE RESTORED
               </motion.div>
@@ -949,14 +946,12 @@ function RadiometerInstrumentInline({
               fill={solved ? "#36e0c4" : "#36e0c450"}
               fontSize={solved ? 16 : 12}
               fontFamily="'VT323',monospace"
-              filter={solved ? "url(#gf2)" : undefined}
             >
               {solved ? pin.digit : (i % 2 === 0 ? glyph : "▒")}
             </text>
             {/* LED */}
             <circle cx={px} cy={py + 18} r="3"
               fill={solved ? "#36e0c4" : "#ff3b45"}
-              style={{ filter: `drop-shadow(0 0 ${solved ? 4 : 2}px ${solved ? "#36e0c4" : "#ff3b45"})` }}
             />
           </g>
         );

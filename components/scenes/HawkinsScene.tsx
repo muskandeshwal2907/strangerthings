@@ -11,8 +11,7 @@ export default function HawkinsScene() {
       <Particles mode="dust" count={90} color="190,220,255" />
       {/* moon with halo */}
       <div style={{ position: "absolute", right: "18%", top: "10%" }}>
-        <div style={{ width: 90, height: 90, borderRadius: "50%", background: "radial-gradient(circle at 35% 35%,#f4f9ff,#b8c9dd 60%,#8aa0b8)", boxShadow: "0 0 60px 20px rgba(190,220,255,.25)", opacity: 0.9 }} />
-        <div style={{ position: "absolute", inset: -20, borderRadius: "50%", background: "radial-gradient(circle, rgba(190,220,255,.18), transparent 60%)", filter: "blur(8px)" }} />
+        <div style={{ width: 90, height: 90, borderRadius: "50%", background: "radial-gradient(circle at 35% 35%,#f4f9ff,#b8c9dd 60%,#8aa0b8)", opacity: 0.9 }} />
       </div>
       {/* string lights */}
       <svg viewBox="0 0 1600 160" preserveAspectRatio="none" style={{ position: "absolute", left: 0, right: 0, top: 0, width: "100%", height: 130, opacity: 0.98 }}>

@@ -187,7 +187,7 @@ export default function LabTerminalTask({ task, solved, onSolve, disabled }: Lab
                 fontSize: 14,
               }}
             >
-              <span>{isDone ? "✔" : i + 1}</span>
+              <span>{isDone ? "[OK]" : i + 1}</span>
               <span>{st.title.split(":")[0]}</span>
             </button>
           );
@@ -220,7 +220,7 @@ export default function LabTerminalTask({ task, solved, onSolve, disabled }: Lab
           <div style={{ display: "flex", gap: 10 }}>
             <input
               className="field"
-              value={completedSubs[currentSubtask.id] ? "✔ SUBMODULE RESTORED" : inputVal}
+              value={completedSubs[currentSubtask.id] ? "[RESTORED] SUBMODULE RESTORED" : inputVal}
               onChange={(e) => {
                 setInputVal(e.target.value);
                 sfx("type");
@@ -238,7 +238,7 @@ export default function LabTerminalTask({ task, solved, onSolve, disabled }: Lab
         <AnimatePresence>
           {errorMsg && (
             <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ color: "var(--danger)", marginTop: 10, fontSize: 15 }}>
-              ⚠ {errorMsg}
+              [ERROR] {errorMsg}
             </motion.div>
           )}
         </AnimatePresence>
@@ -270,7 +270,7 @@ export default function LabTerminalTask({ task, solved, onSolve, disabled }: Lab
             letterSpacing: ".1em",
           }}
         >
-          <div style={{ fontWeight: "bold" }}>✔ ALL LAB SUBSYSTEMS RESTORED (+{task.points} PTS)</div>
+          <div style={{ fontWeight: "bold" }}>[RESTORED] ALL LAB SUBSYSTEMS RESTORED (+{task.points} PTS)</div>
           {task.storyClue && (
             <div style={{ fontSize: 15, color: "#fff", marginTop: 6, opacity: 0.9 }}>
               {task.storyClue}

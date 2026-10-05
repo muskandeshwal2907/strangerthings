@@ -11,7 +11,7 @@ function Letters({ text, delay = 0, size }: { text: string; delay?: number; size
       {text.split("").map((c, i) => c === " " ? <span key={i} style={{ width: "0.32em" }} /> : (
         <motion.span
           key={i} className="title-xl"
-          style={{ display: "inline-block", color: "#ff3b45", textShadow: "0 0 3px #fff6, 0 0 18px #ff3b45, 0 0 60px #ff1f2d, 0 0 120px #ff1f2d" }}
+          style={{ display: "inline-block", color: "#ff3b45" }}
           initial={{ opacity: 0, y: 40, scale: 1.4, filter: "blur(14px)" }}
           animate={{ opacity: [0, 1, 0.3, 1, 0.6, 1], y: 0, scale: 1, filter: "blur(0px)" }}
           transition={{ duration: 1.4, delay: delay + i * 0.11 }}

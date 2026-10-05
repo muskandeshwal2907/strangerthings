@@ -156,7 +156,7 @@ export default function RearrangeTask({ task, solved, onSolve, disabled }: Rearr
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                boxShadow: isSelected ? "0 0 16px rgba(255,180,84,0.3)" : "none",
+                boxShadow: "none",
               }}
             >
               <span>{tile}</span>
@@ -214,7 +214,7 @@ export default function RearrangeTask({ task, solved, onSolve, disabled }: Rearr
           onClick={checkSolution}
           disabled={disabled || solved}
         >
-          {solved ? "✔ MESSAGE RESTORED" : "VERIFY ORDER →"}
+          {solved ? "[VERIFIED] MESSAGE RESTORED" : "VERIFY ORDER →"}
         </button>
       </div>
 
@@ -234,7 +234,7 @@ export default function RearrangeTask({ task, solved, onSolve, disabled }: Rearr
               letterSpacing: ".1em",
             }}
           >
-            <div style={{ fontWeight: "bold" }}>✔ MESSAGE RESTORED (+{task.points} PTS)</div>
+            <div style={{ fontWeight: "bold" }}>[VERIFIED] MESSAGE RESTORED (+{task.points} PTS)</div>
             {task.storyClue && (
               <div style={{ fontSize: 15, color: "#fff", marginTop: 6, opacity: 0.9 }}>
                 {task.storyClue}

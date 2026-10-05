@@ -117,9 +117,7 @@ export default function SeriesTask({ task, solved, onSolve, disabled }: SeriesTa
                       ? "#ffb454"
                       : "var(--accent2)"
                     : "rgba(255, 255, 255, 0.08)",
-                  boxShadow: isPulse
-                    ? `0 0 20px ${isMissing ? "#ffb454" : "var(--accent2)"}`
-                    : "none",
+                  boxShadow: "none",
                   border: `2px solid ${isMissing ? "#ffb454" : "var(--accent2)"}`,
                   transition: "all .12s ease-out",
                   display: "flex",
@@ -181,7 +179,7 @@ export default function SeriesTask({ task, solved, onSolve, disabled }: SeriesTa
             exit={{ opacity: 0 }}
             style={{ color: "var(--danger)", marginBottom: 12, fontSize: 15 }}
           >
-            ⚠ {errorMsg}
+            [ERROR] {errorMsg}
           </motion.div>
         )}
       </AnimatePresence>
@@ -201,7 +199,7 @@ export default function SeriesTask({ task, solved, onSolve, disabled }: SeriesTa
             letterSpacing: ".1em",
           }}
         >
-          <div style={{ fontWeight: "bold" }}>✔ TELEMETRY VALUE RESOLVED (+{task.points} PTS)</div>
+          <div style={{ fontWeight: "bold" }}>[RESOLVED] TELEMETRY VALUE RESOLVED (+{task.points} PTS)</div>
           <div style={{ fontSize: 15, color: "#fff", marginTop: 6 }}>
             CLUE UNLOCKED: <b>{data.clueName}</b> → <span style={{ color: "var(--accent2)" }}>{data.clueValue}</span>
           </div>

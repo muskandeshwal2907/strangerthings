@@ -95,14 +95,13 @@ export default function SabotageOverlay() {
 
         <div style={{ position: "relative", zIndex: 10, textAlign: "center", padding: 24, maxWidth: 640 }}>
           <div className="eyebrow" style={{ color: "var(--danger)", fontSize: 18, letterSpacing: ".3em", marginBottom: 12 }}>
-            ⚠ PSYCHIC TRANSMISSION INTERFERENCE
+            [ALERT] PSYCHIC TRANSMISSION INTERFERENCE
           </div>
           <h1
             className="title-xl glitch-text-burst"
             style={{
               fontSize: "clamp(42px, 8vw, 86px)",
               color: "#ff2d3a",
-              textShadow: "-3px 0 #36e0c4, 3px 0 #ff2d3a, 0 0 40px rgba(255,45,58,0.9)",
               lineHeight: 1.1,
             }}
           >
@@ -126,7 +125,7 @@ export default function SabotageOverlay() {
           <motion.div className="sab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="sab-box" style={{ maxWidth: 620 }}>
               <div className="term" style={{ color: "var(--danger)", fontSize: 24, letterSpacing: ".3em" }}>
-                ⚠ {sabotage.kind === "MESSAGE" ? "PSYCHIC BROADCAST" : "SYSTEM COMPROMISED"}
+                [ALERT] {sabotage.kind === "MESSAGE" ? "PSYCHIC BROADCAST" : "SYSTEM COMPROMISED"}
               </div>
 
               <h2 className="title-xl" style={{ fontSize: 44, margin: "14px 0", color: "#ff2d3a" }}>
@@ -189,7 +188,7 @@ export default function SabotageOverlay() {
 
       {sabotage && (hide || sabotage.kind === "WATCH") && (
         <div className="sab-banner">
-          ⚠{" "}
+          [ALERT]{" "}
           {sabotage.kind === "LOCK" && sabotage.pinIndex !== undefined
             ? `PIN ${sabotage.pinIndex + 1} LOCKED`
             : NAME[sabotage.kind]}

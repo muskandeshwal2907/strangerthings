@@ -68,9 +68,7 @@ export default function QuizTask({ task, solved, onSolve, disabled }: QuizTaskPr
         border: `1px solid ${isCorrupted ? "rgba(255, 45, 58, 0.45)" : "rgba(255, 180, 84, 0.35)"}`,
         borderRadius: 6,
         padding: "24px 28px",
-        boxShadow: isCorrupted
-          ? "0 8px 32px rgba(255, 45, 58, 0.2)"
-          : "0 8px 32px rgba(0, 0, 0, 0.6)",
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.6)",
         fontFamily: "var(--font-term)",
       }}
     >
@@ -177,7 +175,7 @@ export default function QuizTask({ task, solved, onSolve, disabled }: QuizTaskPr
                     fontWeight: "bold",
                   }}
                 >
-                  {isSelected ? "✓" : ""}
+                  {isSelected ? "X" : ""}
                 </span>
                 <span>{opt.label}</span>
               </button>
@@ -216,7 +214,7 @@ export default function QuizTask({ task, solved, onSolve, disabled }: QuizTaskPr
             onClick={handleOptionSubmit}
             disabled={disabled || solved || !selectedId}
           >
-            {solved ? "✔ INFORMATION UNLOCKED" : "CONFIRM EVIDENCE →"}
+            {solved ? "[INFORMATION UNLOCKED]" : "CONFIRM EVIDENCE →"}
           </button>
         </div>
       )}
@@ -230,7 +228,7 @@ export default function QuizTask({ task, solved, onSolve, disabled }: QuizTaskPr
             exit={{ opacity: 0 }}
             style={{ color: "var(--danger)", marginTop: 12, fontSize: 16 }}
           >
-            ⚠ {errorMsg}
+            [ERROR] {errorMsg}
           </motion.div>
         )}
       </AnimatePresence>
@@ -251,7 +249,7 @@ export default function QuizTask({ task, solved, onSolve, disabled }: QuizTaskPr
             letterSpacing: ".1em",
           }}
         >
-          <div style={{ fontWeight: "bold" }}>✔ INFORMATION UNLOCKED (+{task.points} PTS)</div>
+          <div style={{ fontWeight: "bold" }}>[UNLOCKED] INFORMATION UNLOCKED (+{task.points} PTS)</div>
           {task.storyClue && (
             <div style={{ fontSize: 15, color: "#fff", marginTop: 6, opacity: 0.9 }}>
               {task.storyClue}

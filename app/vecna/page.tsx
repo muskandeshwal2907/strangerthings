@@ -17,7 +17,7 @@ import {
   RealtimeMessage,
   StoryEventType,
 } from "@/lib/realtime";
-import UpsideScene from "@/components/scenes/UpsideScene";
+import CinematicBackground from "@/components/CinematicBackground";
 import Glitch from "@/components/Glitch";
 import { sfx } from "@/lib/audio";
 
@@ -325,8 +325,8 @@ export default function VecnaDashboard() {
   const displayTeams = PLAYER_TEAMS.length > 0 ? registeredTeams : (Object.values(live).length ? Object.values(live) : sim);
 
   return (
-    <div className="screen" style={{ minHeight: "100vh", overflowX: "hidden" }}>
-      <UpsideScene />
+    <div className="screen" style={{ minHeight: "100vh", overflowX: "hidden", position: "relative" }}>
+      <CinematicBackground src="/upsidedown-bg.jpg" particles="spores" vignette="heavy" overlayOpacity={0.65} />
 
       <div className="content" style={{ maxWidth: 1220, margin: "0 auto", padding: "34px 20px 80px" }}>
         {/* Header with Vecna Operator Identity & Logout */}
@@ -598,32 +598,32 @@ export default function VecnaDashboard() {
                   className="btn sm red"
                   onClick={() => fireStoryTrigger("gate_open", "The Gate Opens")}
                 >
-                  ⚡ OPEN THE GATE
+                  OPEN THE GATE
                 </button>
                 <button
                   className="btn sm red"
                   onClick={() => fireStoryTrigger("upsidedown_activate", "Upside Down Activation")}
                 >
-                  🌌 ACTIVATE UPSIDE DOWN
+                  ACTIVATE UPSIDE DOWN
                 </button>
                 <button
                   className="btn sm red"
                   onClick={() => fireStoryTrigger("vecna_appear", "Vecna Appearance Cutscene")}
                 >
-                  👁 VECNA TAKEOVER
+                  VECNA TAKEOVER
                 </button>
                 <button
                   className="btn sm red"
                   onClick={() => fireStoryTrigger("will_signal", "Will's Emergency Signal")}
                 >
-                  📻 TRANSMIT WILL&apos;S SIGNAL
+                  TRANSMIT WILL&apos;S SIGNAL
                 </button>
                 <button
                   className="btn sm red"
                   style={{ gridColumn: "1 / -1" }}
                   onClick={() => fireStoryTrigger("final_stage", "Final Mind Showdown")}
                 >
-                  ⏳ TRIGGER FINAL SHOWDOWN IN VECNA&apos;S MIND
+                  TRIGGER FINAL SHOWDOWN IN VECNA&apos;S MIND
                 </button>
               </div>
 
@@ -650,14 +650,14 @@ export default function VecnaDashboard() {
                     style={{ flex: 1 }}
                     onClick={() => toggleChallengeLock(true)}
                   >
-                    🔒 LOCK CHALLENGE
+                    [LOCK] CHALLENGE
                   </button>
                   <button
                     className="btn sm ghost"
                     style={{ flex: 1 }}
                     onClick={() => toggleChallengeLock(false)}
                   >
-                    🔓 UNLOCK CHALLENGE
+                    [UNLOCK] CHALLENGE
                   </button>
                 </div>
               </div>

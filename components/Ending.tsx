@@ -142,7 +142,6 @@ export default function Ending() {
                 style={{
                   fontSize: "clamp(36px, 8vw, 84px)",
                   color: "#ff2d3a",
-                  textShadow: "0 0 30px #ff2d3a, 0 0 80px rgba(255,45,58,0.8)",
                   textAlign: "center",
                 }}
               >
@@ -180,7 +179,6 @@ export default function Ending() {
                 borderRadius: "50%",
                 background: "radial-gradient(circle, #fffbee 0%, #ffa542 55%, transparent 72%)",
                 filter: "blur(6px)",
-                boxShadow: "0 0 100px #ffa542",
               }}
             />
             <Particles mode="dust" count={70} color="255, 235, 180" />
@@ -206,7 +204,6 @@ export default function Ending() {
                   fontSize: "clamp(42px, 8vw, 102px)",
                   margin: "12px 0 6px",
                   color: "#fff",
-                  textShadow: "0 0 30px rgba(255,180,84,0.6)",
                 }}
               >
                 HAWKINS IS SAFE.

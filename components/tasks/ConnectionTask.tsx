@@ -335,7 +335,7 @@ export default function ConnectionTask({ task, solved, onSolve, disabled }: Conn
               letterSpacing: ".1em",
             }}
           >
-            <div style={{ fontWeight: "bold" }}>✔ CONNECTION ESTABLISHED (+{task.points} PTS)</div>
+            <div style={{ fontWeight: "bold" }}>[CONNECTED] CONNECTION ESTABLISHED (+{task.points} PTS)</div>
             {task.storyClue && (
               <div style={{ fontSize: 15, color: "#fff", marginTop: 6, opacity: 0.9 }}>
                 {task.storyClue}

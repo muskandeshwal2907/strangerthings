@@ -6,8 +6,8 @@ import IntroCutscene from "@/components/scenes/IntroCutscene";
 import LoginScreen from "@/components/LoginScreen";
 import StageView from "@/components/StageView";
 import Ending from "@/components/Ending";
-import Hud, { Dock, SoundToggle, Toast } from "@/components/Hud";
 import ChapterCard from "@/components/ChapterCard";
+import Hud, { SoundToggle, Toast } from "@/components/Hud";
 import SabotageOverlay from "@/components/SabotageOverlay";
 
 export default function Home() {
@@ -45,7 +45,6 @@ export default function Home() {
     <>
       {!cutscene && (s.stage === "ending" ? <Ending /> : <StageView />)}
       <Hud />
-      {s.stage !== "ending" && !cutscene && <Dock />}
       <SabotageOverlay />
       <ChapterCard />
       <Toast />

@@ -111,7 +111,7 @@ export default function CaseStudyTask({ task, solved, onSolve, disabled }: CaseS
                 padding: "16px 14px 14px",
                 cursor: disabled || solved ? "default" : "pointer",
                 transition: "all .2s",
-                boxShadow: isPinned ? "0 4px 16px rgba(255,180,84,0.18)" : "none",
+                boxShadow: "none",
               }}
             >
               {/* Pushpin indicator */}
@@ -124,7 +124,7 @@ export default function CaseStudyTask({ task, solved, onSolve, disabled }: CaseS
                   height: 16,
                   borderRadius: "50%",
                   background: isPinned ? "#ff2d3a" : "#555",
-                  boxShadow: isPinned ? "0 0 8px #ff2d3a" : "none",
+                  boxShadow: "none",
                   border: "2px solid #fff",
                 }}
               />
@@ -205,7 +205,7 @@ export default function CaseStudyTask({ task, solved, onSolve, disabled }: CaseS
           onClick={handleConfirm}
           disabled={disabled || solved || !selectedRoute}
         >
-          {solved ? "✔ INVESTIGATION ROUTE ESTABLISHED" : "DEPLOY INVESTIGATION →"}
+          {solved ? "[ESTABLISHED] INVESTIGATION ROUTE ESTABLISHED" : "DEPLOY INVESTIGATION →"}
         </button>
       </div>
 
@@ -225,7 +225,7 @@ export default function CaseStudyTask({ task, solved, onSolve, disabled }: CaseS
               letterSpacing: ".1em",
             }}
           >
-            <div style={{ fontWeight: "bold" }}>✔ PRIMARY EPICENTER CONFIRMED (+{task.points} PTS)</div>
+            <div style={{ fontWeight: "bold" }}>[CONFIRMED] PRIMARY EPICENTER CONFIRMED (+{task.points} PTS)</div>
             {task.storyClue && (
               <div style={{ fontSize: 15, color: "#fff", marginTop: 6, opacity: 0.9 }}>
                 {task.storyClue}

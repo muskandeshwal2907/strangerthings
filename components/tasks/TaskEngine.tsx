@@ -109,7 +109,7 @@ export default function TaskEngine({ task, onNavigateLocation }: TaskEngineProps
             padding: 20,
           }}
         >
-          <div style={{ fontSize: 32, fontWeight: "bold", letterSpacing: ".2em" }}>⚠ SIGNAL JAMMED</div>
+          <div style={{ fontSize: 32, fontWeight: "bold", letterSpacing: ".2em" }}>[ALERT] SIGNAL JAMMED</div>
           <div className="term" style={{ marginTop: 8, color: "#fff" }}>
             VECNA HAS FLOODED THIS FREQUENCY WITH PSYCHIC NOISE.
           </div>

@@ -189,6 +189,10 @@ interface Ctx {
   solveRadiometerPin: (pinIndex: number, points: number) => void;
   submitRadiometerCode: (code: string) => boolean;
   radiometerPinCount: number;
+  activeChapterId: 1 | 2 | 3 | 4;
+  setActiveChapterId: (id: 1 | 2 | 3 | 4) => void;
+  chapterModalOpen: boolean;
+  setChapterModalOpen: (open: boolean) => void;
 }
 
 const GameCtx = createContext<Ctx | null>(null);
@@ -209,6 +213,28 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [soundOn, setSoundOnState] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
+  const [activeChapterId, setActiveChapterId] = useState<1 | 2 | 3 | 4>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("hawkins_active_chapter");
+        if (saved) {
+          const num = parseInt(saved, 10);
+          if ([1, 2, 3, 4].includes(num)) return num as 1 | 2 | 3 | 4;
+        }
+      } catch {}
+    }
+    return 1;
+  });
+  const [chapterModalOpen, setChapterModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("hawkins_active_chapter", String(activeChapterId));
+      } catch {}
+    }
+  }, [activeChapterId]);
+
   const sRef = useRef(s);
   sRef.current = s;
 
@@ -960,6 +986,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       solveRadiometerPin,
       submitRadiometerCode,
       radiometerPinCount,
+      activeChapterId,
+      setActiveChapterId,
+      chapterModalOpen,
+      setChapterModalOpen,
     }),
     [
       s,
@@ -997,6 +1027,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       solveRadiometerPin,
       submitRadiometerCode,
       radiometerPinCount,
+      activeChapterId,
+      chapterModalOpen,
     ]
   );
 

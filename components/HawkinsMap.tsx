@@ -373,7 +373,7 @@ export default function HawkinsMap({ onSelectLocation, currentLoc }: HawkinsMapP
                   border: `2px solid ${
                     unlocked ? markerColor : "rgba(255, 255, 255, 0.2)"
                   }`,
-                  boxShadow: unlocked ? `0 0 16px ${markerColor}` : "none",
+                  boxShadow: "none",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -384,7 +384,7 @@ export default function HawkinsMap({ onSelectLocation, currentLoc }: HawkinsMapP
                   transform: isHovered ? "scale(1.25)" : "scale(1)",
                 }}
               >
-                {unlocked ? (isCurrent ? "◉" : "●") : "🔒"}
+                {unlocked ? (isCurrent ? "◉" : "●") : "■"}
               </div>
 
               {/* Pin Label */}
@@ -457,7 +457,7 @@ export default function HawkinsMap({ onSelectLocation, currentLoc }: HawkinsMapP
 
             {!isUnlocked(hovered.id) && (
               <div style={{ fontSize: 12, color: "var(--danger)", borderTop: "1px dashed rgba(255,45,58,0.3)", paddingTop: 6 }}>
-                ⚠ {hovered.unlockCondition}
+                [RESTRICTED] {hovered.unlockCondition}
               </div>
             )}
             {isUnlocked(hovered.id) && (

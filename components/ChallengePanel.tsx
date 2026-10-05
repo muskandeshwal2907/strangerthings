@@ -84,7 +84,7 @@ export default function ChallengePanel({ stageId }: { stageId: StageId }) {
         <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
           {list.map((c, i) => (
             <button key={c.id} className={`chip ${s.solved[c.id] ? "done" : ""}`} style={{ background: c.id === ch.id ? "color-mix(in srgb, var(--accent) 16%, transparent)" : "transparent", color: c.id === ch.id ? "var(--accent)" : undefined, borderColor: c.id === ch.id ? "var(--accent)" : undefined, cursor: "pointer" }} onClick={() => { setSel(c.id); setVal(""); sfx("click"); }}>
-              {s.solved[c.id] ? "✔" : i + 1} {c.title}
+              {s.solved[c.id] ? "[OK]" : i + 1} {c.title}
             </button>
           ))}
         </div>
@@ -101,9 +101,9 @@ export default function ChallengePanel({ stageId }: { stageId: StageId }) {
             <label className="lbl">{solved ? "ACCESS GRANTED" : "ENTER ANSWER"}</label>
             <div style={{ display: "flex", gap: 10 }}>
               <input
-                className="field" value={solved ? "✔ COMPLETE" : val} disabled={locked || solved}
+                className="field" value={solved ? "[COMPLETE]" : val} disabled={locked || solved}
                 onChange={(e) => { setVal(e.target.value); sfx("type"); }}
-                placeholder={locked ? "// LOCKED BY VECNA" : ch.placeholder || "answer"} autoComplete="off" spellCheck={false}
+                placeholder={locked ? "[LOCKED BY VECNA]" : ch.placeholder || "answer"} autoComplete="off" spellCheck={false}
               />
               <button className="btn" disabled={locked || solved || !val.trim()}>SEND</button>
             </div>

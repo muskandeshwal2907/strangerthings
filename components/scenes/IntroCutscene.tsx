@@ -22,6 +22,61 @@ export default function IntroCutscene({ onComplete }: IntroCutsceneProps) {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
   const [isFinished, setIsFinished] = useState(false);
 
+  // Fast forward one line on click or keypress
+  const handleFastForward = () => {
+    if (isFinished) return;
+
+    if (lineIdx < LINES.length) {
+      const currentFullLine = LINES[lineIdx];
+      setDisplayedLines((prev) => {
+        const next = [...prev];
+        if (next.length <= lineIdx) {
+          next.push(currentFullLine);
+        } else {
+          next[lineIdx] = currentFullLine;
+        }
+        return next;
+      });
+
+      const nextLineIdx = lineIdx + 1;
+      setLineIdx(nextLineIdx);
+      setCharIdx(0);
+      sfx("type");
+
+      if (nextLineIdx >= LINES.length) {
+        setIsFinished(true);
+      }
+    } else {
+      setIsFinished(true);
+    }
+  };
+
+  // Skip straight to finished state
+  const handleSkipAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDisplayedLines([...LINES]);
+    setLineIdx(LINES.length);
+    setCharIdx(0);
+    setIsFinished(true);
+    sfx("type");
+  };
+
+  // Keyboard handler: any key fast-forwards the lore, or Enter when finished enters Hawkins
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (["Shift", "Control", "Alt", "Meta"].includes(e.key)) return;
+
+      if (!isFinished) {
+        handleFastForward();
+      } else if (e.key === "Enter" || e.key === " ") {
+        handleEnter();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lineIdx, charIdx, isFinished]);
+
   useEffect(() => {
     if (lineIdx >= LINES.length) {
       setIsFinished(true);
@@ -36,12 +91,17 @@ export default function IntroCutscene({ onComplete }: IntroCutsceneProps) {
         if (Math.random() > 0.4) {
           sfx("type");
         }
-      }, 42);
+      }, 40);
       return () => clearTimeout(timer);
     } else {
       // Completed line, wait and move to next
       const pause = setTimeout(() => {
-        setDisplayedLines((prev) => [...prev, currentFullLine]);
+        setDisplayedLines((prev) => {
+          if (prev.length <= lineIdx) {
+            return [...prev, currentFullLine];
+          }
+          return prev;
+        });
         setLineIdx((l) => l + 1);
         setCharIdx(0);
       }, lineIdx < 2 ? 650 : 850);
@@ -57,6 +117,7 @@ export default function IntroCutscene({ onComplete }: IntroCutsceneProps) {
 
   return (
     <div
+      onClick={handleFastForward}
       style={{
         position: "fixed",
         inset: 0,
@@ -68,6 +129,8 @@ export default function IntroCutscene({ onComplete }: IntroCutsceneProps) {
         justifyContent: "center",
         padding: 30,
         fontFamily: "var(--font-term)",
+        cursor: isFinished ? "default" : "pointer",
+        userSelect: "none",
       }}
     >
       <div style={{ maxWidth: 680, width: "100%" }}>
@@ -103,19 +166,31 @@ export default function IntroCutscene({ onComplete }: IntroCutsceneProps) {
           </div>
         )}
 
-        {/* Enter Hawkins CTA */}
+        {/* Enter Hawkins CTA without blinking shadow */}
         <AnimatePresence>
           {isFinished && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.5 }}
               style={{ marginTop: 44 }}
             >
               <button
-                className="btn big pulse-cta"
-                onClick={handleEnter}
-                style={{ width: "100%", fontSize: 24, padding: "18px 24px" }}
+                id="enter-hawkins-btn"
+                className="btn big"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEnter();
+                }}
+                style={{
+                  width: "100%",
+                  fontSize: 24,
+                  padding: "18px 24px",
+                  boxShadow: "none",
+                  animation: "none",
+                  border: "1px solid var(--accent)",
+                  letterSpacing: ".18em",
+                }}
               >
                 ENTER HAWKINS →
               </button>
@@ -123,18 +198,40 @@ export default function IntroCutscene({ onComplete }: IntroCutsceneProps) {
           )}
         </AnimatePresence>
 
-        {/* Skip button in corner */}
-        <div style={{ position: "absolute", bottom: 20, right: 24 }}>
+        {/* Fast-Forward / Skip Hint & Button */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 20,
+            right: 24,
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
+          {!isFinished && (
+            <span
+              className="term dim"
+              style={{
+                fontSize: 12,
+                letterSpacing: ".1em",
+                color: "rgba(255, 255, 255, 0.4)",
+              }}
+            >
+              [CLICK / KEY TO FAST FORWARD ▶]
+            </span>
+          )}
+
           <button
             type="button"
             className="term dim"
-            onClick={handleEnter}
+            onClick={handleSkipAll}
             style={{
               background: "none",
               border: "none",
-              color: "rgba(255,255,255,0.3)",
+              color: "rgba(255,255,255,0.4)",
               cursor: "pointer",
-              fontSize: 14,
+              fontSize: 13,
               letterSpacing: ".15em",
             }}
           >

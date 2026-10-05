@@ -18,7 +18,7 @@ export default function Leaderboard({ highlight }: { highlight?: string }) {
           const rank = rows.indexOf(r) + 1;
           return (
             <motion.div key={r.team + r.score} initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.25, type: "spring" }}
-              className="panel" style={{ width: "min(180px,30vw)", height: heights[i], padding: 12, textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "flex-end", borderColor: rank === 1 ? "var(--accent)" : undefined, boxShadow: rank === 1 ? "var(--glow)" : undefined }}>
+              className="panel" style={{ width: "min(180px,30vw)", height: heights[i], padding: 12, textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "flex-end", borderColor: rank === 1 ? "var(--accent)" : undefined }}>
               <div className="title-xl" style={{ fontSize: 44 }}>{rank}</div>
               <div className="term" style={{ fontSize: 18, wordBreak: "break-word" }}>{r.team}</div>
               <div className="term accent">{r.score}</div>
@@ -33,7 +33,7 @@ export default function Leaderboard({ highlight }: { highlight?: string }) {
             <motion.div key={r.team + r.score + i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 + i * 0.07 }}
               style={{ display: "grid", gridTemplateColumns: "50px 1fr 90px 90px", padding: "10px 16px", borderBottom: "1px solid var(--line)", fontFamily: "var(--font-term)", fontSize: 21, letterSpacing: ".08em", background: highlight && r.team === highlight ? "color-mix(in srgb, var(--accent) 14%, transparent)" : undefined, color: highlight && r.team === highlight ? "var(--accent)" : undefined }}>
               <span className="dim">{String(i + 1).padStart(2, "0")}</span>
-              <span>{r.team}{!r.mock && " ★"}</span>
+              <span>{r.team}{!r.mock && " [ACTIVE]"}</span>
               <span className="dim">{mmss(r.time)}</span>
               <span style={{ textAlign: "right" }}>{r.score}</span>
             </motion.div>

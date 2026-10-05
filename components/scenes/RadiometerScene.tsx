@@ -133,7 +133,7 @@ function TaskNode({
       disabled={solved || jammed}
       aria-label={`${label}${solved ? " – SOLVED" : jammed ? " – JAMMED" : ""}`}
     >
-      <span className="rm-tasknode__icon">{solved ? "✔" : jammed ? "✖" : "◎"}</span>
+      <span className="rm-tasknode__icon">{solved ? "[OK]" : jammed ? "[ERR]" : "◎"}</span>
       <span className="rm-tasknode__label">{label}</span>
     </motion.button>
   );
@@ -354,7 +354,7 @@ export default function RadiometerScene() {
             className="rm-jam-banner"
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
           >
-            ⚡ SIGNAL JAMMED — TUNING DIAL OFFLINE ⚡
+            [ALERT] SIGNAL JAMMED — TUNING DIAL OFFLINE [ALERT]
           </motion.div>
         )}
       </AnimatePresence>

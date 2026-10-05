@@ -340,7 +340,7 @@ export default function RadioTask({ task, solved, onSolve, disabled }: RadioTask
             exit={{ opacity: 0 }}
             style={{ color: "var(--danger)", marginTop: 10, fontSize: 15 }}
           >
-            ⚠ {errorMsg}
+            [ERROR] {errorMsg}
           </motion.div>
         )}
       </AnimatePresence>
@@ -361,7 +361,7 @@ export default function RadioTask({ task, solved, onSolve, disabled }: RadioTask
             letterSpacing: ".1em",
           }}
         >
-          <div style={{ fontWeight: "bold" }}>✔ TRANSMISSION LOCKED &amp; DECODED (+{task.points} PTS)</div>
+          <div style={{ fontWeight: "bold" }}>[DECODED] TRANSMISSION LOCKED &amp; DECODED (+{task.points} PTS)</div>
           {task.storyClue && (
             <div style={{ fontSize: 15, color: "#fff", marginTop: 6, opacity: 0.9 }}>
               {task.storyClue}

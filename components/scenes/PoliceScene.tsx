@@ -24,7 +24,7 @@ export default function PoliceScene() {
           height: 8,
           background: "#e8f4f8",
           borderRadius: "0 0 4px 4px",
-          boxShadow: "0 0 45px rgba(232, 244, 248, 0.45), 0 0 90px rgba(54, 224, 196, 0.2)",
+          boxShadow: "none",
           animation: "flicker 4s infinite",
         }}
       />

@@ -49,7 +49,7 @@ export const ITEMS: Record<string, Item> = {
   "key-beta": { id: "key-beta", name: "Key Fragment β", glyph: "β", desc: "Pulled from the Lab's sealed archive." },
   "key-gamma": { id: "key-gamma", name: "Key Fragment γ", glyph: "γ", desc: "Hidden in the forest, near the old trail." },
   "file-will": { id: "file-will", name: "Subject File 003", glyph: "▤", desc: "A file that mentions Will Byers." },
-  "note-forest": { id: "note-forest", name: "Trail Marker Notes", glyph: "✎", desc: "Three carved digits: 4 · 1 · 7" },
+  "note-forest": { id: "note-forest", name: "Trail Marker Notes", glyph: "NOTE", desc: "Three carved digits: 4 · 1 · 7" },
 };
 
 export const STAGE_ORDER: StageId[] = [

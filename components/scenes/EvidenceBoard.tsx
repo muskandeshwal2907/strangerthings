@@ -23,7 +23,7 @@ export default function EvidenceBoard() {
           const on = shown(a) && shown(b);
           return (
             <motion.line key={i} x1={A.x + 18} y1={A.y + 14} x2={B.x + 18} y2={B.y + 14}
-              stroke="#ff2d3a" strokeWidth="0.7" vectorEffect="non-scaling-stroke" style={{ filter: "drop-shadow(0 0 4px #ff2d3a)" }}
+              stroke="#ff2d3a" strokeWidth="0.7" vectorEffect="non-scaling-stroke"
               initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: on ? 1 : 0, opacity: on ? 1 : 0 }} transition={{ duration: 1.2 }} />
           );
         })}

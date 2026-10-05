@@ -60,7 +60,7 @@ export default function ChapterCard() {
           </motion.div>
           <motion.div
             initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 1.2, duration: 2.2, ease: "easeInOut" }}
-            style={{ height: 2, width: "min(520px,70vw)", marginTop: 34, background: `linear-gradient(90deg,transparent,${upside ? "#ff2d3a" : "#ff3b45"},transparent)`, boxShadow: `0 0 18px ${upside ? "#ff2d3a" : "#ff3b45"}`, transformOrigin: "left" }}
+            style={{ height: 2, width: "min(520px,70vw)", marginTop: 34, background: `linear-gradient(90deg,transparent,${upside ? "#ff2d3a" : "#ff3b45"},transparent)`, transformOrigin: "left" }}
           />
           <motion.div
             className="term dim"

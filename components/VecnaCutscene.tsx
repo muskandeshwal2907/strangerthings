@@ -101,7 +101,6 @@ export default function VecnaCutscene({ onDismiss }: VecnaCutsceneProps) {
               style={{
                 fontSize: "clamp(38px, 8vw, 76px)",
                 color: "#ff2d3a",
-                textShadow: "0 0 20px #ff2d3a, 0 0 50px rgba(255,45,58,0.8)",
                 lineHeight: 1.1,
               }}
             >

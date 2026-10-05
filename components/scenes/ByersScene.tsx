@@ -117,9 +117,7 @@ export default function ByersScene() {
                         height: 26,
                         borderRadius: "50% 50% 40% 40%",
                         background: isLit ? bulbColor : "rgba(255,255,255,0.18)",
-                        boxShadow: isLit
-                          ? `0 0 24px ${bulbColor}, 0 0 55px ${bulbColor}`
-                          : "0 0 4px rgba(0,0,0,0.5)",
+                        boxShadow: "none",
                         border: "1px solid rgba(0,0,0,0.6)",
                         transition: "all .12s ease-out",
                       }}
@@ -133,9 +131,7 @@ export default function ByersScene() {
                         fontFamily: "'Playfair Display', Georgia, serif",
                         fontWeight: 900,
                         color: isLit ? "#fff" : "rgba(255, 230, 200, 0.4)",
-                        textShadow: isLit
-                          ? `0 0 15px ${bulbColor}, 0 0 35px ${bulbColor}`
-                          : "none",
+                        textShadow: "none",
                         transform: `rotate(${(charIdx % 3 - 1) * 4}deg)`,
                         userSelect: "none",
                         transition: "all .12s ease-out",
