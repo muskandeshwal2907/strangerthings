@@ -42,6 +42,14 @@ export default function LoginScreen() {
             id: authResult.session.teamId || "T01",
             teamName: authResult.session.teamName,
             leaderName: authResult.session.leaderName,
+            token: authResult.token,
+            totalScore: authResult.team?.totalScore,
+            breakdown: authResult.team?.breakdown,
+            penalty: authResult.team?.penalty,
+            completedTasks: authResult.team?.completedTasks,
+            solvedChapters: authResult.team?.solvedChapters,
+            unlockedLocations: authResult.team?.unlockedLocations,
+            storyProgress: authResult.team?.storyProgress,
           });
         }
       } else {

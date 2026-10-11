@@ -6,5 +6,6 @@ const router = Router();
 
 router.post("/validate-pin", validationRateLimiter, RadiometerController.validatePin);
 router.post("/validate-keypad", validationRateLimiter, RadiometerController.validateKeypad);
+router.post("/validate-master-keypad", validationRateLimiter, RadiometerController.validateKeypad);
 
 export default router;

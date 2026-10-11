@@ -27,6 +27,7 @@ export interface TiDBAuthResult {
     leaderName: string;
     teamId: string;
   };
+  team?: any;
   token?: string;
   source?: "tidb" | "backend" | "canon";
   error?: string;
@@ -235,6 +236,7 @@ export async function authenticateTeamWithTiDB(
           leaderName: res.session.leaderName,
           teamId: res.session.teamId,
         },
+        team: res.team,
         token: res.token,
         source: "tidb",
       };

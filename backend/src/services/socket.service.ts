@@ -42,13 +42,25 @@ class SocketService {
   public setTeamOffline(teamId: string) {
     this.onlineTeams.delete(teamId);
     if (this.io) {
+      // 1. Emit revocation notices across team room and public broadcast
+      const revocationPayload = {
+        teamId,
+        reason: "admin_force_logout",
+        message: "An administrator has terminated your active session.",
+        ts: Date.now(),
+      };
+      this.io.to(`team:${teamId}`).emit("session:revoked", revocationPayload);
+      this.io.to(`team:${teamId}`).emit("team:force_logged_out", revocationPayload);
+      this.io.to(`team:${teamId}`).emit("team:session_terminated", { teamId, reason: "LOGOUT" });
+
       const room = this.io.sockets.adapter.rooms.get(`team:${teamId}`);
       if (room) {
         for (const socketId of Array.from(room)) {
           const s = this.io.sockets.sockets.get(socketId);
           if (s) {
+            s.emit("session:revoked", revocationPayload);
+            s.emit("team:force_logged_out", revocationPayload);
             s.leave(`team:${teamId}`);
-            s.emit("team:session_terminated", { teamId, reason: "LOGOUT" });
             s.disconnect(true);
           }
         }
@@ -62,6 +74,14 @@ class SocketService {
   public clearAllOnlineTeams() {
     this.onlineTeams.clear();
     if (this.io) {
+      const revocationPayload = {
+        teamId: "all",
+        reason: "admin_reset_all_sessions",
+        message: "All active participant sessions have been terminated by tournament command.",
+        ts: Date.now(),
+      };
+      this.io.to("public:broadcast").emit("session:revoked", revocationPayload);
+      this.io.to("public:broadcast").emit("team:force_logged_out", revocationPayload);
       this.broadcastLeaderboard();
       this.io.to("admins").emit("presence:update", { all: true, isOnline: false });
     }
@@ -75,23 +95,41 @@ class SocketService {
     const requestedTeamId = socket.handshake.query?.teamId as string;
     const requestedSenderId = socket.handshake.query?.senderId as string;
 
-    if (session) {
-      if (session.role === "VECNA") {
+    const joinSessionRooms = (sess: typeof session) => {
+      if (!sess) return;
+      if (sess.role === "VECNA") {
         socket.join("role:vecna");
-        socket.join(`vecna-sender:${session.teamId}`);
-      } else if (session.role === "ADMIN") {
+        socket.join(`vecna-sender:${sess.teamId}`);
+      } else if (sess.role === "ADMIN") {
         socket.join("role:admin");
         socket.join("admins");
-      } else if (session.role === "PLAYER") {
-        socket.join(`team:${session.teamId}`);
-        if (session.teamId) {
-          this.onlineTeams.add(session.teamId);
+      } else if (sess.role === "PLAYER") {
+        socket.join(`team:${sess.teamId}`);
+        if (sess.teamId) {
+          this.onlineTeams.add(sess.teamId);
           // Broadcast live presence to admins immediately
-          this.io?.to("admins").emit("presence:update", { teamId: session.teamId, isOnline: true });
+          this.io?.to("admins").emit("presence:update", { teamId: sess.teamId, isOnline: true });
           this.broadcastLeaderboard();
         }
       }
+    };
+
+    if (session) {
+      joinSessionRooms(session);
     }
+
+    // Dynamic post-handshake authentication for seamless login without reload
+    socket.on("authenticate", (authData: { token?: string }) => {
+      if (!authData?.token) return;
+      const verified = AuthService.verifyToken(authData.token);
+      if (verified) {
+        session = verified;
+        joinSessionRooms(session);
+        socket.emit("authenticated", { success: true, role: session.role, teamId: session.teamId });
+      } else {
+        socket.emit("authenticated", { success: false, error: "INVALID_TOKEN" });
+      }
+    });
 
     // Explicit client logout event
     socket.on("team:logout", () => {
@@ -335,6 +373,14 @@ class SocketService {
    */
   public disconnectTeamSockets(teamId: string) {
     if (!this.io) return;
+    const revocationPayload = {
+      teamId,
+      reason: "admin_force_logout",
+      message: "An administrator has terminated your active session.",
+      ts: Date.now(),
+    };
+    this.io.to(`team:${teamId}`).emit("session:revoked", revocationPayload);
+    this.io.to(`team:${teamId}`).emit("team:force_logged_out", revocationPayload);
     this.io.in(`team:${teamId}`).disconnectSockets(true);
   }
 }

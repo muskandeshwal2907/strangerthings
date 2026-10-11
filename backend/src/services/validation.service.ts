@@ -10,6 +10,9 @@ import {
 } from "../config/vault";
 import { db } from "./db.service";
 import { ScoreService } from "./score.service";
+import { EventControlService } from "./eventControl.service";
+import { SessionService } from "./session.service";
+import { socketService } from "./socket.service";
 
 export const ValidationService = {
   /**
@@ -21,6 +24,24 @@ export const ValidationService = {
     answer: string | Record<number, string> | string[],
     teamId?: string
   ): ValidationResponse {
+    if (!EventControlService.isGameplayAllowedSync()) {
+      return {
+        success: false,
+        pointsAwarded: 0,
+        error: "EVENT_PAUSED",
+        message: "GAMEPLAY MUTATIONS SUSPENDED: Tournament is currently paused by Chief Administrator.",
+      };
+    }
+
+    if (teamId && !SessionService.hasActiveSessionSync(teamId)) {
+      return {
+        success: false,
+        pointsAwarded: 0,
+        error: "SESSION_REVOKED",
+        message: "ACCESS DENIED: Team session has been invalidated or logged out.",
+      };
+    }
+
     const rawChapter = db.getRawChapterById(chapterId);
     if (!rawChapter) {
       return {
@@ -81,7 +102,7 @@ export const ValidationService = {
 
         const nextProgress = Math.min(100, Math.round((nextSolvedChapters.length / 7) * 100));
 
-        db.updateTeam(team.id, {
+        const updated = db.updateTeam(team.id, {
           solvedChapters: nextSolvedChapters,
           completedTasks: nextCompletedTasks,
           unlockedLocations: nextUnlocked,
@@ -92,6 +113,23 @@ export const ValidationService = {
             tech: team.breakdown.tech + basePoints,
           },
         });
+
+        if (updated) {
+          const scorePayload = {
+            type: "SCORE_UPDATE",
+            teamId: team.id,
+            teamName: team.teamName,
+            newScore: updated.totalScore,
+            delta: totalAwarded,
+            chapterId,
+            taskId,
+            breakdown: updated.breakdown,
+            source: "CHAPTER_SOLVED",
+            ts: Date.now(),
+          };
+          socketService.emitToTeam(team.id, "score:update", scorePayload);
+          socketService.broadcast("score:update", scorePayload);
+        }
       }
 
       return {
@@ -127,7 +165,7 @@ export const ValidationService = {
         const nextSolvedChapters = Array.from(new Set([...team.solvedChapters, chapterId]));
         const nextCompletedTasks = Array.from(new Set([...team.completedTasks, taskId]));
 
-        db.updateTeam(team.id, {
+        const updated = db.updateTeam(team.id, {
           solvedChapters: nextSolvedChapters,
           completedTasks: nextCompletedTasks,
           lastSolvedAt: new Date().toISOString(),
@@ -138,6 +176,23 @@ export const ValidationService = {
             story: team.breakdown.story + 10,
           },
         });
+
+        if (updated) {
+          const scorePayload = {
+            type: "SCORE_UPDATE",
+            teamId: team.id,
+            teamName: team.teamName,
+            newScore: updated.totalScore,
+            delta: totalAwarded,
+            chapterId,
+            taskId,
+            breakdown: updated.breakdown,
+            source: "CHAPTER_SOLVED",
+            ts: Date.now(),
+          };
+          socketService.emitToTeam(team.id, "score:update", scorePayload);
+          socketService.broadcast("score:update", scorePayload);
+        }
       }
 
       return {
@@ -167,6 +222,24 @@ export const ValidationService = {
    * Validates a story task submission
    */
   validateTask(taskId: string, candidateAnswer: string, teamId?: string): ValidationResponse {
+    if (!EventControlService.isGameplayAllowedSync()) {
+      return {
+        success: false,
+        pointsAwarded: 0,
+        error: "EVENT_PAUSED",
+        message: "GAMEPLAY MUTATIONS SUSPENDED: Tournament is currently paused by Chief Administrator.",
+      };
+    }
+
+    if (teamId && !SessionService.hasActiveSessionSync(teamId)) {
+      return {
+        success: false,
+        pointsAwarded: 0,
+        error: "SESSION_REVOKED",
+        message: "ACCESS DENIED: Team session has been invalidated or logged out.",
+      };
+    }
+
     const secret = STORY_TASK_SECRETS[taskId];
     if (!secret) {
       return {
@@ -196,7 +269,7 @@ export const ValidationService = {
       const nextCompleted = Array.from(new Set([...team.completedTasks, taskId]));
       const cat = secret.category as keyof TeamRecord["breakdown"];
 
-      db.updateTeam(team.id, {
+      const updated = db.updateTeam(team.id, {
         completedTasks: nextCompleted,
         lastSolvedAt: new Date().toISOString(),
         breakdown: {
@@ -205,6 +278,22 @@ export const ValidationService = {
           speed: team.breakdown.speed + speedBonus,
         },
       });
+
+      if (updated) {
+        const scorePayload = {
+          type: "SCORE_UPDATE",
+          teamId: team.id,
+          teamName: team.teamName,
+          newScore: updated.totalScore,
+          delta: totalPoints,
+          taskId,
+          breakdown: updated.breakdown,
+          source: "TASK_SOLVED",
+          ts: Date.now(),
+        };
+        socketService.emitToTeam(team.id, "score:update", scorePayload);
+        socketService.broadcast("score:update", scorePayload);
+      }
     }
 
     return {
@@ -219,6 +308,22 @@ export const ValidationService = {
    * Validates a 5-pin radiometer calibration pin
    */
   validateRadiometerPin(pinIndex: number, answer: any, teamId?: string): PinValidationResponse {
+    if (!EventControlService.isGameplayAllowedSync()) {
+      return {
+        success: false,
+        error: "EVENT_PAUSED",
+        message: "GAMEPLAY MUTATIONS SUSPENDED: Tournament is currently paused by Chief Administrator.",
+      };
+    }
+
+    if (teamId && !SessionService.hasActiveSessionSync(teamId)) {
+      return {
+        success: false,
+        error: "SESSION_REVOKED",
+        message: "ACCESS DENIED: Team session has been invalidated or logged out.",
+      };
+    }
+
     const pinSecret = RADIOMETER_PIN_SECRETS[pinIndex];
     if (!pinSecret) {
       return {
@@ -240,7 +345,7 @@ export const ValidationService = {
         nextPins[pinIndex] = pinSecret.digit;
         nextSolved[pinIndex] = true;
 
-        db.updateTeam(team.id, {
+        const updated = db.updateTeam(team.id, {
           radiometerPins: nextPins,
           radiometerSolved: nextSolved,
           lastSolvedAt: new Date().toISOString(),
@@ -249,6 +354,21 @@ export const ValidationService = {
             puzzle: team.breakdown.puzzle + pinSecret.points,
           },
         });
+
+        if (updated) {
+          const scorePayload = {
+            type: "SCORE_UPDATE",
+            teamId: team.id,
+            teamName: team.teamName,
+            newScore: updated.totalScore,
+            delta: pinSecret.points,
+            breakdown: updated.breakdown,
+            source: "RADIOMETER_PIN",
+            ts: Date.now(),
+          };
+          socketService.emitToTeam(team.id, "score:update", scorePayload);
+          socketService.broadcast("score:update", scorePayload);
+        }
       }
 
       return {
@@ -272,6 +392,24 @@ export const ValidationService = {
    * Validates the 5-digit master keypad cipher
    */
   validateMasterKeypad(code: string, teamId?: string): ValidationResponse {
+    if (!EventControlService.isGameplayAllowedSync()) {
+      return {
+        success: false,
+        pointsAwarded: 0,
+        error: "EVENT_PAUSED",
+        message: "GAMEPLAY MUTATIONS SUSPENDED: Tournament is currently paused by Chief Administrator.",
+      };
+    }
+
+    if (teamId && !SessionService.hasActiveSessionSync(teamId)) {
+      return {
+        success: false,
+        pointsAwarded: 0,
+        error: "SESSION_REVOKED",
+        message: "ACCESS DENIED: Team session has been invalidated or logged out.",
+      };
+    }
+
     const isMatch = code.trim() === MASTER_KEYPAD_CODE;
     if (!isMatch) {
       return {
@@ -288,7 +426,7 @@ export const ValidationService = {
     const totalPoints = basePoints + speedBonus;
 
     if (team) {
-      db.updateTeam(team.id, {
+      const updated = db.updateTeam(team.id, {
         radiometerCodeSolved: true,
         unlockedLocations: { ...team.unlockedLocations, lab: true, gate: true },
         lastSolvedAt: new Date().toISOString(),
@@ -298,6 +436,21 @@ export const ValidationService = {
           speed: team.breakdown.speed + speedBonus,
         },
       });
+
+      if (updated) {
+        const scorePayload = {
+          type: "SCORE_UPDATE",
+          teamId: team.id,
+          teamName: team.teamName,
+          newScore: updated.totalScore,
+          delta: totalPoints,
+          breakdown: updated.breakdown,
+          source: "MASTER_KEYPAD",
+          ts: Date.now(),
+        };
+        socketService.emitToTeam(team.id, "score:update", scorePayload);
+        socketService.broadcast("score:update", scorePayload);
+      }
     }
 
     return {

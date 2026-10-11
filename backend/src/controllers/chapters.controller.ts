@@ -64,7 +64,8 @@ export const ChaptersController = {
       socketService.broadcastLeaderboard();
       return res.json(result);
     } else {
-      return res.status(400).json(result);
+      const statusCode = result.error === "EVENT_PAUSED" ? 403 : result.error === "SESSION_REVOKED" ? 401 : 400;
+      return res.status(statusCode).json(result);
     }
   },
 };

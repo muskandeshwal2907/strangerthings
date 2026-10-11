@@ -343,6 +343,20 @@ export const AdminController = {
       // Truly online only if socket is live AND valid active session exists
       const isOnline = isSocketOnline && hasActiveSession;
       const numPart = t.id.replace(/\D/g, "") || String(idx + 1);
+
+      const distinctStages = new Set<number>();
+      (t.solvedChapters || []).forEach((c) => {
+        const num = Number(c);
+        if (!isNaN(num) && num >= 1 && num <= 7) distinctStages.add(num);
+      });
+      (t.completedTasks || []).forEach((task) => {
+        const m = String(task).match(/^(?:ch|chapter)[\-_]?(\d+)/i);
+        if (m) {
+          const num = Number(m[1]);
+          if (!isNaN(num) && num >= 1 && num <= 7) distinctStages.add(num);
+        }
+      });
+
       return {
         ...t,
         rank: idx + 1,
@@ -353,7 +367,7 @@ export const AdminController = {
         password: (t as any).password || `hawkins83_${numPart.padStart(2, "0")}`,
         isOnline,
         hasSession: hasActiveSession,
-        solvedCount: (t.solvedChapters?.length || 0) + (t.completedTasks?.length || 0),
+        solvedCount: distinctStages.size,
         currentStage: 1,
       };
     });

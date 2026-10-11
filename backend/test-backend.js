@@ -1,4 +1,5 @@
 // test-backend.js - Comprehensive Verification Suite for Hawkins Protocol + TiDB Spec
+process.env.NODE_ENV = "test";
 const { default: app } = require("./dist/server.js");
 
 async function runDirectTests() {

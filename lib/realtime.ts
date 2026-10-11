@@ -109,6 +109,15 @@ export interface ScoreUpdatePayload {
   ts?: number;
 }
 
+export interface EventStatePayload {
+  type: "event_state";
+  status: string;
+  isPaused: boolean;
+  submissionsOpen: boolean;
+  loginOpen?: boolean;
+  ts?: number;
+}
+
 export type RealtimeMessage =
   | PresencePayload
   | SabotagePayload
@@ -116,7 +125,8 @@ export type RealtimeMessage =
   | ChallengeLockPayload
   | AwardPayload
   | ForceLogoutPayload
-  | ScoreUpdatePayload;
+  | ScoreUpdatePayload
+  | EventStatePayload;
 
 type Handler = (msg: RealtimeMessage) => void;
 
@@ -154,6 +164,22 @@ export function getSocket(): Socket | null {
 
       socketInstance.on("connect", () => {
         console.log("[SOCKET.IO] Connected to Hawkins Security Mainframe on Port 5000");
+        if (token) {
+          socketInstance?.emit("authenticate", { token });
+        }
+      });
+
+      socketInstance.on("reconnect", () => {
+        console.log("[SOCKET.IO] Reconnected to Hawkins Security Mainframe");
+        try {
+          const stored = localStorage.getItem("hawkins-protocol:session");
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.token) {
+              socketInstance?.emit("authenticate", { token: parsed.token });
+            }
+          }
+        } catch {}
       });
 
       socketInstance.on("leaderboard:update", (data: any) => {
@@ -161,6 +187,25 @@ export function getSocket(): Socket | null {
           type: "SCORE_UPDATE",
           source: "socketio",
           ...data,
+        });
+      });
+
+      socketInstance.on("score:update", (data: any) => {
+        dispatchToSubscribers({
+          type: "SCORE_UPDATE",
+          source: data?.source || "socketio",
+          ...data,
+        });
+      });
+
+      socketInstance.on("event:state_changed", (data: any) => {
+        dispatchToSubscribers({
+          type: "event_state",
+          status: data?.status || "active",
+          isPaused: Boolean(data?.isPaused ?? (data?.status === "paused")),
+          submissionsOpen: Boolean(data?.submissionsOpen),
+          loginOpen: Boolean(data?.loginOpen),
+          ts: Date.now(),
         });
       });
 
@@ -192,10 +237,27 @@ export function getSocket(): Socket | null {
         });
       });
 
+      socketInstance.on("session:revoked", (data: any) => {
+        dispatchToSubscribers({
+          type: "force_logout",
+          target: data?.teamId || "all",
+          ts: data?.ts || Date.now(),
+        });
+      });
+
+      socketInstance.on("team:session_terminated", (data: any) => {
+        dispatchToSubscribers({
+          type: "force_logout",
+          target: data?.teamId || "all",
+          ts: Date.now(),
+        });
+      });
+
       socketInstance.on("team:force_logged_out", (data: any) => {
         dispatchToSubscribers({
           type: "force_logout",
           target: data?.teamId || "all",
+          ts: data?.ts || Date.now(),
         });
       });
     } catch (e) {
@@ -203,6 +265,15 @@ export function getSocket(): Socket | null {
     }
   }
   return socketInstance;
+}
+
+export function authenticateSocket(token: string): void {
+  if (!token || typeof window === "undefined") return;
+  const sock = getSocket();
+  if (sock) {
+    sock.auth = { token };
+    sock.emit("authenticate", { token });
+  }
 }
 
 export function disconnectSocket(): void {

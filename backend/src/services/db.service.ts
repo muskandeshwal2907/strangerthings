@@ -578,21 +578,37 @@ class DatabaseService {
       return a.teamName.localeCompare(b.teamName);
     });
 
-    return playerTeams.map((t, i) => ({
-      rank: i + 1,
-      teamId: t.id,
-      teamName: t.teamName,
-      leaderName: t.leaderName,
-      score: t.totalScore,
-      breakdown: t.breakdown,
-      solvedCount: t.solvedChapters.length + t.completedTasks.length,
-      completedTasks: [
-        ...t.solvedChapters.map((cid) => `ch${cid}`),
-        ...t.completedTasks,
-      ],
-      lastSubmissionTime: t.lastSolvedAt || t.updatedAt,
-      status: t.status,
-    }));
+    return playerTeams.map((t, i) => {
+      const distinctStages = new Set<number>();
+      (t.solvedChapters || []).forEach((c) => {
+        const num = Number(c);
+        if (!isNaN(num) && num >= 1 && num <= 7) distinctStages.add(num);
+      });
+      (t.completedTasks || []).forEach((task) => {
+        const m = String(task).match(/^(?:ch|chapter)[\-_]?(\d+)/i);
+        if (m) {
+          const num = Number(m[1]);
+          if (!isNaN(num) && num >= 1 && num <= 7) distinctStages.add(num);
+        }
+      });
+      const distinctCompleted = Array.from(new Set([
+        ...(t.solvedChapters || []).map((cid) => `ch${cid}`),
+        ...(t.completedTasks || []),
+      ]));
+
+      return {
+        rank: i + 1,
+        teamId: t.id,
+        teamName: t.teamName,
+        leaderName: t.leaderName,
+        score: t.totalScore,
+        breakdown: t.breakdown,
+        solvedCount: distinctStages.size,
+        completedTasks: distinctCompleted,
+        lastSubmissionTime: t.lastSolvedAt || t.updatedAt,
+        status: t.status,
+      };
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
