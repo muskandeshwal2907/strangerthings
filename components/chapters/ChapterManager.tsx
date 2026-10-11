@@ -909,6 +909,8 @@ interface ChapterManagerProps {
 export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = {}) {
   const {
     s,
+    isPaused,
+    say,
     submitTask,
     activeChapterId,
     setActiveChapterId,
@@ -977,6 +979,11 @@ export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = 
   const [quizErrorMap, setQuizErrorMap] = useState<Record<number, boolean>>({});
 
   const handleQuizSubmitAll = async (chapterId: ChapterId, answers: Record<number, string>) => {
+    if (s.isPaused || isPaused) {
+      say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+      sfx("err");
+      return;
+    }
     const cfg = STAGE_QUIZ_CONFIGS[chapterId];
     if (!cfg) return;
 
@@ -996,8 +1003,17 @@ export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = 
         serverResponded = true;
         correctCount = typeof (valRes as any).correctCount === "number" ? (valRes as any).correctCount : 0;
         totalPointsAwarded = typeof valRes.pointsAwarded === "number" ? valRes.pointsAwarded : 0;
+      } else if (valRes && (valRes.error === "EVENT_PAUSED" || (valRes as any).status === 403)) {
+        say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+        sfx("err");
+        return;
       }
-    } catch (e) {
+    } catch (e: any) {
+      if (e?.response?.status === 403 || e?.status === 403 || e?.message?.includes("EVENT_PAUSED")) {
+        say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+        sfx("err");
+        return;
+      }
       console.warn("[CHAPTER BACKEND VALIDATION FALLBACK]", e);
     }
 

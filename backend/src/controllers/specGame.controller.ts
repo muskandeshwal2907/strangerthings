@@ -70,9 +70,12 @@ export const SpecGameController = {
       teamId,
       teamName: team?.teamName || "Hawkins Squad",
       score,
+      totalScore: score,
+      breakdown: team?.breakdown,
       unlockedRounds,
       stage: team?.stage || "hawkins",
       location: team?.location || "town",
+      team,
     });
   },
 

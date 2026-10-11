@@ -77,17 +77,19 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 // Start Server with high-concurrency settings
-server.listen(ENV.PORT, "0.0.0.0", () => {
-  console.log(`======================================================`);
-  console.log(`★ HAWKINS PROTOCOL SECURITY BACKEND V2 ONLINE ★`);
-  console.log(`Listening on http://localhost:${ENV.PORT} and http://127.0.0.1:${ENV.PORT}`);
-  console.log(`Database Engine: TiDB Serverless / Distributed SQL`);
-  console.log(`WebSocket Engine: Socket.io on port ${ENV.PORT}`);
-  console.log(`Security Vault Status: ENCRYPTED & ISOLATED`);
-  console.log(`Concurrency Capacity: 5,000 max connections`);
-  console.log(`CORS Allowed Origin: *`);
-  console.log(`======================================================`);
-});
+if (process.env.NODE_ENV !== "test") {
+  server.listen(ENV.PORT, "0.0.0.0", () => {
+    console.log(`======================================================`);
+    console.log(`★ HAWKINS PROTOCOL SECURITY BACKEND V2 ONLINE ★`);
+    console.log(`Listening on http://localhost:${ENV.PORT} and http://127.0.0.1:${ENV.PORT}`);
+    console.log(`Database Engine: TiDB Serverless / Distributed SQL`);
+    console.log(`WebSocket Engine: Socket.io on port ${ENV.PORT}`);
+    console.log(`Security Vault Status: ENCRYPTED & ISOLATED`);
+    console.log(`Concurrency Capacity: 5,000 max connections`);
+    console.log(`CORS Allowed Origin: *`);
+    console.log(`======================================================`);
+  });
+}
 
 // High concurrency socket tuning
 server.maxConnections = 5000;

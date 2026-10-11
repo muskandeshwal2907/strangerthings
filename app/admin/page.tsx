@@ -292,14 +292,25 @@ export default function AdminPage() {
 
           if (isMatch) {
             found = true;
-            const newSolvedCount =
-              payload.chapterId && !item.completedTasks.includes(`ch${payload.chapterId}`)
-                ? item.solvedCount + 1
-                : item.solvedCount;
             const newCompletedTasks =
               payload.chapterId && !item.completedTasks.includes(`ch${payload.chapterId}`)
                 ? [...item.completedTasks, `ch${payload.chapterId}`]
                 : item.completedTasks;
+
+            const distinctStages = new Set<number>();
+            newCompletedTasks.forEach((t) => {
+              const match = String(t).match(/^(?:ch|chapter)[\-_]?(\d+)/i);
+              if (match) {
+                const num = Number(match[1]);
+                if (!isNaN(num) && num >= 1 && num <= 7) distinctStages.add(num);
+              }
+            });
+            if (payload.chapterId) {
+              distinctStages.add(Number(payload.chapterId));
+            }
+            const newSolvedCount = typeof (payload as any).solvedCount === "number"
+              ? (payload as any).solvedCount
+              : distinctStages.size > 0 ? distinctStages.size : item.solvedCount;
 
             return {
               ...item,

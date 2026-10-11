@@ -6,24 +6,28 @@
       "leaderName": "Aarav Sharma",
       "role": "PLAYER",
       "status": "ACTIVE",
-      "totalScore": 0,
+      "totalScore": 87,
       "breakdown": {
-        "tech": 0,
-        "puzzle": 0,
-        "speed": 0,
+        "tech": 50,
+        "puzzle": 25,
+        "speed": 2,
         "clue": 0,
-        "story": 0,
+        "story": 10,
         "teamwork": 0
       },
       "penalty": 0,
-      "startedAt": null,
+      "startedAt": "2026-10-11T10:43:37.622Z",
       "finishedAt": null,
-      "lastSolvedAt": null,
+      "lastSolvedAt": "2026-10-11T11:56:54.020Z",
       "location": "town",
       "stage": "hawkins",
       "storyProgress": 5,
-      "completedTasks": [],
-      "solvedChapters": [],
+      "completedTasks": [
+        "ch1-quiz"
+      ],
+      "solvedChapters": [
+        1
+      ],
       "unlockedLocations": {
         "town": true,
         "policeStation": true,
@@ -36,14 +40,14 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
+        "8",
         null,
         null,
         null,
         null
       ],
       "radiometerSolved": [
-        false,
+        true,
         false,
         false,
         false,
@@ -52,7 +56,7 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T03:14:39.006Z"
+      "updatedAt": "2026-10-11T11:56:54.020Z"
     },
     "T02": {
       "id": "T02",
@@ -60,24 +64,28 @@
       "leaderName": "Maya Lin",
       "role": "PLAYER",
       "status": "ACTIVE",
-      "totalScore": 0,
+      "totalScore": 260,
       "breakdown": {
-        "tech": 0,
-        "puzzle": 0,
-        "speed": 0,
+        "tech": 150,
+        "puzzle": 50,
+        "speed": 30,
         "clue": 0,
-        "story": 0,
+        "story": 30,
         "teamwork": 0
       },
       "penalty": 0,
-      "startedAt": null,
+      "startedAt": "2026-10-11T11:54:31.766Z",
       "finishedAt": null,
-      "lastSolvedAt": null,
+      "lastSolvedAt": "2026-10-11T11:56:46.146Z",
       "location": "town",
       "stage": "hawkins",
       "storyProgress": 5,
-      "completedTasks": [],
-      "solvedChapters": [],
+      "completedTasks": [
+        "ch1-quiz"
+      ],
+      "solvedChapters": [
+        1
+      ],
       "unlockedLocations": {
         "town": true,
         "policeStation": true,
@@ -90,23 +98,23 @@
         "mind": false
       },
       "radiometerPins": [
+        "8",
         null,
-        null,
-        null,
+        "4",
         null,
         null
       ],
       "radiometerSolved": [
+        true,
         false,
-        false,
-        false,
+        true,
         false,
         false
       ],
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T03:14:39.006Z"
+      "updatedAt": "2026-10-11T11:56:46.146Z"
     },
     "T03": {
       "id": "T03",

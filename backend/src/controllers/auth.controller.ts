@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
+import { SessionService } from "../services/session.service";
 import { db } from "../services/db.service";
 
 export const AuthController = {
@@ -53,6 +54,14 @@ export const AuthController = {
   getMe(req: Request, res: Response) {
     if (!req.user) {
       return res.status(401).json({ success: false, error: "UNAUTHORIZED" });
+    }
+
+    if (req.user.role === "PLAYER" && !SessionService.hasActiveSessionSync(req.user.teamId)) {
+      return res.status(401).json({
+        success: false,
+        error: "SESSION_REVOKED",
+        message: "Session has been terminated by administrator.",
+      });
     }
 
     const team = db.getTeamById(req.user.teamId);

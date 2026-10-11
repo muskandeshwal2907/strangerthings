@@ -47,11 +47,11 @@ export class SessionService {
         if (Array.isArray(existing) && existing.length > 0) {
           const row = existing[0];
           const isOnline = socketService.isTeamOnline(teamId);
-          const isStale = row.seconds_ago === null || row.seconds_ago > 300;
+          const isStale = row.seconds_ago !== null && row.seconds_ago > 300;
 
-          // If the team is completely disconnected from sockets or inactive for > 5 mins,
+          // If the team is completely disconnected from sockets AND inactive for > 5 mins,
           // allow session rotation / reconnection
-          if (!isOnline || isStale) {
+          if (!isOnline && isStale) {
             console.log(`[SESSION SERVICE] Team ${teamId} reconnecting: replacing orphaned/offline session`);
             await pool.query("DELETE FROM team_active_sessions WHERE team_id = ?", [teamId]);
             this.localTeamSessions.delete(teamId);
@@ -77,8 +77,15 @@ export class SessionService {
     }
 
     // Check local fallback cache
-    if (this.localTeamSessions.has(teamId)) {
-      if (socketService.isTeamOnline(teamId)) {
+    const local = this.localTeamSessions.get(teamId);
+    if (local) {
+      const isOnline = socketService.isTeamOnline(teamId);
+      const secondsAgo = (Date.now() - new Date(local.lastSeenAt).getTime()) / 1000;
+      const isStale = secondsAgo > 300;
+
+      if (!isOnline && isStale) {
+        this.localTeamSessions.delete(teamId);
+      } else {
         return {
           success: false,
           code: "ALREADY_LOGGED_IN",
@@ -86,8 +93,6 @@ export class SessionService {
           message:
             "This squad is currently active on another device. Only one active session is allowed per team.",
         };
-      } else {
-        this.localTeamSessions.delete(teamId);
       }
     }
 
@@ -220,12 +225,17 @@ export class SessionService {
   public static async forceLogoutTeam(teamId: string, adminId: number = 1): Promise<boolean> {
     await this.deleteTeamSession(teamId, "admin_force_logout", "Admin forced session termination", adminId);
 
-    // Notify connected sockets in team room and revoke session immediately
-    socketService.emitToTeam(teamId, "session:revoked", {
+    const payload = {
+      teamId,
       reason: "admin_force_logout",
       message: "An administrator has terminated your active session.",
       ts: Date.now(),
-    });
+    };
+
+    // Notify connected sockets in team room and revoke session immediately
+    socketService.emitToTeam(teamId, "session:revoked", payload);
+    socketService.emitToTeam(teamId, "team:force_logged_out", payload);
+    socketService.setTeamOffline(teamId);
 
     return true;
   }
@@ -249,11 +259,16 @@ export class SessionService {
 
     this.localTeamSessions.clear();
 
-    socketService.broadcastEvent("session:revoked", {
+    const payload = {
+      teamId: "all",
       reason: "admin_reset_all",
       message: "All active team sessions have been terminated by an administrator.",
       ts: Date.now(),
-    });
+    };
+
+    socketService.broadcastEvent("session:revoked", payload);
+    socketService.broadcastEvent("team:force_logged_out", payload);
+    socketService.clearAllOnlineTeams();
 
     return true;
   }

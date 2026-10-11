@@ -7,11 +7,11 @@ export class EventControlService {
     eventId: 1,
     eventCode: "HAWKINS_1983",
     eventName: "Stranger Things Hawkins Invitational 1983",
-    status: "not_started",
+    status: "active",
     loginOpen: true,
-    submissionsOpen: false,
+    submissionsOpen: true,
     isPaused: false,
-    startedAt: null,
+    startedAt: new Date().toISOString(),
     endedAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -80,34 +80,47 @@ export class EventControlService {
     return this.getEventState();
   }
 
+  public static async isGameplayAllowed(): Promise<boolean> {
+    const state = await this.getEventState();
+    return !state.isPaused && state.status === "active" && state.submissionsOpen;
+  }
+
+  public static isGameplayAllowedSync(): boolean {
+    return !this.localEvent.isPaused && this.localEvent.status === "active" && this.localEvent.submissionsOpen;
+  }
+
   public static async pauseEvent(adminId: number = 1): Promise<EventRecord> {
     const pool = tidb.pool;
     if (pool) {
       try {
-        await pool.query("UPDATE events SET is_paused = 1, status = 'paused' WHERE event_id = 1");
+        await pool.query("UPDATE events SET is_paused = 1, status = 'paused', submissions_open = 0 WHERE event_id = 1");
       } catch {}
     }
     this.localEvent.isPaused = true;
     this.localEvent.status = "paused";
+    this.localEvent.submissionsOpen = false;
     await this.logAudit(adminId, "event_pause");
 
-    socketService.broadcast("event:state_changed", this.localEvent);
-    return this.getEventState();
+    const state = await this.getEventState();
+    socketService.broadcast("event:state_changed", state);
+    return state;
   }
 
   public static async resumeEvent(adminId: number = 1): Promise<EventRecord> {
     const pool = tidb.pool;
     if (pool) {
       try {
-        await pool.query("UPDATE events SET is_paused = 0, status = 'active' WHERE event_id = 1");
+        await pool.query("UPDATE events SET is_paused = 0, status = 'active', submissions_open = 1 WHERE event_id = 1");
       } catch {}
     }
     this.localEvent.isPaused = false;
     this.localEvent.status = "active";
+    this.localEvent.submissionsOpen = true;
     await this.logAudit(adminId, "event_resume");
 
-    socketService.broadcast("event:state_changed", this.localEvent);
-    return this.getEventState();
+    const state = await this.getEventState();
+    socketService.broadcast("event:state_changed", state);
+    return state;
   }
 
   public static async closeLogin(adminId: number = 1): Promise<EventRecord> {

@@ -74,7 +74,7 @@ export default function HopperPoliceReportQuiz({
     Record<number, { attempts: number; status: "unanswered" | "wrong_first_try" | "solved" | "failed"; earnedPoints: number }>
   >({});
 
-  const { unlockHint, isHintUnlocked, score } = useGame();
+  const { unlockHint, isHintUnlocked, score, isPaused, say } = useGame();
   const [unlockingHintKey, setUnlockingHintKey] = useState<string | null>(null);
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -226,6 +226,11 @@ export default function HopperPoliceReportQuiz({
   };
 
   const handleFinalSubmit = () => {
+    if (isPaused) {
+      say?.("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+      sfx("err");
+      return;
+    }
     if (!allQuestionsDone) {
       sfx("err");
       return;
@@ -1069,33 +1074,35 @@ export default function HopperPoliceReportQuiz({
           <button
             type="button"
             onClick={handleFinalSubmit}
-            disabled={!allQuestionsDone}
+            disabled={!allQuestionsDone || isPaused}
             style={{
               padding: "10px 26px",
-              background: allQuestionsDone ? "#b81d24" : "#8c7b68",
+              background: isPaused ? "#443a34" : allQuestionsDone ? "#b81d24" : "#8c7b68",
               color: "#fff",
-              border: allQuestionsDone ? "1.5px solid #8f1218" : "1px solid #776a5a",
+              border: isPaused ? "1.5px solid #665245" : allQuestionsDone ? "1.5px solid #8f1218" : "1px solid #776a5a",
               borderRadius: 3,
               fontFamily: "'Benguiat Bold', 'ITC Benguiat', serif",
               fontWeight: 900,
               fontSize: "clamp(13px, 1.4vw, 16px)",
               letterSpacing: ".16em",
               textTransform: "uppercase",
-              cursor: allQuestionsDone ? "pointer" : "not-allowed",
-              opacity: allQuestionsDone ? 1 : 0.65,
-              boxShadow: allQuestionsDone
+              cursor: allQuestionsDone && !isPaused ? "pointer" : "not-allowed",
+              opacity: allQuestionsDone && !isPaused ? 1 : 0.65,
+              boxShadow: allQuestionsDone && !isPaused
                 ? "0 6px 16px rgba(184, 29, 36, 0.5), inset 0 0 10px rgba(0,0,0,0.25)"
                 : "none",
               transition: "all 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              if (allQuestionsDone) e.currentTarget.style.background = "#941319";
+              if (allQuestionsDone && !isPaused) e.currentTarget.style.background = "#941319";
             }}
             onMouseLeave={(e) => {
-              if (allQuestionsDone) e.currentTarget.style.background = "#b81d24";
+              if (allQuestionsDone && !isPaused) e.currentTarget.style.background = "#b81d24";
             }}
           >
-            {allQuestionsDone
+            {isPaused
+              ? "TOURNAMENT PAUSED BY HAWKINS COMMAND"
+              : allQuestionsDone
               ? `SUBMIT FINAL REPORT (+${verifiedScore} PTS) ➔`
               : `COMPLETE ALL ITEMS TO SUBMIT [${doneCount}/${totalQuestions}]`}
           </button>

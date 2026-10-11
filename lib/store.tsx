@@ -6,7 +6,7 @@ import { STORY_TASKS, LocationId, StoryTask } from "./tasks";
 import { CONFIG, AuthSession, getStoredSession, saveSession, clearSession } from "./config";
 import { usePathname } from "next/navigation";
 import { setDroneTheme, sfx } from "./audio";
-import { subscribe, presence, RealtimeMessage, StoryEventType, SabKind, disconnectSocket } from "./realtime";
+import { subscribe, presence, RealtimeMessage, StoryEventType, SabKind, disconnectSocket, authenticateSocket } from "./realtime";
 import { API_BASE, validateMasterKeypadOnServer, validateRadiometerPinOnServer } from "./api";
 
 export type { SabKind };
@@ -92,6 +92,7 @@ export interface GameState {
   radiometer: RadiometerState;
   unlockedHints: Record<string, boolean>;
   taskScores?: Record<string, number>;
+  isPaused?: boolean;
 }
 
 const EMPTY_BREAKDOWN: Breakdown = { tech: 0, puzzle: 0, clue: 0, speed: 0, story: 0, teamwork: 0 };
@@ -144,6 +145,7 @@ const INITIAL: GameState = {
   radiometer: INITIAL_RADIOMETER,
   unlockedHints: {},
   taskScores: {},
+  isPaused: false,
 };
 
 const KEY = CONFIG.STORAGE_KEY;
@@ -162,7 +164,21 @@ interface Ctx {
   cutscene: StageId | null;
   endCutscene: () => void;
   start: () => void;
-  loginPlayer: (team: { id: string; teamName: string; leaderName: string; token?: string }) => void;
+  loginPlayer: (team: {
+    id: string;
+    teamName: string;
+    leaderName: string;
+    token?: string;
+    totalScore?: number;
+    score?: number;
+    breakdown?: Breakdown;
+    penalty?: number;
+    completedTasks?: string[];
+    solvedChapters?: number[];
+    unlockedLocations?: Record<string, boolean>;
+    storyProgress?: number;
+  }) => void;
+  isPaused: boolean;
   register: (name: string, members: string[]) => void;
   logout: () => void;
   submit: (challengeId: string, text: string) => boolean;
@@ -341,17 +357,44 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           };
           saveSession(sData);
           setSession(sData);
+
+          const teamScore = data.team.totalScore ?? data.team.score ?? 0;
+          const sBreakdown: Breakdown = data.team.breakdown || {
+            tech: teamScore,
+            puzzle: 0,
+            clue: 0,
+            speed: 0,
+            story: 0,
+            teamwork: 0,
+          };
+
           setS((prev) => ({
             ...prev,
             phase: "play",
+            breakdown: sBreakdown,
+            penalty: data.team.penalty ?? prev.penalty,
+            completedTasks:
+              data.team.completedTasks && data.team.completedTasks.length > 0
+                ? data.team.completedTasks
+                : prev.completedTasks,
+            unlocked: data.team.unlockedLocations
+              ? { ...prev.unlocked, ...data.team.unlockedLocations }
+              : prev.unlocked,
+            storyProgress: data.team.storyProgress ?? prev.storyProgress,
+            isPaused: Boolean(data.event?.isPaused),
             team: {
               ...prev.team,
               id: data.team.id,
               name: data.team.teamName,
               leaderName: data.team.squadLeader,
               members: [data.team.squadLeader],
+              score: teamScore,
             },
           }));
+
+          if (sessionToken) {
+            authenticateSocket(sessionToken);
+          }
         }
       })
       .catch(() => {});
@@ -453,16 +496,84 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         say(`AWARDED +${m.points} TEAMWORK BY ${m.operatorName || "ORGANIZER"}`);
       }
 
+      if (m.type === "SCORE_UPDATE") {
+        const myTeamId = sRef.current.team?.id;
+        const myTeamName = sRef.current.team?.name;
+        const isMyTeam =
+          (m.teamId && m.teamId === myTeamId) ||
+          (m.teamName && myTeamName && m.teamName.toLowerCase() === myTeamName.toLowerCase());
+
+        if (isMyTeam) {
+          setS((p) => {
+            let nextBreakdown = { ...p.breakdown };
+            if ((m as any).breakdown) {
+              nextBreakdown = { ...(m as any).breakdown };
+            } else if (m.delta) {
+              nextBreakdown.tech += m.delta;
+            } else if (m.newScore !== undefined) {
+              const currentTotal = totalScore(p.breakdown, p.penalty);
+              const diff = m.newScore - currentTotal;
+              nextBreakdown.tech += diff;
+            }
+
+            const nextCompletedTasks =
+              m.taskId && !p.completedTasks.includes(m.taskId)
+                ? [...p.completedTasks, m.taskId]
+                : p.completedTasks;
+
+            return {
+              ...p,
+              breakdown: nextBreakdown,
+              completedTasks: nextCompletedTasks,
+              team: p.team
+                ? {
+                    ...p.team,
+                    score: m.newScore !== undefined ? m.newScore : totalScore(nextBreakdown, p.penalty),
+                    completedTasks: nextCompletedTasks,
+                  }
+                : p.team,
+            };
+          });
+        }
+      }
+
+      if (m.type === "event_state") {
+        setS((p) => ({
+          ...p,
+          isPaused: m.isPaused,
+        }));
+        if (m.isPaused) {
+          say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+          sfx("err");
+        } else {
+          say("HAWKINS COMMAND: TOURNAMENT RESUMED");
+          sfx("ok");
+        }
+      }
+
       if (m.type === "force_logout") {
-        say("HAWKINS COMMAND: SESSION TERMINATED BY ADMINISTRATOR");
-        sfx("err");
-        logout();
+        const myTeamId = sRef.current.team?.id;
+        if (!m.target || m.target === "all" || m.target === myTeamId) {
+          say("HAWKINS COMMAND: SESSION TERMINATED BY ADMINISTRATOR");
+          sfx("err");
+          logout();
+        }
       }
     });
 
     const beat = setInterval(() => {
       const cur = sRef.current;
       if (cur.phase !== "play" || !cur.team) return;
+
+      const distinctStages = new Set<number>();
+      (cur.completedTasks || []).forEach((t) => {
+        const match = String(t).match(/^(?:ch|chapter)[\-_]?(\d+)/i);
+        if (match) {
+          const num = Number(match[1]);
+          if (!isNaN(num) && num >= 1 && num <= 7) distinctStages.add(num);
+        }
+      });
+
       presence({
         team: cur.team.name,
         teamId: cur.team.id,
@@ -472,7 +583,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         stage: cur.stage,
         score: totalScore(cur.breakdown, cur.penalty),
         timeLeft: cur.timeLeft,
-        solved: Object.keys(cur.solved).length,
+        solved: distinctStages.size,
         completedTasks: cur.completedTasks,
         vecnaStatus: cur.vecnaStatus,
         radiometerPins: cur.radiometer.pinsSolved.filter(Boolean).length,
@@ -599,51 +710,89 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setS((p) => ({ ...p, phase: "login" }));
   }, []);
 
-  const loginPlayer = useCallback((team: { id: string; teamName: string; leaderName: string; token?: string }) => {
-    const sessionData: AuthSession = {
-      role: "PLAYER",
-      teamName: team.teamName,
-      leaderName: team.leaderName,
-      teamId: team.id,
-      ...(team.token ? { token: team.token } : {}),
-    };
-    saveSession(sessionData);
-    setSession(sessionData);
+  const loginPlayer = useCallback(
+    (team: {
+      id: string;
+      teamName: string;
+      leaderName: string;
+      token?: string;
+      totalScore?: number;
+      score?: number;
+      breakdown?: Breakdown;
+      penalty?: number;
+      completedTasks?: string[];
+      solvedChapters?: number[];
+      unlockedLocations?: Record<string, boolean>;
+      storyProgress?: number;
+    }) => {
+      const sessionData: AuthSession = {
+        role: "PLAYER",
+        teamName: team.teamName,
+        leaderName: team.leaderName,
+        teamId: team.id,
+        ...(team.token ? { token: team.token } : {}),
+      };
+      saveSession(sessionData);
+      setSession(sessionData);
 
-    if (typeof document !== "undefined" && team.token) {
-      document.cookie = `hawkins_session_token=${team.token}; path=/; max-age=86400; SameSite=Lax`;
-    }
+      if (typeof document !== "undefined" && team.token) {
+        document.cookie = `hawkins_session_token=${team.token}; path=/; max-age=86400; SameSite=Lax`;
+      }
 
-    const teamObj: TeamInfo = {
-      id: team.id,
-      name: team.teamName,
-      leaderName: team.leaderName,
-      members: [team.leaderName],
-      location: "town",
-      currentTask: "town-1",
-      storyProgress: 10,
-      score: 0,
-      powers: ["vision"],
-      powerCharges: { vision: 3, will: 2, eleven: 2 },
-      completedTasks: [],
-      clues: {},
-      inventory: [],
-      timeRemaining: TOTAL_TIME,
-      vecnaStatus: "INACTIVE",
-      unlocked: { ...INITIAL_UNLOCKED },
-    };
-    setS((p) => ({
-      ...p,
-      team: teamObj,
-      phase: "play",
-      location: "town",
-      viewMode: "board",
-      storyProgress: 10,
-      introSeen: false, // ensures cinematic typewriter intro runs on fresh login
-    }));
-    setCutscene("hawkins");
-    sfx("boom");
-  }, []);
+      if (team.token) {
+        authenticateSocket(team.token);
+      }
+
+      const teamScore = team.totalScore ?? team.score ?? 0;
+      const teamBreakdown: Breakdown = team.breakdown || {
+        tech: teamScore,
+        puzzle: 0,
+        clue: 0,
+        speed: 0,
+        story: 0,
+        teamwork: 0,
+      };
+      const teamUnlocked = { ...INITIAL_UNLOCKED, ...(team.unlockedLocations || {}) };
+      const teamCompleted = team.completedTasks || [];
+      const teamProgress = team.storyProgress ?? 10;
+
+      const teamObj: TeamInfo = {
+        id: team.id,
+        name: team.teamName,
+        leaderName: team.leaderName,
+        members: [team.leaderName],
+        location: "town",
+        currentTask: "town-1",
+        storyProgress: teamProgress,
+        score: teamScore,
+        powers: ["vision"],
+        powerCharges: { vision: 3, will: 2, eleven: 2 },
+        completedTasks: teamCompleted,
+        clues: {},
+        inventory: [],
+        timeRemaining: TOTAL_TIME,
+        vecnaStatus: "INACTIVE",
+        unlocked: teamUnlocked,
+      };
+
+      setS((p) => ({
+        ...p,
+        team: teamObj,
+        phase: "play",
+        location: "town",
+        viewMode: "board",
+        breakdown: teamBreakdown,
+        penalty: team.penalty || 0,
+        completedTasks: teamCompleted,
+        unlocked: teamUnlocked,
+        storyProgress: teamProgress,
+        introSeen: false, // ensures cinematic typewriter intro runs on fresh login
+      }));
+      setCutscene("hawkins");
+      sfx("boom");
+    },
+    []
+  );
 
   const register = useCallback((name: string, members: string[]) => {
     const randomId = `HP-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -714,6 +863,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // Submit task from Task Engine
   const submitTask = useCallback((taskId: string, points: number, answerText: string) => {
+    if (sRef.current.isPaused) {
+      say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+      sfx("err");
+      return;
+    }
     sfx("ok");
     setS((p) => {
       if (p.completedTasks.includes(taskId)) return p;
@@ -772,6 +926,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const submit = useCallback((cid: string, text: string) => {
+    if (sRef.current.isPaused) {
+      say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+      sfx("err");
+      return false;
+    }
     let ch: any = null;
     for (const st of Object.values(STAGES)) {
       const f = st.challenges.find((c) => c.id === cid);
@@ -811,6 +970,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const castPower = useCallback(
     (p: PowerId, cid: string) => {
       const cur = sRef.current;
+      if (cur.isPaused) {
+        say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+        sfx("err");
+        return null;
+      }
       if (!powerUnlocked(p)) return null;
       if (sabotage && sabotage.kind === "SIGNAL_JAM") {
         sfx("err");
@@ -925,6 +1089,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const solveRadiometerPin = useCallback((pinIndex: number, points: number) => {
+    if (sRef.current.isPaused) {
+      say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+      sfx("err");
+      return;
+    }
     // Notify server of pin calibration
     try {
       validateRadiometerPinOnServer(pinIndex, RADIOMETER_PINS[pinIndex]?.digit).catch(() => {});
@@ -955,6 +1124,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const submitRadiometerCode = useCallback(async (code: string): Promise<boolean> => {
+    if (sRef.current.isPaused) {
+      say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+      sfx("err");
+      return false;
+    }
     try {
       const res = await validateMasterKeypadOnServer(code);
       if (res.success) {
@@ -1071,6 +1245,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const unlockHint = useCallback(
     (hintKey: string, cost = 10): boolean => {
       const cur = sRef.current;
+      if (cur.isPaused) {
+        say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+        sfx("err");
+        return false;
+      }
       if (cur.unlockedHints?.[hintKey]) return true;
 
       sfx("clue");
@@ -1097,6 +1276,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const spendPoints = useCallback(
     (points: number, reason?: string) => {
+      if (sRef.current.isPaused) {
+        say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+        sfx("err");
+        return;
+      }
       setS((p) => ({
         ...p,
         penalty: p.penalty + points,
@@ -1114,6 +1298,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       hydrated,
       session,
       score: totalScore(s.breakdown, s.penalty),
+      isPaused: Boolean(s.isPaused),
       sabotage,
       cutscene,
       endCutscene,
