@@ -53,6 +53,14 @@ export const ValidationService = {
     }
 
     const team = teamId ? db.getTeamById(teamId) : undefined;
+    if (team && team.role === "VECNA") {
+      return {
+        success: false,
+        pointsAwarded: 0,
+        error: "ROLE_UNAUTHORIZED",
+        message: "ACCESS DENIED: Vecna squads cannot submit Hawkins investigation solutions.",
+      };
+    }
     const questions = rawChapter.questions || [];
 
     // Case A: Batch docket submission (Array or Object map of answers)
@@ -75,6 +83,23 @@ export const ValidationService = {
       const totalAwarded = basePoints;
 
       if (team) {
+        const isAlreadySolved = team.solvedChapters?.includes(chapterId);
+        if (isAlreadySolved) {
+          return {
+            success: true,
+            pointsAwarded: 0,
+            speedBonus: 0,
+            correctCount,
+            totalCount: questions.length,
+            message: `TELEMETRY CONFIRMED · CHAPTER ${chapterId} ALREADY SOLVED`,
+            completionLore: {
+              title: rawChapter.completionLoreTitle,
+              text: rawChapter.completionLoreText,
+              lines: rawChapter.completionLines,
+            },
+          };
+        }
+
         const nextSolvedChapters = Array.from(new Set([...team.solvedChapters, chapterId]));
         const nextCompletedTasks = Array.from(new Set([...team.completedTasks, taskId]));
 
@@ -113,6 +138,9 @@ export const ValidationService = {
             tech: team.breakdown.tech + basePoints,
           },
         });
+
+        // Record in TiDB ledger & solve history
+        db.recordChapterSolve(team.id, chapterId, basePoints).catch(() => {});
 
         if (updated) {
           const scorePayload = {
@@ -162,6 +190,23 @@ export const ValidationService = {
       const totalAwarded = basePoints + speedBonus;
 
       if (team) {
+        const isAlreadySolved = team.solvedChapters?.includes(chapterId);
+        if (isAlreadySolved) {
+          return {
+            success: true,
+            pointsAwarded: 0,
+            speedBonus: 0,
+            correctCount: questions.length,
+            totalCount: questions.length,
+            message: `TELEMETRY CONFIRMED · CHAPTER ${chapterId} ALREADY SOLVED`,
+            completionLore: {
+              title: rawChapter.completionLoreTitle,
+              text: rawChapter.completionLoreText,
+              lines: rawChapter.completionLines,
+            },
+          };
+        }
+
         const nextSolvedChapters = Array.from(new Set([...team.solvedChapters, chapterId]));
         const nextCompletedTasks = Array.from(new Set([...team.completedTasks, taskId]));
 
@@ -261,11 +306,28 @@ export const ValidationService = {
     }
 
     const team = teamId ? db.getTeamById(teamId) : undefined;
+    if (team && team.role === "VECNA") {
+      return {
+        success: false,
+        pointsAwarded: 0,
+        error: "ROLE_UNAUTHORIZED",
+        message: "ACCESS DENIED: Vecna squads cannot submit Hawkins tasks.",
+      };
+    }
     const basePoints = secret.points;
     const speedBonus = team ? ScoreService.calculateSpeedBonus(basePoints, team.startedAt) : 0;
     const totalPoints = basePoints + speedBonus;
 
     if (team) {
+      if (team.completedTasks?.includes(taskId)) {
+        return {
+          success: true,
+          pointsAwarded: 0,
+          speedBonus: 0,
+          message: `TASK ALREADY ARCHIVED · [${taskId}] PREVIOUSLY VERIFIED`,
+        };
+      }
+
       const nextCompleted = Array.from(new Set([...team.completedTasks, taskId]));
       const cat = secret.category as keyof TeamRecord["breakdown"];
 
@@ -340,6 +402,16 @@ export const ValidationService = {
     if (isCorrect) {
       const team = teamId ? db.getTeamById(teamId) : undefined;
       if (team) {
+        if (team.radiometerSolved?.[pinIndex]) {
+          return {
+            success: true,
+            pinIndex,
+            digit: pinSecret.digit,
+            pointsAwarded: 0,
+            message: `PIN ${pinIndex + 1} ALREADY CALIBRATED · DIGIT [${pinSecret.digit}]`,
+          };
+        }
+
         const nextPins = [...team.radiometerPins];
         const nextSolved = [...team.radiometerSolved];
         nextPins[pinIndex] = pinSecret.digit;
@@ -426,6 +498,15 @@ export const ValidationService = {
     const totalPoints = basePoints + speedBonus;
 
     if (team) {
+      if (team.radiometerCodeSolved) {
+        return {
+          success: true,
+          pointsAwarded: 0,
+          speedBonus: 0,
+          message: "MASTER CIPHER ALREADY ACCEPTED · PREVIOUSLY UNLOCKED",
+        };
+      }
+
       const updated = db.updateTeam(team.id, {
         radiometerCodeSolved: true,
         unlockedLocations: { ...team.unlockedLocations, lab: true, gate: true },

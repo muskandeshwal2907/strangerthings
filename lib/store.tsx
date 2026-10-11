@@ -7,7 +7,7 @@ import { CONFIG, AuthSession, getStoredSession, saveSession, clearSession } from
 import { usePathname } from "next/navigation";
 import { setDroneTheme, sfx } from "./audio";
 import { subscribe, presence, RealtimeMessage, StoryEventType, SabKind, disconnectSocket, authenticateSocket } from "./realtime";
-import { API_BASE, validateMasterKeypadOnServer, validateRadiometerPinOnServer } from "./api";
+import { API_BASE, validateMasterKeypadOnServer, validateRadiometerPinOnServer, saveTeamProgressToServer } from "./api";
 
 export type { SabKind };
 
@@ -175,6 +175,7 @@ interface Ctx {
     penalty?: number;
     completedTasks?: string[];
     solvedChapters?: number[];
+    taskScores?: Record<string, number>;
     unlockedLocations?: Record<string, boolean>;
     storyProgress?: number;
   }) => void;
@@ -182,7 +183,7 @@ interface Ctx {
   register: (name: string, members: string[]) => void;
   logout: () => void;
   submit: (challengeId: string, text: string) => boolean;
-  submitTask: (taskId: string, points: number, answerText: string) => void;
+  submitTask: (taskId: string, points: number, answerText: string, alreadyAwarded?: boolean) => void;
   castPower: (p: PowerId, challengeId: string) => string | null;
   powerUnlocked: (p: PowerId) => boolean;
   stageComplete: (id?: StageId) => boolean;
@@ -368,11 +369,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             teamwork: 0,
           };
 
+          const teamTaskScores: Record<string, number> = { ...(data.team.taskScores || {}) };
+          if (Object.keys(teamTaskScores).length === 0 && data.team.completedTasks?.length && teamScore > 0) {
+            const perTask = Math.floor(teamScore / data.team.completedTasks.length);
+            data.team.completedTasks.forEach((tid: string, idx: number) => {
+              teamTaskScores[tid] = idx === 0 ? teamScore - perTask * (data.team.completedTasks.length - 1) : perTask;
+            });
+          }
           setS((prev) => ({
             ...prev,
             phase: "play",
             breakdown: sBreakdown,
             penalty: data.team.penalty ?? prev.penalty,
+            taskScores: Object.keys(teamTaskScores).length > 0 ? teamTaskScores : prev.taskScores,
             completedTasks:
               data.team.completedTasks && data.team.completedTasks.length > 0
                 ? data.team.completedTasks
@@ -454,15 +463,27 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const cur = sRef.current;
       if (cur.phase !== "play") return;
       const mine = cur.team?.name;
+      const myId = cur.team?.id;
 
       if ("target" in m && m.target && m.target !== "all") {
-        if (!mine || m.target.trim().toLowerCase() !== mine.trim().toLowerCase()) {
+        const targetStr = String(m.target).trim().toLowerCase();
+        const matchesName = mine && targetStr === mine.trim().toLowerCase();
+        const matchesId = myId && targetStr === myId.trim().toLowerCase();
+        const matchesTargetTeamId =
+          (m as any).targetTeamId && myId && String((m as any).targetTeamId).trim().toLowerCase() === myId.trim().toLowerCase();
+        const matchesTargetTeamName =
+          (m as any).targetTeamName && mine && String((m as any).targetTeamName).trim().toLowerCase() === mine.trim().toLowerCase();
+
+        if (!matchesName && !matchesId && !matchesTargetTeamId && !matchesTargetTeamName) {
           return;
         }
       }
 
       if (m.type === "sabotage") {
         if (cur.stage === "ending") return;
+        if (m.kind === "MESSAGE") {
+          sfx("vecnaCurse");
+        }
         applySabotage(m.kind as SabKind, m.pinIndex, m.message, m.operatorName);
       }
 
@@ -553,7 +574,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       if (m.type === "force_logout") {
         const myTeamId = sRef.current.team?.id;
-        if (!m.target || m.target === "all" || m.target === myTeamId) {
+        const myTeamName = sRef.current.team?.name;
+        const tgt = String(m.target || "").trim().toLowerCase();
+        const isMatch =
+          !m.target ||
+          tgt === "all" ||
+          (myTeamId && tgt === myTeamId.toLowerCase()) ||
+          (myTeamName && tgt === myTeamName.toLowerCase()) ||
+          ((m as any).teamId && myTeamId && String((m as any).teamId).toLowerCase() === myTeamId.toLowerCase());
+        if (isMatch) {
           say("HAWKINS COMMAND: SESSION TERMINATED BY ADMINISTRATOR");
           sfx("err");
           logout();
@@ -722,6 +751,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       penalty?: number;
       completedTasks?: string[];
       solvedChapters?: number[];
+      taskScores?: Record<string, number>;
       unlockedLocations?: Record<string, boolean>;
       storyProgress?: number;
     }) => {
@@ -756,6 +786,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const teamCompleted = team.completedTasks || [];
       const teamProgress = team.storyProgress ?? 10;
 
+      let teamTaskScores: Record<string, number> = { ...(team.taskScores || {}) };
+      if (Object.keys(teamTaskScores).length === 0 && teamCompleted.length > 0 && teamScore > 0) {
+        const perTask = Math.floor(teamScore / teamCompleted.length);
+        teamCompleted.forEach((tid, idx) => {
+          teamTaskScores[tid] = idx === 0 ? teamScore - perTask * (teamCompleted.length - 1) : perTask;
+        });
+      }
+
       const teamObj: TeamInfo = {
         id: team.id,
         name: team.teamName,
@@ -783,6 +821,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         viewMode: "board",
         breakdown: teamBreakdown,
         penalty: team.penalty || 0,
+        taskScores: teamTaskScores,
         completedTasks: teamCompleted,
         unlocked: teamUnlocked,
         storyProgress: teamProgress,
@@ -862,7 +901,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Submit task from Task Engine
-  const submitTask = useCallback((taskId: string, points: number, answerText: string) => {
+  const submitTask = useCallback((taskId: string, points: number, answerText: string, alreadyAwarded = false) => {
     if (sRef.current.isPaused) {
       say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
       sfx("err");
@@ -870,10 +909,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
     sfx("ok");
     setS((p) => {
-      if (p.completedTasks.includes(taskId)) return p;
+      // Idempotency: if already completed, do not award points again!
+      if (p.completedTasks.includes(taskId)) {
+        return p;
+      }
+
+      const prevPoints = p.taskScores?.[taskId] ?? 0;
+      const pointDelta = points - prevPoints;
+
       const taskDef = STORY_TASKS[taskId];
       const category = taskDef?.category || "puzzle";
-      const speedBonus = Math.round(points * 0.2 * (p.timeLeft / TOTAL_TIME));
       const nextCompleted = [...p.completedTasks, taskId];
       const nextClues = { ...p.clues };
 
@@ -883,18 +928,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       // Automatically unlock locations according to story milestones
       const nextUnlocked = { ...p.unlocked };
-      if (taskId === "town-1") {
+      if (taskId === "town-1" || taskId.startsWith("ch1")) {
         nextUnlocked.policeStation = true;
         nextUnlocked.radioTower = true;
         nextUnlocked.byersHouse = true;
       }
-      if (taskId === "lab-terminal") {
+      if (taskId === "lab-terminal" || taskId.startsWith("ch2") || taskId.startsWith("ch3")) {
+        nextUnlocked.lab = true;
         nextUnlocked.forest = true;
       }
-      if (taskId === "forest-marks") {
+      if (taskId === "forest-marks" || taskId.startsWith("ch4")) {
+        nextUnlocked.radioTower = true;
         nextUnlocked.gate = true;
       }
-      if (taskId === "gate-unlock") {
+      if (taskId === "gate-unlock" || taskId.startsWith("ch5") || taskId.startsWith("ch6")) {
         nextUnlocked.upsidedown = true;
         nextUnlocked.mind = true;
       }
@@ -905,8 +952,65 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         nextInv.push(taskDef.rewardItem);
       }
 
-      const progressGain = Math.round(90 / Object.keys(STORY_TASKS).length);
+      const progressGain = Math.round(90 / Math.max(1, Object.keys(STORY_TASKS).length));
       const newProgress = Math.min(100, p.storyProgress + progressGain);
+
+      const nextTaskScores = { ...(p.taskScores || {}), [taskId]: points };
+      
+      // If already awarded by authoritative server validation, do not add points again
+      const nextBreakdown = alreadyAwarded
+        ? { ...p.breakdown }
+        : {
+            ...p.breakdown,
+            [category]: Math.max(0, (p.breakdown[category] || 0) + (pointDelta > 0 ? pointDelta : points)),
+          };
+
+      const taskScoresSum = Object.values(nextTaskScores).reduce((a, b) => a + (b || 0), 0);
+      const computedTotalScore = alreadyAwarded
+        ? (p.team?.score ?? totalScore(nextBreakdown, p.penalty))
+        : Math.max(
+            totalScore(nextBreakdown, p.penalty),
+            taskScoresSum
+          );
+
+      const nextTeam = p.team
+        ? {
+            ...p.team,
+            score: computedTotalScore,
+            completedTasks: nextCompleted,
+          }
+        : p.team;
+
+      // Extract chapter number if applicable
+      const chMatch = taskId.match(/^(?:ch|chapter)[\-_]?(\d+)/i);
+      const solvedChapters = p.team?.id
+        ? Array.from(
+            new Set([
+              ...nextCompleted
+                .map((t) => {
+                  const m = t.match(/^(?:ch|chapter)[\-_]?(\d+)/i);
+                  return m ? Number(m[1]) : 0;
+                })
+                .filter((n) => n > 0),
+              chMatch ? Number(chMatch[1]) : 0,
+            ].filter((n) => n > 0))
+          )
+        : [];
+
+      // Persist to Express backend immediately
+      if (p.team?.id) {
+        saveTeamProgressToServer({
+          teamId: p.team.id,
+          completedTasks: nextCompleted,
+          solvedChapters,
+          taskScores: nextTaskScores,
+          unlockedLocations: nextUnlocked,
+          storyProgress: newProgress,
+          breakdown: nextBreakdown,
+          totalScore: computedTotalScore,
+          penalty: p.penalty || 0,
+        }).catch((err) => console.warn("[PROGRESS PERSISTENCE NOTICE]", err));
+      }
 
       return {
         ...p,
@@ -916,14 +1020,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         unlocked: nextUnlocked,
         storyProgress: newProgress,
         solved: { ...p.solved, [taskId]: true },
-        taskScores: { ...(p.taskScores || {}), [taskId]: points },
-        breakdown: {
-          ...p.breakdown,
-          [category]: p.breakdown[category] + points,
-        },
+        taskScores: nextTaskScores,
+        breakdown: nextBreakdown,
+        team: nextTeam,
       };
     });
-  }, []);
+  }, [say]);
 
   const submit = useCallback((cid: string, text: string) => {
     if (sRef.current.isPaused) {
@@ -1221,7 +1323,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           }
         })
         .catch(() => {});
-    }, 30000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [session, logout, say]);
@@ -1297,7 +1399,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       s,
       hydrated,
       session,
-      score: totalScore(s.breakdown, s.penalty),
+      score: Math.max(
+        totalScore(s.breakdown, s.penalty),
+        Object.values(s.taskScores || {}).reduce((a, b) => a + (b || 0), 0)
+      ),
       isPaused: Boolean(s.isPaused),
       sabotage,
       cutscene,

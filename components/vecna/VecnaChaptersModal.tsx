@@ -53,26 +53,17 @@ export const VECNA_CHAPTER_DATA: VecnaChapterCardData[] = [
   },
   {
     id: 5,
-    shortName: "RECON",
-    title: "STAGE 5: DEEP WOODS RECON",
-    subtitle: "ROANE COUNTY // PINE RUNES",
-    category: "FIELD INVESTIGATION",
-    points: 50,
-    bgSrc: "/creel-bg.jpg",
-  },
-  {
-    id: 6,
     shortName: "RADIO",
-    title: "STAGE 6: RADIO TRANSMISSION",
+    title: "STAGE 5: RADIO TRANSMISSION",
     subtitle: "MORSE, BINARY & RUSSIAN INTERCEPTS",
     category: "SIGNAL DECODING",
     points: 50,
     bgSrc: "/hawkins-gate-bg.jpg",
   },
   {
-    id: 7,
+    id: 6,
     shortName: "LAB TASKS",
-    title: "STAGE 7: LAB-TYPE TASKS",
+    title: "STAGE 6: LAB-TYPE TASKS",
     subtitle: "SYSTEM OPERATIONS, LOGIC & DATA",
     category: "TECHNICAL EXPERIMENTS",
     points: 50,
@@ -193,7 +184,7 @@ export default function VecnaChaptersModal({
                     textShadow: "0 0 12px rgba(255, 45, 58, 0.6)",
                   }}
                 >
-                  VECNA EXPEDITION · ALL 7 CHAPTERS
+                  VECNA EXPEDITION · ALL 6 CHAPTERS
                 </h3>
               </div>
               <div

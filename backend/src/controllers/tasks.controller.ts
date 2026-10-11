@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { ValidationService } from "../services/validation.service";
+import { ScoreService } from "../services/score.service";
 import { db } from "../services/db.service";
 import { socketService } from "../services/socket.service";
 
@@ -45,6 +46,14 @@ export const TasksController = {
     if (targetTeamId) {
       const team = db.getTeamById(targetTeamId);
       if (team) {
+        if (team.unlockedHints?.[hintKey]) {
+          return res.json({
+            success: true,
+            hintKey,
+            cost: 0,
+            message: "CLASSIFIED INTEL ALREADY DECRYPTED (NO ADDITIONAL PENALTY)",
+          });
+        }
         const nextHints = { ...team.unlockedHints, [hintKey]: true };
         db.updateTeam(team.id, {
           unlockedHints: nextHints,
@@ -59,6 +68,60 @@ export const TasksController = {
       hintKey,
       cost: penaltyCost,
       message: `CLASSIFIED INTEL DECRYPTED (-${penaltyCost} PTS PENALTY)`,
+    });
+  },
+
+  /**
+   * POST /api/tasks/progress — Authoritatively persists all team progress, scores, and unlocked locations to the DB
+   */
+  saveProgress(req: Request, res: Response) {
+    const { teamId, completedTasks, solvedChapters, taskScores, unlockedLocations, storyProgress, breakdown, totalScore, penalty } = req.body;
+    const targetTeamId = req.user?.teamId || teamId;
+
+    if (!targetTeamId) {
+      return res.status(400).json({ success: false, error: "MISSING_TEAM_ID" });
+    }
+
+    const team = db.getTeamById(targetTeamId);
+    if (!team) {
+      return res.status(404).json({ success: false, error: "TEAM_NOT_FOUND" });
+    }
+
+    const updates: any = {};
+    if (Array.isArray(completedTasks)) {
+      updates.completedTasks = Array.from(new Set([...team.completedTasks, ...completedTasks]));
+    }
+    if (Array.isArray(solvedChapters)) {
+      updates.solvedChapters = Array.from(new Set([...team.solvedChapters, ...solvedChapters]));
+    }
+    if (taskScores && typeof taskScores === "object") {
+      updates.taskScores = { ...(team.taskScores || {}), ...taskScores };
+    }
+    if (unlockedLocations && typeof unlockedLocations === "object") {
+      updates.unlockedLocations = { ...team.unlockedLocations, ...unlockedLocations };
+    }
+    if (typeof storyProgress === "number") {
+      updates.storyProgress = Math.max(team.storyProgress, storyProgress);
+    }
+    if (breakdown && typeof breakdown === "object") {
+      updates.breakdown = { ...team.breakdown, ...breakdown };
+    }
+    if (typeof penalty === "number") {
+      updates.penalty = penalty;
+    }
+    // Authoritatively calculate totalScore from breakdown and penalty
+    const effectiveBreakdown = updates.breakdown || team.breakdown;
+    const effectivePenalty = updates.penalty !== undefined ? updates.penalty : team.penalty;
+    updates.totalScore = ScoreService.calculateTotalScore(effectiveBreakdown, effectivePenalty);
+    updates.lastSolvedAt = new Date().toISOString();
+
+    const updated = db.updateTeam(team.id, updates);
+    socketService.broadcastLeaderboard();
+
+    return res.json({
+      success: true,
+      team: updated,
+      message: "Progress safely synchronized with database.",
     });
   },
 };

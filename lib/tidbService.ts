@@ -209,6 +209,26 @@ export function subscribeToTiDBLeaderboard(onUpdate: (data?: any) => void): () =
   return () => {};
 }
 
+export function subscribeToPresence(onPresence: (data: { teamId: string; isOnline: boolean }) => void): () => void {
+  try {
+    const socket = getSocket();
+    if (socket) {
+      const handler = (data: any) => {
+        if (data && data.teamId !== undefined) {
+          onPresence({ teamId: String(data.teamId), isOnline: Boolean(data.isOnline) });
+        }
+      };
+      socket.on("presence:update", handler);
+      return () => {
+        socket.off("presence:update", handler);
+      };
+    }
+  } catch (e) {
+    console.warn("[TIDB PRESENCE] Socket presence unavailable:", e);
+  }
+  return () => {};
+}
+
 /**
  * Authenticate team credentials against TiDB Security Mainframe
  */

@@ -36,7 +36,7 @@ export default function Leaderboard({ highlight }: { highlight?: string }) {
 
     // Re-fetch on any score update broadcast
     const unsub = subscribe((m) => {
-      if (m.type === "SCORE_UPDATE" || (m as any).type === "presence") {
+      if (m.type === "SCORE_UPDATE" || (m as any).type === "presence" || (m as any).type === "leaderboard") {
         fetchLeaderboard();
       }
     });

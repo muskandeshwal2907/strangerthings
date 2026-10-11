@@ -234,7 +234,7 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
         sfx("boom");
 
         if (authResult.session.role === "VECNA") {
-          saveSession(authResult.session);
+          saveSession({ ...authResult.session, token: authResult.token });
           if (onEnterVecna) {
             onEnterVecna();
           } else {
@@ -251,6 +251,7 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
             penalty: authResult.team?.penalty,
             completedTasks: authResult.team?.completedTasks,
             solvedChapters: authResult.team?.solvedChapters,
+            taskScores: authResult.team?.taskScores,
             unlockedLocations: authResult.team?.unlockedLocations,
             storyProgress: authResult.team?.storyProgress,
           });

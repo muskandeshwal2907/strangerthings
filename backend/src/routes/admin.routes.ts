@@ -23,6 +23,7 @@ router.get("/leaderboard", AdminController.getLeaderboard);
 router.post("/leaderboard/score", updateAdminTeamScore);
 router.get("/teams", AdminController.getTeams);
 router.post("/teams", AdminController.createTeam);
+router.put("/teams/:id/role", AdminController.updateTeamRole);
 router.put("/teams/:id/score", AdminController.updateTeamScore);
 router.post("/teams/:teamId/force-logout", AdminController.forceLogoutTeam);
 router.post("/teams/reset-all-sessions", AdminController.resetAllSessions);
@@ -33,7 +34,9 @@ router.post("/teams/import", AdminController.importTeams);
 router.post("/event/start", AdminController.startEvent);
 router.post("/event/pause", AdminController.pauseEvent);
 router.post("/event/resume", AdminController.resumeEvent);
+router.post("/event/open-login", AdminController.openLogin);
 router.post("/event/close-login", AdminController.closeLogin);
+router.post("/event/open-submissions", AdminController.openSubmissions);
 router.post("/event/stop-submissions", AdminController.stopSubmissions);
 router.post("/event/end", AdminController.endEvent);
 

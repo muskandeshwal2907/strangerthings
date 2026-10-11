@@ -4,6 +4,8 @@ import { SessionService } from "../services/session.service";
 import { AuthService } from "../services/auth.service";
 import { tidb } from "../config/tidb";
 import { socketService } from "../services/socket.service";
+import { db } from "../services/db.service";
+import { RAW_CHAPTER_QUESTIONS } from "../config/vault";
 
 export const VecnaController = {
   /**
@@ -16,6 +18,23 @@ export const VecnaController = {
         success: false,
         error: "MISSING_FIELDS",
         message: "Username and password required for Vecna clearance.",
+      });
+    }
+
+    const { EventControlService } = await import("../services/eventControl.service");
+    const eventState = await EventControlService.getEventState();
+    if (eventState.status === "ended") {
+      return res.status(403).json({
+        success: false,
+        error: "EVENT_ENDED",
+        message: "The tournament has concluded. Vecna access is terminated.",
+      });
+    }
+    if (!eventState.loginOpen) {
+      return res.status(403).json({
+        success: false,
+        error: "LOGIN_CLOSED",
+        message: "Vecna login is currently closed by tournament administration.",
       });
     }
 
@@ -246,6 +265,189 @@ export const VecnaController = {
       success: true,
       sabotages: activeSabotages,
       messages: deliveredMessages,
+    });
+  },
+
+  /**
+   * GET /api/vecna/trials/:trialId/progress — Returns progress and max unlocked question for the trial
+   */
+  getTrialProgress(req: Request, res: Response) {
+    const trialId = parseInt(req.params.trialId, 10);
+    if (isNaN(trialId) || trialId < 1 || trialId > 7) {
+      return res.status(400).json({ success: false, error: "INVALID_TRIAL_ID" });
+    }
+
+    const teamId = (req.user as any)?.teamId || "VECNA-001";
+    const progress = db.getVecnaProgress(teamId, trialId);
+
+    // Compute max unlocked question index (sequential progression rule)
+    let maxUnlockedIdx = 0;
+    while (maxUnlockedIdx < 10) {
+      const qState = progress[maxUnlockedIdx];
+      // A question is attempted if it's solved or failed
+      if (qState && (qState.status === "solved" || qState.status === "failed")) {
+        maxUnlockedIdx++;
+      } else {
+        break;
+      }
+    }
+
+    return res.json({
+      success: true,
+      trialId,
+      progress,
+      maxUnlockedIdx: Math.min(9, maxUnlockedIdx),
+    });
+  },
+
+  /**
+   * GET /api/vecna/trials/:trialId/questions/:questionIdx — Fetches question with sequential check
+   */
+  getTrialQuestion(req: Request, res: Response) {
+    const trialId = parseInt(req.params.trialId, 10);
+    const questionIdx = parseInt(req.params.questionIdx, 10);
+
+    if (isNaN(trialId) || trialId < 1 || trialId > 7) {
+      return res.status(400).json({ success: false, error: "INVALID_TRIAL_ID" });
+    }
+    if (isNaN(questionIdx) || questionIdx < 0 || questionIdx > 9) {
+      return res.status(400).json({ success: false, error: "INVALID_QUESTION_INDEX" });
+    }
+
+    const teamId = (req.user as any)?.teamId || "VECNA-001";
+    const progress = db.getVecnaProgress(teamId, trialId);
+
+    // Enforce sequential progression: all prior questions 0..(questionIdx - 1) MUST be attempted
+    for (let i = 0; i < questionIdx; i++) {
+      const priorState = progress[i];
+      if (!priorState || (priorState.status !== "solved" && priorState.status !== "failed")) {
+        return res.status(403).json({
+          success: false,
+          error: "SEQUENTIAL_PROGRESSION_REQUIRED",
+          message: `ACCESS DENIED: Sequential progression required. Question ${i + 1} must be completed first.`,
+          unlockedMaxIndex: i,
+        });
+      }
+    }
+
+    const questions = RAW_CHAPTER_QUESTIONS[trialId] || [];
+    const q = questions[questionIdx];
+    if (!q) {
+      return res.status(404).json({ success: false, error: "QUESTION_NOT_FOUND" });
+    }
+
+    const attempt = progress[questionIdx];
+    const isLocked = Boolean(attempt && (attempt.status === "solved" || attempt.status === "failed"));
+
+    return res.json({
+      success: true,
+      question: {
+        id: q.id,
+        itemNumber: q.itemNumber,
+        subHeader: q.subHeader,
+        question: q.question,
+        options: q.options,
+        isLocked,
+        status: attempt?.status || "unanswered",
+        earnedPoints: attempt?.earnedPoints || 0,
+      },
+    });
+  },
+
+  /**
+   * POST /api/vecna/trials/:trialId/questions/:questionIdx/submit — Authoritative submit with sequential check
+   */
+  async submitTrialQuestion(req: Request, res: Response) {
+    const trialId = parseInt(req.params.trialId, 10);
+    const questionIdx = parseInt(req.params.questionIdx, 10);
+    const { answer } = req.body;
+
+    if (isNaN(trialId) || trialId < 1 || trialId > 7) {
+      return res.status(400).json({ success: false, error: "INVALID_TRIAL_ID" });
+    }
+    if (isNaN(questionIdx) || questionIdx < 0 || questionIdx > 9) {
+      return res.status(400).json({ success: false, error: "INVALID_QUESTION_INDEX" });
+    }
+    if (!answer || typeof answer !== "string") {
+      return res.status(400).json({ success: false, error: "MISSING_ANSWER", message: "Answer is required." });
+    }
+
+    const { EventControlService } = await import("../services/eventControl.service");
+    const eventState = await EventControlService.getEventState();
+    if (eventState.status === "ended") {
+      return res.status(403).json({ success: false, error: "EVENT_ENDED", message: "Tournament has ended." });
+    }
+    if (!eventState.submissionsOpen) {
+      return res.status(403).json({ success: false, error: "SUBMISSIONS_CLOSED", message: "Submissions are closed." });
+    }
+
+    const teamId = (req.user as any)?.teamId || "VECNA-001";
+    const progress = db.getVecnaProgress(teamId, trialId);
+
+    // Enforce sequential progression: all prior questions 0..(questionIdx - 1) MUST be attempted
+    for (let i = 0; i < questionIdx; i++) {
+      const priorState = progress[i];
+      if (!priorState || (priorState.status !== "solved" && priorState.status !== "failed")) {
+        return res.status(403).json({
+          success: false,
+          error: "SEQUENTIAL_PROGRESSION_REQUIRED",
+          message: `ACCESS DENIED: Cannot skip question ${i + 1}. Preceding questions must be completed first.`,
+          unlockedMaxIndex: i,
+        });
+      }
+    }
+
+    // Check if this question is already submitted (idempotent, no points duplicate)
+    const existing = progress[questionIdx];
+    if (existing && (existing.status === "solved" || existing.status === "failed")) {
+      return res.json({
+        success: true,
+        isCorrect: existing.status === "solved",
+        pointsAwarded: 0,
+        status: existing.status,
+        isLocked: true,
+        nextQuestionIdx: Math.min(9, questionIdx + 1),
+        message: "Question already submitted and locked.",
+      });
+    }
+
+    const questions = RAW_CHAPTER_QUESTIONS[trialId] || [];
+    const q = questions[questionIdx];
+    if (!q) {
+      return res.status(404).json({ success: false, error: "QUESTION_NOT_FOUND" });
+    }
+
+    const isCorrect = answer.trim().toUpperCase() === q.correctAnswerId.trim().toUpperCase();
+    const pointsAwarded = isCorrect ? 5 : 0;
+    const status = isCorrect ? "solved" : "failed";
+
+    // Record authoritative attempt in backend
+    db.recordVecnaAttempt(teamId, trialId, questionIdx, status, pointsAwarded, answer);
+
+    if (pointsAwarded > 0) {
+      const team = db.getTeamById(teamId);
+      if (team) {
+        db.updateTeam(team.id, {
+          totalScore: team.totalScore + pointsAwarded,
+          breakdown: {
+            ...team.breakdown,
+            tech: team.breakdown.tech + pointsAwarded,
+          },
+        });
+        socketService.broadcastLeaderboard();
+      }
+    }
+
+    return res.json({
+      success: true,
+      isCorrect,
+      pointsAwarded,
+      status,
+      isLocked: true,
+      nextQuestionIdx: Math.min(9, questionIdx + 1),
+      message: isCorrect
+        ? `LEVEL ${questionIdx + 1} OVERRIDE CONFIRMED (+5 PTS)`
+        : `INCORRECT VECTOR · LEVEL ${questionIdx + 1} LOCKED (0 PTS)`,
     });
   },
 };

@@ -71,18 +71,6 @@ const CASE_CARDS: CaseCardData[] = [
   },
   {
     id: 5,
-    title: "THE FOREST",
-    imgSrc: "/creel-bg.jpg",
-    checkpoints: [
-      "Deep woods near Trail 7",
-      "Match related clues & vectors",
-      "Identify entity relationships",
-      "Carved pine rune triangulation",
-    ],
-    stageKey: "gate",
-  },
-  {
-    id: 6,
     title: "RADIO TOWER",
     imgSrc: "/hawkins-gate-bg.jpg",
     checkpoints: [
@@ -91,10 +79,10 @@ const CASE_CARDS: CaseCardData[] = [
       "Calibrate 5-pin radiometer",
       "Clear dimensional interference",
     ],
-    stageKey: "upsidedown",
+    stageKey: "gate",
   },
   {
-    id: 7,
+    id: 6,
     title: "THE GATE RIFT",
     imgSrc: "/upsidedown-bg.jpg",
     checkpoints: [
@@ -105,7 +93,7 @@ const CASE_CARDS: CaseCardData[] = [
     ],
     note: "★ GRAND FINALE · HAWKINS TOURNAMENT VICTORY",
     noteColor: "red",
-    stageKey: "mind",
+    stageKey: "upsidedown",
   },
 ];
 

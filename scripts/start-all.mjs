@@ -9,18 +9,19 @@ const backendDir = path.resolve(rootDir, "backend");
 
 console.log("\x1b[31m%s\x1b[0m", "======================================================");
 console.log("\x1b[31m%s\x1b[0m", "★ LAUNCHING HAWKINS PROTOCOL FULLSTACK SYSTEM ★");
-console.log("\x1b[36m%s\x1b[0m", "  Backend Port  : 5000 (Express + TiDB + Socket.IO)");
+console.log("\x1b[36m%s\x1b[0m", "  Backend Port  : 5055 (Express + TiDB + Socket.IO)");
 console.log("\x1b[32m%s\x1b[0m", "  Frontend Port : 3000 (Next.js Retro CRT Client)");
 console.log("\x1b[31m%s\x1b[0m", "======================================================\n");
 
 // 1. Spawn Backend
 const backendProcess = spawn(
-  process.platform === "win32" ? "node.exe" : "node",
+  process.execPath,
   ["dist/server.js"],
   {
     cwd: backendDir,
     stdio: "inherit",
-    shell: true,
+    shell: false,
+    env: { ...process.env },
   }
 );
 
@@ -28,19 +29,33 @@ backendProcess.on("error", (err) => {
   console.error("\x1b[31m[BACKEND ERROR]\x1b[0m", err);
 });
 
+backendProcess.on("exit", (code, signal) => {
+  if (code !== null && code !== 0) {
+    console.error(`\x1b[31m[BACKEND PROCESS EXITED]\x1b[0m (code: ${code}, signal: ${signal})`);
+  }
+});
+
 // 2. Spawn Frontend
+const nextBin = path.resolve(rootDir, "node_modules/next/dist/bin/next");
 const frontendProcess = spawn(
-  process.platform === "win32" ? "npx.cmd" : "npx",
-  ["next", "dev"],
+  process.execPath,
+  [nextBin, "dev"],
   {
     cwd: rootDir,
     stdio: "inherit",
-    shell: true,
+    shell: false,
+    env: { ...process.env },
   }
 );
 
 frontendProcess.on("error", (err) => {
   console.error("\x1b[31m[FRONTEND ERROR]\x1b[0m", err);
+});
+
+frontendProcess.on("exit", (code, signal) => {
+  if (code !== null && code !== 0) {
+    console.error(`\x1b[31m[FRONTEND PROCESS EXITED]\x1b[0m (code: ${code}, signal: ${signal})`);
+  }
 });
 
 // Handle graceful shutdown

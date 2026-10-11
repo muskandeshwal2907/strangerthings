@@ -60,6 +60,7 @@ export interface TeamRecord {
   radiometerSolved: boolean[];
   radiometerCodeSolved: boolean;
   unlockedHints: Record<string, boolean>;
+  taskScores?: Record<string, number>;
   activeSabotage?: ActiveSabotage | null;
   createdAt: string;
   updatedAt: string;

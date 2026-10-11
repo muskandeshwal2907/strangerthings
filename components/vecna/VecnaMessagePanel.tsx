@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { sfx } from "@/lib/audio";
 
 interface VecnaMessagePanelProps {
@@ -7,20 +7,81 @@ interface VecnaMessagePanelProps {
   selectedTeamName?: string;
 }
 
+const AVAILABLE_TEAMS = [
+  "Null Pointers",
+  "Stack Smashers",
+  "Rift Runners",
+  "Byte Byters",
+  "Signal Seekers",
+  "Hellfire Club",
+];
+
 export default function VecnaMessagePanel({
   onSendMessage,
   selectedTeamName,
 }: VecnaMessagePanelProps) {
   const [targetType, setTargetType] = useState<"all" | "specific">("all");
+  const [chosenTeam, setChosenTeam] = useState<string>(selectedTeamName || AVAILABLE_TEAMS[0]);
   const [message, setMessage] = useState("I KNOW WHERE YOU ARE.");
+
+  // Limits:
+  // "all": limit 5 times, cooldown 120s (2 minutes)
+  // individual team: limit 5 times per team, cooldown 60s (1 minute)
+  const [allCount, setAllCount] = useState<number>(0);
+  const [allLastSent, setAllLastSent] = useState<number>(0);
+
+  const [teamCounts, setTeamCounts] = useState<Record<string, number>>({});
+  const [teamLastSent, setTeamLastSent] = useState<Record<string, number>>({});
+
+  const [now, setNow] = useState<number>(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (selectedTeamName) {
+      setChosenTeam(selectedTeamName);
+    }
+  }, [selectedTeamName]);
+
+  // Calculate cooldowns
+  const allCooldownRemaining = Math.max(0, Math.ceil((allLastSent + 120000 - now) / 1000));
+  const selectedTeamCooldownRemaining = Math.max(
+    0,
+    Math.ceil(((teamLastSent[chosenTeam] || 0) + 60000 - now) / 1000)
+  );
+
+  const isAllDisabled = allCount >= 5 || allCooldownRemaining > 0;
+  const currentTeamCount = teamCounts[chosenTeam] || 0;
+  const isTeamDisabled = currentTeamCount >= 5 || selectedTeamCooldownRemaining > 0;
+
+  const isSendDisabled =
+    !message.trim() || (targetType === "all" ? isAllDisabled : isTeamDisabled);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (isSendDisabled) return;
 
     sfx("boom");
-    const actualTarget = targetType === "all" ? "all" : selectedTeamName || "all";
-    onSendMessage(actualTarget, message.trim());
+    const currentTime = Date.now();
+
+    if (targetType === "all") {
+      setAllCount((prev) => prev + 1);
+      setAllLastSent(currentTime);
+      onSendMessage("all", message.trim());
+    } else {
+      setTeamCounts((prev) => ({
+        ...prev,
+        [chosenTeam]: (prev[chosenTeam] || 0) + 1,
+      }));
+      setTeamLastSent((prev) => ({
+        ...prev,
+        [chosenTeam]: currentTime,
+      }));
+      onSendMessage(chosenTeam, message.trim());
+    }
   };
 
   const presetMessages = [
@@ -53,13 +114,25 @@ export default function VecnaMessagePanel({
           color: "#ffffff",
           display: "flex",
           alignItems: "center",
-          gap: "8px",
+          justifyContent: "space-between",
         }}
       >
-        SEND MESSAGE
+        <span>SEND MESSAGE</span>
+        <span
+          style={{
+            fontSize: "10px",
+            fontFamily: "var(--font-mono)",
+            color: "rgba(255, 180, 180, 0.7)",
+            letterSpacing: "0.1em",
+          }}
+        >
+          {targetType === "all"
+            ? `ALL TEAMS: ${5 - allCount}/5 REMAINING`
+            : `${chosenTeam}: ${5 - currentTeamCount}/5 REMAINING`}
+        </span>
       </div>
 
-      {/* Target Toggle Tabs (Matches Image 3) */}
+      {/* Target Toggle Tabs */}
       <div style={{ display: "flex", gap: "8px" }}>
         <button
           type="button"
@@ -69,18 +142,19 @@ export default function VecnaMessagePanel({
           }}
           style={{
             flex: 1,
-            padding: "6px 10px",
+            padding: "7px 10px",
             background: targetType === "all" ? "rgba(255, 45, 58, 0.25)" : "rgba(0, 0, 0, 0.5)",
-            border: targetType === "all" ? "1px solid #ff2d3a" : "1px solid rgba(255, 255, 255, 0.15)",
+            border: targetType === "all" ? "1.5px solid #ff2d3a" : "1px solid rgba(255, 255, 255, 0.15)",
             color: targetType === "all" ? "#ffffff" : "rgba(255, 255, 255, 0.6)",
             fontFamily: "var(--font-mono)",
             fontSize: "11px",
+            fontWeight: "bold",
             letterSpacing: "0.1em",
             cursor: "pointer",
             borderRadius: "2px",
           }}
         >
-          ALL TEAMS
+          ALL TEAMS ({5 - allCount}/5)
         </button>
         <button
           type="button"
@@ -90,20 +164,134 @@ export default function VecnaMessagePanel({
           }}
           style={{
             flex: 1,
-            padding: "6px 10px",
+            padding: "7px 10px",
             background: targetType === "specific" ? "rgba(255, 45, 58, 0.25)" : "rgba(0, 0, 0, 0.5)",
-            border: targetType === "specific" ? "1px solid #ff2d3a" : "1px solid rgba(255, 255, 255, 0.15)",
+            border: targetType === "specific" ? "1.5px solid #ff2d3a" : "1px solid rgba(255, 255, 255, 0.15)",
             color: targetType === "specific" ? "#ffffff" : "rgba(255, 255, 255, 0.6)",
             fontFamily: "var(--font-mono)",
             fontSize: "11px",
+            fontWeight: "bold",
             letterSpacing: "0.1em",
             cursor: "pointer",
             borderRadius: "2px",
           }}
         >
-          {selectedTeamName ? `TEAM: ${selectedTeamName}` : "SPECIFIC TEAM"}
+          INDIVIDUAL TEAM
         </button>
       </div>
+
+      {/* Team Selector when Specific Team is chosen */}
+      {targetType === "specific" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <label
+            style={{
+              fontSize: "10.5px",
+              fontFamily: "var(--font-mono)",
+              color: "rgba(255, 180, 180, 0.8)",
+              letterSpacing: "0.12em",
+            }}
+          >
+            TARGET TEAM:
+          </label>
+          <select
+            value={chosenTeam}
+            onChange={(e) => {
+              sfx("click");
+              setChosenTeam(e.target.value);
+            }}
+            style={{
+              background: "#140407",
+              border: "1.5px solid #ff2d3a",
+              color: "#ffffff",
+              padding: "7px 10px",
+              borderRadius: "3px",
+              fontFamily: "var(--font-mono)",
+              fontSize: "12px",
+              fontWeight: "bold",
+              letterSpacing: "0.08em",
+              outline: "none",
+              cursor: "pointer",
+            }}
+          >
+            {AVAILABLE_TEAMS.map((tm) => (
+              <option key={tm} value={tm} style={{ background: "#140407", color: "#ffffff" }}>
+                {tm} ({5 - (teamCounts[tm] || 0)} messages left)
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Rate Limit / Cooldown Status Banner */}
+      {targetType === "all" && allCooldownRemaining > 0 && (
+        <div
+          style={{
+            background: "rgba(255, 45, 58, 0.15)",
+            border: "1px dashed #ff2d3a",
+            padding: "6px 10px",
+            borderRadius: "3px",
+            fontSize: "11px",
+            color: "#ff8a80",
+            fontFamily: "var(--font-mono)",
+            letterSpacing: "0.08em",
+            textAlign: "center",
+          }}
+        >
+          ⏳ COOLDOWN: {allCooldownRemaining}s REMAINING (ALL TEAMS: 1 PER 2 MIN)
+        </div>
+      )}
+      {targetType === "all" && allCount >= 5 && (
+        <div
+          style={{
+            background: "rgba(100, 20, 25, 0.4)",
+            border: "1px solid #ff2d3a",
+            padding: "6px 10px",
+            borderRadius: "3px",
+            fontSize: "11px",
+            color: "#ff6666",
+            fontFamily: "var(--font-mono)",
+            letterSpacing: "0.08em",
+            textAlign: "center",
+          }}
+        >
+          🚫 QUOTA REACHED: 5/5 ALL TEAMS TRANSMISSIONS USED
+        </div>
+      )}
+
+      {targetType === "specific" && selectedTeamCooldownRemaining > 0 && (
+        <div
+          style={{
+            background: "rgba(255, 45, 58, 0.15)",
+            border: "1px dashed #ff2d3a",
+            padding: "6px 10px",
+            borderRadius: "3px",
+            fontSize: "11px",
+            color: "#ff8a80",
+            fontFamily: "var(--font-mono)",
+            letterSpacing: "0.08em",
+            textAlign: "center",
+          }}
+        >
+          ⏳ COOLDOWN: {selectedTeamCooldownRemaining}s REMAINING FOR {chosenTeam.toUpperCase()} (1 PER MIN)
+        </div>
+      )}
+      {targetType === "specific" && currentTeamCount >= 5 && (
+        <div
+          style={{
+            background: "rgba(100, 20, 25, 0.4)",
+            border: "1px solid #ff2d3a",
+            padding: "6px 10px",
+            borderRadius: "3px",
+            fontSize: "11px",
+            color: "#ff6666",
+            fontFamily: "var(--font-mono)",
+            letterSpacing: "0.08em",
+            textAlign: "center",
+          }}
+        >
+          🚫 QUOTA REACHED FOR {chosenTeam.toUpperCase()}: 5/5 MESSAGES USED
+        </div>
+      )}
 
       {/* Message Input with Character Count */}
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
@@ -156,10 +344,10 @@ export default function VecnaMessagePanel({
               style={{
                 fontSize: "9px",
                 fontFamily: "var(--font-mono)",
-                padding: "2px 6px",
+                padding: "3px 7px",
                 background: "rgba(255, 45, 58, 0.1)",
                 border: "1px solid rgba(255, 45, 58, 0.2)",
-                color: "rgba(255, 180, 180, 0.7)",
+                color: "rgba(255, 180, 180, 0.8)",
                 cursor: "pointer",
                 borderRadius: "2px",
               }}
@@ -169,37 +357,43 @@ export default function VecnaMessagePanel({
           ))}
         </div>
 
-        {/* Send Button (Matches Image 3) */}
+        {/* Send Button */}
         <button
           type="submit"
-          disabled={!message.trim()}
+          disabled={isSendDisabled}
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             gap: "8px",
             padding: "10px",
-            background: "rgba(18, 3, 5, 0.9)",
-            border: "1px solid #ff2d3a",
-            color: "#ff4d58",
+            background: isSendDisabled ? "rgba(30, 10, 15, 0.6)" : "rgba(18, 3, 5, 0.9)",
+            border: isSendDisabled ? "1px solid rgba(150, 45, 58, 0.3)" : "1.5px solid #ff2d3a",
+            color: isSendDisabled ? "rgba(255, 255, 255, 0.3)" : "#ff4d58",
             fontFamily: "var(--font-mono)",
             fontSize: "12px",
             fontWeight: "bold",
             letterSpacing: "0.15em",
-            cursor: "pointer",
+            cursor: isSendDisabled ? "not-allowed" : "pointer",
             borderRadius: "3px",
             transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#ff2d3a";
-            e.currentTarget.style.color = "#ffffff";
+            if (!isSendDisabled) {
+              e.currentTarget.style.background = "#ff2d3a";
+              e.currentTarget.style.color = "#ffffff";
+            }
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(18, 3, 5, 0.9)";
-            e.currentTarget.style.color = "#ff4d58";
+            if (!isSendDisabled) {
+              e.currentTarget.style.background = "rgba(18, 3, 5, 0.9)";
+              e.currentTarget.style.color = "#ff4d58";
+            }
           }}
         >
-          SEND MESSAGE
+          {targetType === "all"
+            ? `SEND TO ALL TEAMS (${5 - allCount} LEFT)`
+            : `SEND TO ${chosenTeam.toUpperCase()} (${5 - currentTeamCount} LEFT)`}
         </button>
       </form>
     </div>

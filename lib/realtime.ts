@@ -54,11 +54,14 @@ export interface SabotagePayload {
   id?: number;
   kind: SabKind | "GLITCH";
   target: string; // teamId or "all"
+  targetTeamId?: string;
+  targetTeamName?: string;
   pinIndex?: number;
   message?: string;
   duration?: number;
   operatorId?: string;
   operatorName?: string;
+  teams?: string[];
   until?: number;
   ts?: number;
 }
@@ -94,6 +97,8 @@ export interface AwardPayload {
 export interface ForceLogoutPayload {
   type: "force_logout";
   target: string; // teamId or "all"
+  reason?: string;
+  message?: string;
   ts?: number;
 }
 
@@ -141,7 +146,7 @@ export function getSocket(): Socket | null {
   if (!socketInstance) {
     try {
       const host = window.location.hostname || "localhost";
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || `http://${host}:5000`;
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || `http://${host}:5055`;
 
       let token = "";
       try {
@@ -184,10 +189,10 @@ export function getSocket(): Socket | null {
 
       socketInstance.on("leaderboard:update", (data: any) => {
         dispatchToSubscribers({
-          type: "SCORE_UPDATE",
+          type: "leaderboard",
           source: "socketio",
-          ...data,
-        });
+          data,
+        } as any);
       });
 
       socketInstance.on("score:update", (data: any) => {
@@ -206,6 +211,23 @@ export function getSocket(): Socket | null {
           submissionsOpen: Boolean(data?.submissionsOpen),
           loginOpen: Boolean(data?.loginOpen),
           ts: Date.now(),
+        });
+      });
+
+      socketInstance.on("event:ended", (data: any) => {
+        dispatchToSubscribers({
+          type: "force_logout",
+          target: "all",
+          reason: "event_ended",
+          message: data?.message || "The tournament has ended.",
+          ts: Date.now(),
+        });
+      });
+
+      socketInstance.on("sabotage", (data: any) => {
+        dispatchToSubscribers({
+          type: "sabotage",
+          ...data,
         });
       });
 
@@ -326,7 +348,9 @@ export function publish(msg: RealtimeMessage): void {
   const sock = getSocket();
   if (sock && sock.connected) {
     try {
-      if (msg.type === "sabotage") {
+      if (msg.type === "presence") {
+        sock.emit("presence", msg);
+      } else if (msg.type === "sabotage") {
         sock.emit("sabotage", msg);
       } else if (msg.type === "story_event") {
         sock.emit("story_event", msg);

@@ -1,6 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { sfx } from "@/lib/audio";
 import { QuizQuestion, StageQuestionType } from "@/lib/chapterQuestions";
 
@@ -23,42 +22,105 @@ export default function QuestionTypeRenderer({
 
   // Reorder state for Stage 3
   const [reorderedTokens, setReorderedTokens] = useState<string[]>([]);
-  // Connection state for Stage 2
+  // Connection state for Stage 2: leftId -> rightId
   const [activeConnections, setActiveConnections] = useState<Record<string, string>>({});
+  const [selectedLeftId, setSelectedLeftId] = useState<string | null>(null);
 
+  // SVG String rendering coordinates
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const leftPinsRef = useRef<Record<string, HTMLDivElement | null>>({});
+  const rightPinsRef = useRef<Record<string, HTMLDivElement | null>>({});
+  const [lines, setLines] = useState<Array<{ key: string; x1: number; y1: number; x2: number; y2: number }>>([]);
+
+  // Initialize state when question changes
   useEffect(() => {
     if (question.rearrangeData) {
-      setReorderedTokens([...question.rearrangeData.tokens]);
+      const initialTokens = [...question.rearrangeData.tokens];
+      setReorderedTokens(initialTokens);
+      // Check if already in correct order initially (unlikely)
+      const isInitialMatch =
+        initialTokens.length === question.rearrangeData.correctOrder.length &&
+        initialTokens.every((tok, idx) => tok === question.rearrangeData!.correctOrder[idx]);
+      if (isInitialMatch) {
+        onSelectOption(question.correctAnswerId);
+      } else {
+        onSelectOption("__UNSOLVED_REARRANGE__");
+      }
     }
     setActiveConnections({});
+    setSelectedLeftId(null);
   }, [question.id]);
 
-  // Development-only demo mode guard (strictly disabled in production participant experience)
-  const isDevMode =
-    process.env.NODE_ENV === "development" &&
-    typeof window !== "undefined" &&
-    window.location.hostname === "localhost" &&
-    window.location.search.includes("demo_tools=1");
+  // Recalculate SVG string coordinates for Stage 2
+  const updateStringCoordinates = useCallback(() => {
+    if (!containerRef.current || stageType !== "connection") return;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newLines: Array<{ key: string; x1: number; y1: number; x2: number; y2: number }> = [];
 
-  // Handle quick demo solve for development only
-  const handleDemoSolve = () => {
-    if (!isDevMode) return;
+    Object.entries(activeConnections).forEach(([leftId, rightId]) => {
+      const leftEl = leftPinsRef.current[leftId];
+      const rightEl = rightPinsRef.current[rightId];
+      if (leftEl && rightEl) {
+        const lRect = leftEl.getBoundingClientRect();
+        const rRect = rightEl.getBoundingClientRect();
+        newLines.push({
+          key: `${leftId}-${rightId}`,
+          x1: lRect.left + lRect.width / 2 - containerRect.left,
+          y1: lRect.top + lRect.height / 2 - containerRect.top,
+          x2: rRect.left + rRect.width / 2 - containerRect.left,
+          y2: rRect.top + rRect.height / 2 - containerRect.top,
+        });
+      }
+    });
+
+    setLines(newLines);
+  }, [activeConnections, stageType]);
+
+  useEffect(() => {
+    updateStringCoordinates();
+    window.addEventListener("resize", updateStringCoordinates);
+    const timer = setTimeout(updateStringCoordinates, 60);
+    return () => {
+      window.removeEventListener("resize", updateStringCoordinates);
+      clearTimeout(timer);
+    };
+  }, [updateStringCoordinates, activeConnections]);
+
+  // Handle Stage 2 Connection logic
+  const handleConnect = (leftId: string, rightId: string) => {
+    if (disabled) return;
     sfx("click");
-    onSelectOption(question.correctAnswerId);
-    if (question.rearrangeData) {
-      setReorderedTokens([...question.rearrangeData.correctOrder]);
-    }
-    if (question.connectionData) {
-      const solvedMap: Record<string, string> = {};
-      question.connectionData.pairs.forEach((p) => {
-        solvedMap[p.leftId] = p.rightId;
-      });
-      setActiveConnections(solvedMap);
+    const updated = { ...activeConnections, [leftId]: rightId };
+    setActiveConnections(updated);
+    setSelectedLeftId(null);
+
+    // Verify answers if all pairs connected
+    const totalPairs = question.connectionData?.pairs.length || 0;
+    if (Object.keys(updated).length === totalPairs && totalPairs > 0) {
+      const isAllCorrect = question.connectionData!.pairs.every(
+        (p) => updated[p.leftId]?.toLowerCase() === p.rightId.toLowerCase()
+      );
+      if (isAllCorrect) {
+        onSelectOption(question.correctAnswerId);
+      } else {
+        onSelectOption("__WRONG_CONNECTION__");
+      }
+    } else {
+      onSelectOption("");
     }
   };
 
-  // Move token up/down in rearrange
+  const handleResetConnections = () => {
+    if (disabled) return;
+    sfx("click");
+    setActiveConnections({});
+    setSelectedLeftId(null);
+    onSelectOption("");
+  };
+
+  // Stage 3 Reorder Logic
   const handleMoveToken = (index: number, direction: "up" | "down") => {
+    if (disabled) return;
     sfx("click");
     const targetIdx = direction === "up" ? index - 1 : index + 1;
     if (targetIdx < 0 || targetIdx >= reorderedTokens.length) return;
@@ -67,6 +129,18 @@ export default function QuestionTypeRenderer({
     updated[index] = updated[targetIdx];
     updated[targetIdx] = temp;
     setReorderedTokens(updated);
+
+    // Verify if assembled correctly
+    if (question.rearrangeData) {
+      const isMatch =
+        updated.length === question.rearrangeData.correctOrder.length &&
+        updated.every((tok, idx) => tok === question.rearrangeData!.correctOrder[idx]);
+      if (isMatch) {
+        onSelectOption(question.correctAnswerId);
+      } else {
+        onSelectOption("__WRONG_REARRANGE__");
+      }
+    }
   };
 
   // Theme tokens for Old Classic Paper
@@ -92,27 +166,6 @@ export default function QuestionTypeRenderer({
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           <div
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "4px 10px",
-              background: "rgba(184, 29, 36, 0.08)",
-              border: "1px dashed #b81d24",
-              borderRadius: "2px",
-              alignSelf: "flex-start",
-              fontSize: "11px",
-              fontFamily: "'Courier New', monospace",
-              fontWeight: 800,
-              color: paperAccent,
-              letterSpacing: ".1em",
-            }}
-          >
-            <span>★</span>
-            <span>STAGE 01 · QUIZ-TYPE SERIES INQUIRY</span>
-          </div>
-
-          <div
-            style={{
               fontSize: "clamp(14px, 1.35vw, 16px)",
               lineHeight: 1.6,
               color: textColor,
@@ -131,62 +184,10 @@ export default function QuestionTypeRenderer({
       )}
 
       {/* ──────────────────────────────────────────────────────────
-          STAGE 2: CONNECTION QUESTIONS (MATCHING RELATIONSHIPS)
+          STAGE 2: CONNECTION QUESTIONS (DRAG-AND-DROP & RED STRINGS)
           ────────────────────────────────────────────────────────── */}
-      {stageType === "connection" && (
+      {stageType === "connection" && question.connectionData && (
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "10px",
-            }}
-          >
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "4px 10px",
-                background: "rgba(30, 80, 140, 0.08)",
-                border: "1px dashed #205080",
-                borderRadius: "2px",
-                fontSize: "11px",
-                fontFamily: "'Courier New', monospace",
-                fontWeight: 800,
-                color: "#184070",
-                letterSpacing: ".1em",
-              }}
-            >
-              <span>◈</span>
-              <span>STAGE 02 · CONNECTION MATRIX // MATCH THE CORRELATIONS</span>
-            </div>
-
-            {isDevMode && (
-              <button
-                type="button"
-                onClick={handleDemoSolve}
-                style={{
-                  padding: "4px 12px",
-                  background: "#241810",
-                  color: "#ffc107",
-                  border: "1px solid #c49646",
-                  borderRadius: "3px",
-                  fontSize: "10.5px",
-                  fontFamily: "'Courier New', monospace",
-                  fontWeight: 900,
-                  letterSpacing: ".12em",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                }}
-              >
-                ⚡ DEMO AUTO-CONNECT
-              </button>
-            )}
-          </div>
-
           <div
             style={{
               fontSize: "14px",
@@ -194,174 +195,353 @@ export default function QuestionTypeRenderer({
               color: textColor,
               fontWeight: 700,
               fontFamily: "'Courier New', Courier, monospace",
-              marginBottom: "4px",
             }}
           >
             {question.question}
           </div>
 
-          {/* Dual Column Matching Board */}
-          {question.connectionData && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                gap: "12px",
-                padding: "14px",
-                background: "rgba(255, 255, 255, 0.45)",
-                border: paperBorder,
-                borderRadius: "3px",
-              }}
-            >
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 900,
-                    letterSpacing: ".14em",
-                    color: paperAccent,
-                    borderBottom: "1px solid #d4c4a8",
-                    paddingBottom: "4px",
-                    fontFamily: "'Courier New', monospace",
-                  }}
-                >
-                  COLUMN A (SCENARIO / TELEMETRY)
-                </div>
-                {question.connectionData.pairs.map((p, idx) => (
-                  <div
-                    key={p.leftId}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: "8px",
-                      padding: "8px 10px",
-                      background: "#fff",
-                      border: "1px solid #d4c4a8",
-                      borderRadius: "2px",
-                      fontSize: "12px",
-                      fontFamily: "'Courier New', monospace",
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontWeight: 900,
-                        color: paperAccent,
-                        flexShrink: 0,
-                      }}
-                    >
-                      [{idx + 1}]
-                    </span>
-                    <span style={{ color: textColor }}>{p.leftText}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 900,
-                    letterSpacing: ".14em",
-                    color: paperAccent,
-                    borderBottom: "1px solid #d4c4a8",
-                    paddingBottom: "4px",
-                    fontFamily: "'Courier New', monospace",
-                  }}
-                >
-                  COLUMN B (MATCH TARGETS)
-                </div>
-                {question.connectionData.pairs.map((p) => (
-                  <div
-                    key={p.rightId}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: "8px",
-                      padding: "8px 10px",
-                      background: "#fdfbf7",
-                      border: "1px solid #c9bda4",
-                      borderRadius: "2px",
-                      fontSize: "12px",
-                      fontFamily: "'Courier New', monospace",
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontWeight: 900,
-                        color: "#184070",
-                        flexShrink: 0,
-                      }}
-                    >
-                      ({p.rightId})
-                    </span>
-                    <span style={{ color: textColor }}>{p.rightText}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ──────────────────────────────────────────────────────────
-          STAGE 3: REARRANGE QUESTIONS (WORDS, STATEMENTS, CODE & STEPS)
-          ────────────────────────────────────────────────────────── */}
-      {stageType === "rearrange" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "10px",
+              fontSize: "11px",
+              fontFamily: "'Courier New', monospace",
+              fontWeight: 800,
+              color: mutedText,
+              letterSpacing: ".08em",
             }}
           >
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "4px 10px",
-                background: "rgba(140, 70, 20, 0.08)",
-                border: "1px dashed #8c4614",
-                borderRadius: "2px",
-                fontSize: "11px",
-                fontFamily: "'Courier New', monospace",
-                fontWeight: 800,
-                color: "#8c4614",
-                letterSpacing: ".1em",
-              }}
-            >
-              <span>⇄</span>
-              <span>STAGE 03 · REARRANGE ARTIFACTS // REORDER SEQUENCE</span>
-            </div>
-
-            {isDevMode && (
+            <span>DRAG OR CLICK ITEMS IN COLUMN A TO CONNECT WITH COLUMN B:</span>
+            {Object.keys(activeConnections).length > 0 && (
               <button
                 type="button"
-                onClick={handleDemoSolve}
+                onClick={handleResetConnections}
                 style={{
-                  padding: "4px 12px",
-                  background: "#241810",
-                  color: "#ffc107",
-                  border: "1px solid #c49646",
-                  borderRadius: "3px",
+                  background: "#e4dac4",
+                  border: "1px solid #b8a691",
+                  borderRadius: "2px",
+                  padding: "4px 8px",
+                  cursor: "pointer",
                   fontSize: "10.5px",
                   fontFamily: "'Courier New', monospace",
                   fontWeight: 900,
-                  letterSpacing: ".12em",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                  color: "#8f231e",
                 }}
               >
-                ⚡ DEMO AUTO-ORDER
+                ✕ RESET STRINGS
               </button>
             )}
           </div>
 
+          {/* Interactive Dual-Column Connection Board with SVG Strings */}
+          <div
+            ref={containerRef}
+            style={{
+              position: "relative",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "28px",
+              padding: "18px 16px",
+              background: "rgba(255, 255, 255, 0.5)",
+              border: paperBorder,
+              borderRadius: "3px",
+              boxShadow: "inset 0 1px 6px rgba(0,0,0,0.05)",
+            }}
+          >
+            {/* SVG Overlay for Red Investigation Strings */}
+            <svg
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                pointerEvents: "none",
+                zIndex: 10,
+              }}
+            >
+              {lines.map((line) => {
+                const midX = (line.x1 + line.x2) / 2;
+                return (
+                  <g key={line.key}>
+                    {/* Shadow / Glow */}
+                    <path
+                      d={`M ${line.x1} ${line.y1} C ${midX} ${line.y1 + 14}, ${midX} ${line.y2 + 14}, ${line.x2} ${line.y2}`}
+                      stroke="rgba(255, 45, 58, 0.4)"
+                      strokeWidth="6"
+                      fill="none"
+                    />
+                    {/* Main Red String */}
+                    <path
+                      d={`M ${line.x1} ${line.y1} C ${midX} ${line.y1 + 14}, ${midX} ${line.y2 + 14}, ${line.x2} ${line.y2}`}
+                      stroke="#c41e24"
+                      strokeWidth="3"
+                      fill="none"
+                      strokeLinecap="round"
+                    />
+                    {/* Anchor Pin Knots */}
+                    <circle cx={line.x1} cy={line.y1} r="5" fill="#8f1218" stroke="#fff" strokeWidth="1.5" />
+                    <circle cx={line.x2} cy={line.y2} r="5" fill="#8f1218" stroke="#fff" strokeWidth="1.5" />
+                  </g>
+                );
+              })}
+            </svg>
+
+            {/* Left Column (Column A) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", zIndex: 12 }}>
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 900,
+                  letterSpacing: ".12em",
+                  color: paperAccent,
+                  borderBottom: "1px solid #d4c4a8",
+                  paddingBottom: "4px",
+                  fontFamily: "'Courier New', monospace",
+                }}
+              >
+                COLUMN A (SCENARIOS & VALUES)
+              </div>
+              {question.connectionData.pairs.map((p, idx) => {
+                const isSelected = selectedLeftId === p.leftId;
+                const isConnected = !!activeConnections[p.leftId];
+                const connectedRight = activeConnections[p.leftId];
+
+                return (
+                  <div
+                    key={p.leftId}
+                    draggable={!disabled}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/plain", p.leftId);
+                      setSelectedLeftId(p.leftId);
+                    }}
+                    onClick={() => {
+                      if (disabled) return;
+                      sfx("click");
+                      setSelectedLeftId(isSelected ? null : p.leftId);
+                    }}
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "10px",
+                      padding: "10px 12px",
+                      background: isSelected
+                        ? "rgba(184, 29, 36, 0.12)"
+                        : isConnected
+                        ? "#fdf7f4"
+                        : "#ffffff",
+                      border: isSelected
+                        ? "2px solid #b81d24"
+                        : isConnected
+                        ? "1.5px solid #c48a80"
+                        : "1px solid #d4c4a8",
+                      borderRadius: "3px",
+                      fontSize: "12.5px",
+                      fontFamily: "'Courier New', monospace",
+                      lineHeight: 1.4,
+                      cursor: "grab",
+                      boxShadow: isSelected
+                        ? "0 2px 8px rgba(184, 29, 36, 0.25)"
+                        : "0 1px 3px rgba(0,0,0,0.05)",
+                      transition: "all 0.15s ease",
+                      userSelect: "none",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", flex: 1 }}>
+                      <span
+                        style={{
+                          fontWeight: 900,
+                          color: paperAccent,
+                          flexShrink: 0,
+                        }}
+                      >
+                        [{idx + 1}]
+                      </span>
+                      <div>
+                        <span style={{ color: textColor }}>{p.leftText}</span>
+                        {connectedRight && (
+                          <div
+                            style={{
+                              fontSize: "10px",
+                              color: "#8f1218",
+                              fontWeight: 800,
+                              marginTop: "2px",
+                            }}
+                          >
+                            STRING CONNECTED ➔ ({connectedRight})
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Connection Pin Socket */}
+                    <div
+                      ref={(el) => {
+                        leftPinsRef.current[p.leftId] = el;
+                      }}
+                      style={{
+                        width: "14px",
+                        height: "14px",
+                        borderRadius: "50%",
+                        background: isConnected ? "#c41e24" : isSelected ? "#ff2d3a" : "#d4c4a8",
+                        border: "2px solid #fff",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                        flexShrink: 0,
+                      }}
+                      title="Drag from here to Column B"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Right Column (Column B) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", zIndex: 12 }}>
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 900,
+                  letterSpacing: ".12em",
+                  color: "#184070",
+                  borderBottom: "1px solid #d4c4a8",
+                  paddingBottom: "4px",
+                  fontFamily: "'Courier New', monospace",
+                }}
+              >
+                COLUMN B (MATCH TARGETS)
+              </div>
+              {question.connectionData.pairs.map((p) => {
+                // Find if any left item connects to this right item
+                const connectedFromLeft = Object.entries(activeConnections).find(
+                  ([, rId]) => rId === p.rightId
+                )?.[0];
+
+                return (
+                  <div
+                    key={p.rightId}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const leftId = e.dataTransfer.getData("text/plain") || selectedLeftId;
+                      if (leftId) handleConnect(leftId, p.rightId);
+                    }}
+                    onClick={() => {
+                      if (selectedLeftId) {
+                        handleConnect(selectedLeftId, p.rightId);
+                      }
+                    }}
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 12px",
+                      background: connectedFromLeft ? "#fdf7f4" : "#fdfbf7",
+                      border: connectedFromLeft
+                        ? "1.5px solid #c48a80"
+                        : selectedLeftId
+                        ? "1.5px dashed #205080"
+                        : "1px solid #c9bda4",
+                      borderRadius: "3px",
+                      fontSize: "12.5px",
+                      fontFamily: "'Courier New', monospace",
+                      lineHeight: 1.4,
+                      cursor: selectedLeftId ? "pointer" : "default",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                      transition: "all 0.15s ease",
+                      userSelect: "none",
+                    }}
+                  >
+                    {/* Left Connection Pin Socket */}
+                    <div
+                      ref={(el) => {
+                        rightPinsRef.current[p.rightId] = el;
+                      }}
+                      style={{
+                        width: "14px",
+                        height: "14px",
+                        borderRadius: "50%",
+                        background: connectedFromLeft ? "#c41e24" : "#c9bda4",
+                        border: "2px solid #fff",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                        flexShrink: 0,
+                      }}
+                      title="Drop target socket"
+                    />
+
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", flex: 1 }}>
+                      <span
+                        style={{
+                          fontWeight: 900,
+                          color: "#184070",
+                          flexShrink: 0,
+                        }}
+                      >
+                        ({p.rightId})
+                      </span>
+                      <div>
+                        <span style={{ color: textColor }}>{p.rightText}</span>
+                        {connectedFromLeft && (
+                          <div
+                            style={{
+                              fontSize: "10px",
+                              color: "#8f1218",
+                              fontWeight: 800,
+                              marginTop: "2px",
+                            }}
+                          >
+                            CONNECTED FROM [{connectedFromLeft}]
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Connection Summary Bar */}
+          <div
+            style={{
+              padding: "8px 12px",
+              background: "#e9dfcb",
+              borderRadius: "2px",
+              borderLeft: `3px solid ${paperAccent}`,
+              fontSize: "12px",
+              fontFamily: "'Courier New', Courier, monospace",
+              color: "#2b1c11",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <div>
+              <b>CONNECTED STRINGS:</b>{" "}
+              {Object.keys(activeConnections).length === 0
+                ? "NONE (CONNECT ALL 4 PAIRS BEFORE SUBMITTING)"
+                : Object.entries(activeConnections)
+                    .map(([l, r]) => `${l}–${r}`)
+                    .join("  |  ")}
+            </div>
+            <div>
+              [{Object.keys(activeConnections).length} / {question.connectionData.pairs.length} STRINGS TIED]
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────
+          STAGE 3: REARRANGE QUESTIONS (TARGET & ▲ ▼ WORKBENCH ONLY)
+          ────────────────────────────────────────────────────────── */}
+      {stageType === "rearrange" && question.rearrangeData && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           <div
             style={{
               fontSize: "14px",
@@ -375,123 +555,121 @@ export default function QuestionTypeRenderer({
           </div>
 
           {/* Interactive Reordering Workbench */}
-          {question.rearrangeData && (
+          <div
+            style={{
+              padding: "16px 18px",
+              background: "rgba(255, 255, 255, 0.55)",
+              border: paperBorder,
+              borderRadius: "3px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
             <div
               style={{
-                padding: "14px 16px",
-                background: "rgba(255, 255, 255, 0.55)",
-                border: paperBorder,
-                borderRadius: "3px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
+                fontSize: "11px",
+                fontWeight: 900,
+                color: mutedText,
+                letterSpacing: ".1em",
+                fontFamily: "'Courier New', monospace",
               }}
             >
-              <div
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 900,
-                  color: mutedText,
-                  letterSpacing: ".1em",
-                  fontFamily: "'Courier New', monospace",
-                }}
-              >
-                TARGET: {question.rearrangeData.targetDescription.toUpperCase()}
-              </div>
-
-              {/* Scrambled Tokens List */}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection:
-                    question.rearrangeData.category === "code" ||
-                    question.rearrangeData.category === "steps"
-                      ? "column"
-                      : "row",
-                  flexWrap: "wrap",
-                  gap: "6px",
-                }}
-              >
-                {reorderedTokens.map((tok, idx) => (
-                  <div
-                    key={`${tok}-${idx}`}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "8px",
-                      padding: "6px 10px",
-                      background: "#fff",
-                      border: "1.5px solid #c9bda4",
-                      borderRadius: "2px",
-                      fontSize: "12px",
-                      fontFamily: "'Courier New', Courier, monospace",
-                      fontWeight: 700,
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                    }}
-                  >
-                    <span style={{ color: textColor }}>{tok}</span>
-                    <div style={{ display: "flex", gap: "2px" }}>
-                      <button
-                        type="button"
-                        onClick={() => handleMoveToken(idx, "up")}
-                        disabled={idx === 0}
-                        style={{
-                          background: "#e4dac5",
-                          border: "none",
-                          borderRadius: "2px",
-                          cursor: idx === 0 ? "default" : "pointer",
-                          opacity: idx === 0 ? 0.3 : 1,
-                          padding: "2px 5px",
-                          fontSize: "10px",
-                        }}
-                      >
-                        ▲
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMoveToken(idx, "down")}
-                        disabled={idx === reorderedTokens.length - 1}
-                        style={{
-                          background: "#e4dac5",
-                          border: "none",
-                          borderRadius: "2px",
-                          cursor:
-                            idx === reorderedTokens.length - 1
-                              ? "default"
-                              : "pointer",
-                          opacity:
-                            idx === reorderedTokens.length - 1 ? 0.3 : 1,
-                          padding: "2px 5px",
-                          fontSize: "10px",
-                        }}
-                      >
-                        ▼
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Live Assembled Preview */}
-              <div
-                style={{
-                  padding: "8px 12px",
-                  background: "#e9dfcb",
-                  borderRadius: "2px",
-                  borderLeft: `3px solid ${paperAccent}`,
-                  fontSize: "12px",
-                  fontFamily: "'Courier New', Courier, monospace",
-                  color: "#2b1c11",
-                }}
-              >
-                <b>ASSEMBLED:</b>{" "}
-                {question.rearrangeData.category === "words"
-                  ? reorderedTokens.join(" ")
-                  : reorderedTokens.join(" → ")}
-              </div>
+              TARGET: {question.rearrangeData.targetDescription.toUpperCase()}
             </div>
-          )}
+
+            {/* Token letter tray with ▲ and ▼ buttons */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection:
+                  question.rearrangeData.category === "code" ||
+                  question.rearrangeData.category === "steps"
+                    ? "column"
+                    : "row",
+                flexWrap: "wrap",
+                gap: "8px",
+              }}
+            >
+              {reorderedTokens.map((tok, idx) => (
+                <div
+                  key={`${tok}-${idx}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "8px",
+                    padding: "8px 12px",
+                    background: "#fff",
+                    border: "1.5px solid #c9bda4",
+                    borderRadius: "2px",
+                    fontSize: "13px",
+                    fontFamily: "'Courier New', Courier, monospace",
+                    fontWeight: 800,
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <span style={{ color: textColor }}>{tok}</span>
+                  <div style={{ display: "flex", gap: "3px" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleMoveToken(idx, "up")}
+                      disabled={idx === 0 || disabled}
+                      style={{
+                        background: "#e4dac5",
+                        border: "none",
+                        borderRadius: "2px",
+                        cursor: idx === 0 || disabled ? "default" : "pointer",
+                        opacity: idx === 0 || disabled ? 0.3 : 1,
+                        padding: "3px 6px",
+                        fontSize: "10px",
+                        fontWeight: 900,
+                      }}
+                      title="Move Up / Left"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMoveToken(idx, "down")}
+                      disabled={idx === reorderedTokens.length - 1 || disabled}
+                      style={{
+                        background: "#e4dac5",
+                        border: "none",
+                        borderRadius: "2px",
+                        cursor: idx === reorderedTokens.length - 1 || disabled ? "default" : "pointer",
+                        opacity: idx === reorderedTokens.length - 1 || disabled ? 0.3 : 1,
+                        padding: "3px 6px",
+                        fontSize: "10px",
+                        fontWeight: 900,
+                      }}
+                      title="Move Down / Right"
+                    >
+                      ▼
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Live Assembled Preview */}
+            <div
+              style={{
+                padding: "10px 14px",
+                background: "#e9dfcb",
+                borderRadius: "2px",
+                borderLeft: `3px solid ${paperAccent}`,
+                fontSize: "12.5px",
+                fontFamily: "'Courier New', Courier, monospace",
+                color: "#2b1c11",
+              }}
+            >
+              <b>ASSEMBLED:</b>{" "}
+              {question.rearrangeData.category === "words"
+                ? reorderedTokens.join(" ")
+                : reorderedTokens.join(" → ")}
+            </div>
+          </div>
         </div>
       )}
 
@@ -500,27 +678,6 @@ export default function QuestionTypeRenderer({
           ────────────────────────────────────────────────────────── */}
       {stageType === "case_study" && question.caseStudyData && (
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "4px 10px",
-              background: "rgba(184, 29, 36, 0.08)",
-              border: "1px dashed #b81d24",
-              borderRadius: "2px",
-              alignSelf: "flex-start",
-              fontSize: "11px",
-              fontFamily: "'Courier New', monospace",
-              fontWeight: 800,
-              color: paperAccent,
-              letterSpacing: ".1em",
-            }}
-          >
-            <span>📁</span>
-            <span>STAGE 04 · CASE STUDY INVESTIGATION // INCIDENT ANALYSIS</span>
-          </div>
-
           {/* Forensic Case Dossier Box */}
           <div
             style={{
@@ -630,118 +787,22 @@ export default function QuestionTypeRenderer({
       )}
 
       {/* ──────────────────────────────────────────────────────────
-          STAGE 5: STANDARD (AS-IS CHAPTER 5)
-          ────────────────────────────────────────────────────────── */}
-      {stageType === "standard" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "4px 10px",
-              background: "rgba(40, 120, 50, 0.08)",
-              border: "1px dashed #287832",
-              borderRadius: "2px",
-              alignSelf: "flex-start",
-              fontSize: "11px",
-              fontFamily: "'Courier New', monospace",
-              fontWeight: 800,
-              color: "#206028",
-              letterSpacing: ".1em",
-            }}
-          >
-            <span>🌲</span>
-            <span>STAGE 05 · FIELD RECON // DEEP WOODS RUNIC VECTORS</span>
-          </div>
-
-          <div
-            style={{
-              fontSize: "clamp(14px, 1.35vw, 16px)",
-              lineHeight: 1.6,
-              color: textColor,
-              fontWeight: 700,
-              fontFamily: "'Courier New', Courier, monospace",
-              background: "rgba(255, 255, 255, 0.55)",
-              padding: "14px 18px",
-              border: paperBorder,
-              borderRadius: "2px",
-            }}
-          >
-            &quot;{question.question}&quot;
-          </div>
-        </div>
-      )}
-
-      {/* ──────────────────────────────────────────────────────────
-          STAGE 6: RADIO TRANSMISSION (DECIPHERS, CIPHERS, MORSE, SIGNALS)
+          STAGE 5: RADIO TRANSMISSION (DECIPHERS & CIPHERS)
           ────────────────────────────────────────────────────────── */}
       {stageType === "radio" && question.radioData && (
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "10px",
-            }}
-          >
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "4px 10px",
-                background: "rgba(180, 40, 20, 0.08)",
-                border: "1px dashed #b42814",
-                borderRadius: "2px",
-                fontSize: "11px",
-                fontFamily: "'Courier New', monospace",
-                fontWeight: 800,
-                color: "#b42814",
-                letterSpacing: ".1em",
-              }}
-            >
-              <span>📻</span>
-              <span>STAGE 06 · RADIO TRANSMISSION // DECODE AIRWAVE CIPHERS</span>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleDemoSolve}
-              style={{
-                padding: "4px 12px",
-                background: "#241810",
-                color: "#ffc107",
-                border: "1px solid #c49646",
-                borderRadius: "3px",
-                fontSize: "10.5px",
-                fontFamily: "'Courier New', monospace",
-                fontWeight: 900,
-                letterSpacing: ".12em",
-                cursor: "pointer",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-              }}
-            >
-              ⚡ DECODE SIGNAL
-            </button>
-          </div>
-
           {/* Retro Receiver Console Box */}
           <div
             style={{
               padding: "14px 18px",
               background: "#181410",
-              color: "#e6c387",
-              border: "2px solid #5a422a",
+              color: "#f0e6d2",
+              border: "2px solid #5a483a",
               borderRadius: "3px",
-              boxShadow:
-                "inset 0 0 15px rgba(0,0,0,0.8), 0 3px 8px rgba(0,0,0,0.25)",
               display: "flex",
               flexDirection: "column",
-              gap: "10px",
-              fontFamily: "'Courier New', monospace",
+              gap: "8px",
+              boxShadow: "inset 0 0 10px rgba(0,0,0,0.8)",
             }}
           >
             <div
@@ -749,51 +810,42 @@ export default function QuestionTypeRenderer({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                borderBottom: "1px solid rgba(230, 195, 135, 0.3)",
-                paddingBottom: "6px",
-                fontSize: "11.5px",
-                flexWrap: "wrap",
-                gap: "6px",
+                borderBottom: "1px solid #3d2f25",
+                paddingBottom: "4px",
+                fontSize: "11px",
+                color: "#ff8a80",
+                fontFamily: "'Courier New', monospace",
+                fontWeight: 900,
               }}
             >
-              <span style={{ color: "#ff8a4c", fontWeight: 900 }}>
-                ● FREQ: {question.radioData.frequency}
-              </span>
-              <span style={{ color: "#a8947c" }}>
-                CALLSIGN: {question.radioData.callsign}
-              </span>
-              <span style={{ color: "#81c784" }}>[CARRIER LOCKED]</span>
+              <span>HAWKINS RADIO RELAY // {question.radioData.frequency}</span>
+              <span>TUNED</span>
             </div>
 
             <div
               style={{
-                padding: "12px",
-                background: "#0d0a07",
-                border: "1px solid #3d2d1d",
-                borderRadius: "2px",
+                fontFamily: "'Courier New', monospace",
                 fontSize: "13px",
-                fontWeight: 800,
-                letterSpacing: ".15em",
-                color: "#ffca28",
-                textAlign: "center",
-                textShadow: "0 0 8px rgba(255, 202, 40, 0.5)",
+                letterSpacing: ".12em",
+                color: "#ffcc80",
+                padding: "8px 12px",
+                background: "rgba(0,0,0,0.5)",
+                border: "1px dashed #7a5e4a",
+                borderRadius: "2px",
               }}
             >
-              {question.radioData.rawSignal}
+              SIGNAL PAYLOAD: <b>{question.radioData.rawSignal}</b>
             </div>
 
-            {question.radioData.cipherHint && (
-              <div
-                style={{
-                  fontSize: "11px",
-                  color: "#d9c5b2",
-                  lineHeight: 1.4,
-                  opacity: 0.85,
-                }}
-              >
-                💡 <b>DECRYPTION NOTE:</b> {question.radioData.cipherHint}
-              </div>
-            )}
+            <div
+              style={{
+                fontSize: "11px",
+                color: "#d7ccc8",
+                fontFamily: "'Courier New', monospace",
+              }}
+            >
+              <b>CIPHER METHOD:</b> {question.radioData.cipherHint || question.radioData.signalType.toUpperCase()}
+            </div>
           </div>
 
           <div
@@ -811,63 +863,10 @@ export default function QuestionTypeRenderer({
       )}
 
       {/* ──────────────────────────────────────────────────────────
-          STAGE 7: LAB-TYPE TASKS (TECHNICAL CHALLENGES)
+          STAGE 6: LAB-TYPE TASKS (SYSTEM OPS, LOGIC & CODE)
           ────────────────────────────────────────────────────────── */}
       {stageType === "lab_task" && question.labTaskData && (
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "10px",
-            }}
-          >
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "4px 10px",
-                background: "rgba(184, 29, 36, 0.08)",
-                border: "1px dashed #b81d24",
-                borderRadius: "2px",
-                fontSize: "11px",
-                fontFamily: "'Courier New', monospace",
-                fontWeight: 800,
-                color: paperAccent,
-                letterSpacing: ".1em",
-              }}
-            >
-              <span>🔬</span>
-              <span>
-                STAGE 07 · LAB TASK //{" "}
-                {question.labTaskData.labCategory.toUpperCase()} CHALLENGE
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleDemoSolve}
-              style={{
-                padding: "4px 12px",
-                background: "#241810",
-                color: "#ffc107",
-                border: "1px solid #c49646",
-                borderRadius: "3px",
-                fontSize: "10.5px",
-                fontFamily: "'Courier New', monospace",
-                fontWeight: 900,
-                letterSpacing: ".12em",
-                cursor: "pointer",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-              }}
-            >
-              ⚡ DEMO SOLVE TASK
-            </button>
-          </div>
-
           {/* Terminal / Code / Simulation Box */}
           <div
             style={{
@@ -948,103 +947,106 @@ export default function QuestionTypeRenderer({
       )}
 
       {/* ──────────────────────────────────────────────────────────
-          UNIVERSAL OPTIONS GRID (CLASSIC PAPER POLICE CHECKBOXES)
+          UNIVERSAL OPTIONS GRID (ONLY FOR STAGES 1, 4, 5, 6)
+          REMOVED FOR CHAPTER 2 (CONNECTIONS) AND CHAPTER 3 (REARRANGE)
           ────────────────────────────────────────────────────────── */}
-      <div style={{ marginTop: "4px" }}>
-        <div
-          style={{
-            fontSize: "11px",
-            color: mutedText,
-            letterSpacing: ".12em",
-            marginBottom: "10px",
-            fontFamily: "'Courier New', monospace",
-            fontWeight: 800,
-            textTransform: "uppercase",
-          }}
-        >
-          [SELECT DIAGNOSTIC ANSWER ENTRY BELOW]:
-        </div>
+      {stageType !== "connection" && stageType !== "rearrange" && (
+        <div style={{ marginTop: "4px" }}>
+          <div
+            style={{
+              fontSize: "11px",
+              color: mutedText,
+              letterSpacing: ".12em",
+              marginBottom: "10px",
+              fontFamily: "'Courier New', monospace",
+              fontWeight: 800,
+              textTransform: "uppercase",
+            }}
+          >
+            [SELECT DIAGNOSTIC ANSWER ENTRY BELOW]:
+          </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          {question.options.map((opt) => {
-            const isSelected = selectedAnswer === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={disabled}
-                onClick={() => {
-                  if (disabled) return;
-                  sfx("click");
-                  onSelectOption(opt.id);
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "12px",
-                  padding: "12px 16px",
-                  background: isSelected
-                    ? isVecnaMode
-                      ? "rgba(184, 29, 36, 0.15)"
-                      : "rgba(220, 180, 130, 0.35)"
-                    : "rgba(255, 255, 255, 0.7)",
-                  border: isSelected
-                    ? `2px solid ${paperAccent}`
-                    : "1.5px solid #d4c4a8",
-                  borderRadius: "3px",
-                  cursor: disabled ? "not-allowed" : "pointer",
-                  opacity: disabled ? 0.8 : 1,
-                  textAlign: "left",
-                  width: "100%",
-                  boxSizing: "border-box",
-                  boxShadow: isSelected
-                    ? "0 2px 8px rgba(0,0,0,0.12)"
-                    : "0 1px 3px rgba(0,0,0,0.04)",
-                  transition: "all 0.12s ease",
-                }}
-              >
-                {/* Stamp Checkbox */}
-                <span
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {question.options.map((opt) => {
+              const isSelected = selectedAnswer === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => {
+                    if (disabled) return;
+                    sfx("click");
+                    onSelectOption(opt.id);
+                  }}
                   style={{
-                    width: "24px",
-                    height: "24px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: isSelected ? paperAccent : "#faf6ee",
-                    border: `1.5px solid ${isSelected ? paperAccent : "#8c7b68"}`,
-                    color: isSelected ? "#fff" : "#4a3c2c",
-                    fontFamily: "'Courier New', monospace",
-                    fontSize: "12px",
-                    fontWeight: 900,
-                    flexShrink: 0,
-                    borderRadius: "2px",
-                    marginTop: "1px",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "12px",
+                    padding: "12px 16px",
+                    background: isSelected
+                      ? isVecnaMode
+                        ? "rgba(184, 29, 36, 0.15)"
+                        : "rgba(220, 180, 130, 0.35)"
+                      : "rgba(255, 255, 255, 0.7)",
+                    border: isSelected
+                      ? `2px solid ${paperAccent}`
+                      : "1.5px solid #d4c4a8",
+                    borderRadius: "3px",
+                    cursor: disabled ? "not-allowed" : "pointer",
+                    opacity: disabled ? 0.8 : 1,
+                    textAlign: "left",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    boxShadow: isSelected
+                      ? "0 2px 8px rgba(0,0,0,0.12)"
+                      : "0 1px 3px rgba(0,0,0,0.04)",
+                    transition: "all 0.12s ease",
                   }}
                 >
-                  {isSelected ? "X" : opt.id}
-                </span>
-
-                {/* Option Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
+                  {/* Stamp Checkbox */}
+                  <span
                     style={{
-                      fontFamily: "'Courier New', Courier, monospace",
-                      fontSize: "clamp(12.5px, 1.25vw, 14.5px)",
-                      color: isSelected ? "#000" : textColor,
-                      fontWeight: isSelected ? 800 : 600,
-                      lineHeight: 1.45,
-                      wordBreak: "break-word",
+                      width: "24px",
+                      height: "24px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: isSelected ? paperAccent : "#faf6ee",
+                      border: `1.5px solid ${isSelected ? paperAccent : "#8c7b68"}`,
+                      color: isSelected ? "#fff" : "#4a3c2c",
+                      fontFamily: "'Courier New', monospace",
+                      fontSize: "12px",
+                      fontWeight: 900,
+                      flexShrink: 0,
+                      borderRadius: "2px",
+                      marginTop: "1px",
                     }}
                   >
-                    {opt.text}
+                    {isSelected ? "X" : opt.id}
+                  </span>
+
+                  {/* Option Content */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: "'Courier New', Courier, monospace",
+                        fontSize: "clamp(12.5px, 1.25vw, 14.5px)",
+                        color: isSelected ? "#000" : textColor,
+                        fontWeight: isSelected ? 800 : 600,
+                        lineHeight: 1.45,
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {opt.text}
+                    </div>
                   </div>
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

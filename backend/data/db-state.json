@@ -6,28 +6,24 @@
       "leaderName": "Aarav Sharma",
       "role": "PLAYER",
       "status": "ACTIVE",
-      "totalScore": 87,
+      "totalScore": 75,
       "breakdown": {
-        "tech": 50,
-        "puzzle": 25,
-        "speed": 2,
+        "tech": 0,
+        "puzzle": 0,
+        "speed": 0,
         "clue": 0,
-        "story": 10,
+        "story": 0,
         "teamwork": 0
       },
-      "penalty": 0,
-      "startedAt": "2026-10-11T10:43:37.622Z",
+      "penalty": 25,
+      "startedAt": null,
       "finishedAt": null,
-      "lastSolvedAt": "2026-10-11T11:56:54.020Z",
+      "lastSolvedAt": "2026-10-11T13:05:20.613Z",
       "location": "town",
       "stage": "hawkins",
       "storyProgress": 5,
-      "completedTasks": [
-        "ch1-quiz"
-      ],
-      "solvedChapters": [
-        1
-      ],
+      "completedTasks": [],
+      "solvedChapters": [],
       "unlockedLocations": {
         "town": true,
         "policeStation": true,
@@ -40,14 +36,14 @@
         "mind": false
       },
       "radiometerPins": [
-        "8",
+        null,
         null,
         null,
         null,
         null
       ],
       "radiometerSolved": [
-        true,
+        false,
         false,
         false,
         false,
@@ -56,7 +52,7 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T11:56:54.020Z"
+      "updatedAt": "2026-10-11T13:05:21.585Z"
     },
     "T02": {
       "id": "T02",
@@ -64,28 +60,24 @@
       "leaderName": "Maya Lin",
       "role": "PLAYER",
       "status": "ACTIVE",
-      "totalScore": 260,
+      "totalScore": 0,
       "breakdown": {
-        "tech": 150,
-        "puzzle": 50,
-        "speed": 30,
+        "tech": 0,
+        "puzzle": 0,
+        "speed": 0,
         "clue": 0,
-        "story": 30,
+        "story": 0,
         "teamwork": 0
       },
       "penalty": 0,
-      "startedAt": "2026-10-11T11:54:31.766Z",
+      "startedAt": null,
       "finishedAt": null,
-      "lastSolvedAt": "2026-10-11T11:56:46.146Z",
+      "lastSolvedAt": null,
       "location": "town",
       "stage": "hawkins",
       "storyProgress": 5,
-      "completedTasks": [
-        "ch1-quiz"
-      ],
-      "solvedChapters": [
-        1
-      ],
+      "completedTasks": [],
+      "solvedChapters": [],
       "unlockedLocations": {
         "town": true,
         "policeStation": true,
@@ -98,23 +90,23 @@
         "mind": false
       },
       "radiometerPins": [
-        "8",
         null,
-        "4",
+        null,
+        null,
         null,
         null
       ],
       "radiometerSolved": [
-        true,
         false,
-        true,
+        false,
+        false,
         false,
         false
       ],
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T11:56:46.146Z"
+      "updatedAt": "2026-10-11T03:14:39.006Z"
     },
     "T03": {
       "id": "T03",
@@ -294,7 +286,7 @@
         "teamwork": 0
       },
       "penalty": 0,
-      "startedAt": "2026-10-11T10:15:20.065Z",
+      "startedAt": "2026-10-11T18:40:49.451Z",
       "finishedAt": null,
       "lastSolvedAt": null,
       "location": "town",
@@ -330,7 +322,7 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T10:15:20.066Z"
+      "updatedAt": "2026-10-11T18:41:01.483Z"
     },
     "T07": {
       "id": "T07",
@@ -459,9 +451,9 @@
       "startedAt": null,
       "finishedAt": null,
       "lastSolvedAt": null,
-      "location": "mind",
-      "stage": "mind",
-      "storyProgress": 0,
+      "location": "town",
+      "stage": "hawkins",
+      "storyProgress": 10,
       "completedTasks": [],
       "solvedChapters": [],
       "unlockedLocations": {
@@ -492,7 +484,337 @@
       "radiometerCodeSolved": true,
       "unlockedHints": {},
       "createdAt": "2026-10-09T06:18:39.429Z",
-      "updatedAt": "2026-10-09T06:18:39.429Z"
+      "updatedAt": "2026-10-11T18:43:03.056Z"
+    },
+    "VECNA-TEST-SEQ": {
+      "id": "VECNA-TEST-SEQ",
+      "teamName": "Vecna Seq Squad",
+      "leaderName": "Henry Creel",
+      "role": "PLAYER",
+      "status": "ACTIVE",
+      "totalScore": 0,
+      "breakdown": {
+        "tech": 0,
+        "puzzle": 0,
+        "speed": 0,
+        "clue": 0,
+        "story": 0,
+        "teamwork": 0
+      },
+      "penalty": 0,
+      "startedAt": "2026-10-11T18:31:27.475Z",
+      "finishedAt": null,
+      "lastSolvedAt": null,
+      "location": "town",
+      "stage": "hawkins",
+      "storyProgress": 5,
+      "completedTasks": [],
+      "solvedChapters": [],
+      "unlockedLocations": {
+        "town": true,
+        "policeStation": true,
+        "byersHouse": true,
+        "radioTower": true,
+        "lab": false,
+        "forest": false,
+        "gate": false,
+        "upsidedown": false,
+        "mind": false
+      },
+      "radiometerPins": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "radiometerSolved": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "radiometerCodeSolved": false,
+      "unlockedHints": {},
+      "createdAt": "2026-10-11T18:31:27.475Z",
+      "updatedAt": "2026-10-11T18:31:27.475Z"
+    },
+    "HAWKINS-SCORE-TEST": {
+      "id": "HAWKINS-SCORE-TEST",
+      "teamName": "Hawkins Double Test",
+      "leaderName": "Dustin Henderson",
+      "role": "PLAYER",
+      "status": "ACTIVE",
+      "totalScore": 0,
+      "breakdown": {
+        "tech": 0,
+        "puzzle": 0,
+        "speed": 0,
+        "clue": 0,
+        "story": 0,
+        "teamwork": 0
+      },
+      "penalty": 0,
+      "startedAt": "2026-10-11T18:28:28.593Z",
+      "finishedAt": null,
+      "lastSolvedAt": null,
+      "location": "town",
+      "stage": "hawkins",
+      "storyProgress": 5,
+      "completedTasks": [],
+      "solvedChapters": [],
+      "unlockedLocations": {
+        "town": true,
+        "policeStation": true,
+        "byersHouse": true,
+        "radioTower": true,
+        "lab": false,
+        "forest": false,
+        "gate": false,
+        "upsidedown": false,
+        "mind": false
+      },
+      "radiometerPins": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "radiometerSolved": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "radiometerCodeSolved": false,
+      "unlockedHints": {},
+      "createdAt": "2026-10-11T18:28:28.593Z",
+      "updatedAt": "2026-10-11T18:28:28.593Z"
+    },
+    "VECNA-TEST-SEQ-1791743522368": {
+      "id": "VECNA-TEST-SEQ-1791743522368",
+      "teamName": "Vecna Seq Squad",
+      "leaderName": "Henry Creel",
+      "role": "VECNA",
+      "status": "ACTIVE",
+      "totalScore": 5,
+      "breakdown": {
+        "tech": 5,
+        "puzzle": 0,
+        "speed": 0,
+        "clue": 0,
+        "story": 0,
+        "teamwork": 0
+      },
+      "penalty": 0,
+      "startedAt": "2026-10-11T18:32:02.368Z",
+      "finishedAt": null,
+      "lastSolvedAt": null,
+      "location": "town",
+      "stage": "hawkins",
+      "storyProgress": 5,
+      "completedTasks": [],
+      "solvedChapters": [],
+      "unlockedLocations": {
+        "town": true,
+        "policeStation": true,
+        "byersHouse": true,
+        "radioTower": true,
+        "lab": false,
+        "forest": false,
+        "gate": false,
+        "upsidedown": false,
+        "mind": false
+      },
+      "radiometerPins": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "radiometerSolved": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "radiometerCodeSolved": false,
+      "unlockedHints": {},
+      "createdAt": "2026-10-11T18:32:02.368Z",
+      "updatedAt": "2026-10-11T18:32:02.376Z"
+    },
+    "HAWKINS-SCORE-TEST-1791743522436": {
+      "id": "HAWKINS-SCORE-TEST-1791743522436",
+      "teamName": "Hawkins Double Test",
+      "leaderName": "Dustin Henderson",
+      "role": "PLAYER",
+      "status": "ACTIVE",
+      "totalScore": 0,
+      "breakdown": {
+        "tech": 0,
+        "puzzle": 0,
+        "speed": 0,
+        "clue": 0,
+        "story": 0,
+        "teamwork": 0
+      },
+      "penalty": 0,
+      "startedAt": "2026-10-11T18:32:02.436Z",
+      "finishedAt": null,
+      "lastSolvedAt": null,
+      "location": "town",
+      "stage": "hawkins",
+      "storyProgress": 5,
+      "completedTasks": [],
+      "solvedChapters": [],
+      "unlockedLocations": {
+        "town": true,
+        "policeStation": true,
+        "byersHouse": true,
+        "radioTower": true,
+        "lab": false,
+        "forest": false,
+        "gate": false,
+        "upsidedown": false,
+        "mind": false
+      },
+      "radiometerPins": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "radiometerSolved": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "radiometerCodeSolved": false,
+      "unlockedHints": {},
+      "createdAt": "2026-10-11T18:32:02.436Z",
+      "updatedAt": "2026-10-11T18:32:02.436Z"
+    },
+    "VECNA-TEST-SEQ-1791743549282": {
+      "id": "VECNA-TEST-SEQ-1791743549282",
+      "teamName": "Vecna Seq Squad",
+      "leaderName": "Henry Creel",
+      "role": "VECNA",
+      "status": "ACTIVE",
+      "totalScore": 5,
+      "breakdown": {
+        "tech": 5,
+        "puzzle": 0,
+        "speed": 0,
+        "clue": 0,
+        "story": 0,
+        "teamwork": 0
+      },
+      "penalty": 0,
+      "startedAt": "2026-10-11T18:32:29.282Z",
+      "finishedAt": null,
+      "lastSolvedAt": null,
+      "location": "town",
+      "stage": "hawkins",
+      "storyProgress": 5,
+      "completedTasks": [],
+      "solvedChapters": [],
+      "unlockedLocations": {
+        "town": true,
+        "policeStation": true,
+        "byersHouse": true,
+        "radioTower": true,
+        "lab": false,
+        "forest": false,
+        "gate": false,
+        "upsidedown": false,
+        "mind": false
+      },
+      "radiometerPins": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "radiometerSolved": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "radiometerCodeSolved": false,
+      "unlockedHints": {},
+      "createdAt": "2026-10-11T18:32:29.282Z",
+      "updatedAt": "2026-10-11T18:32:29.289Z"
+    },
+    "HAWKINS-SCORE-TEST-1791743549352": {
+      "id": "HAWKINS-SCORE-TEST-1791743549352",
+      "teamName": "Hawkins Double Test",
+      "leaderName": "Dustin Henderson",
+      "role": "PLAYER",
+      "status": "ACTIVE",
+      "totalScore": 40,
+      "breakdown": {
+        "tech": 50,
+        "puzzle": 0,
+        "speed": 0,
+        "clue": 0,
+        "story": 0,
+        "teamwork": 0
+      },
+      "penalty": 10,
+      "startedAt": "2026-10-11T18:32:29.353Z",
+      "finishedAt": null,
+      "lastSolvedAt": "2026-10-11T18:32:29.355Z",
+      "location": "town",
+      "stage": "hawkins",
+      "storyProgress": 14,
+      "completedTasks": [
+        "ch1"
+      ],
+      "solvedChapters": [
+        1
+      ],
+      "unlockedLocations": {
+        "town": true,
+        "policeStation": true,
+        "byersHouse": true,
+        "radioTower": true,
+        "lab": false,
+        "forest": false,
+        "gate": false,
+        "upsidedown": false,
+        "mind": false
+      },
+      "radiometerPins": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "radiometerSolved": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "radiometerCodeSolved": false,
+      "unlockedHints": {
+        "ch1_hint_1": true
+      },
+      "createdAt": "2026-10-11T18:32:29.352Z",
+      "updatedAt": "2026-10-11T18:32:29.356Z"
     }
   },
   "chapters": [
@@ -2646,5 +2968,66 @@
       ]
     }
   ],
-  "activeSabotages": {}
+  "activeSabotages": {
+    "1791744164149": {
+      "id": 1791744164149,
+      "kind": "MESSAGE",
+      "target": "all",
+      "message": "I KNOW WHERE YOU ARE.",
+      "operatorName": "HENRY CREEL",
+      "expiresAt": 1791744194149
+    },
+    "1791744164154": {
+      "id": 1791744164154,
+      "kind": "MESSAGE",
+      "target": "all",
+      "message": "I KNOW WHERE YOU ARE.",
+      "operatorName": "HENRY CREEL",
+      "expiresAt": 1791744174154
+    }
+  },
+  "vecnaProgress": {
+    "VECNA-TEST-SEQ": {
+      "1-0": {
+        "status": "failed",
+        "earnedPoints": 0,
+        "chosenAnswer": "WRONG_ANSWER",
+        "submittedAt": "2026-10-11T18:29:35.765Z"
+      },
+      "1-1": {
+        "status": "solved",
+        "earnedPoints": 5,
+        "chosenAnswer": "A",
+        "submittedAt": "2026-10-11T18:29:35.767Z"
+      }
+    },
+    "VECNA-TEST-SEQ-1791743522368": {
+      "1-0": {
+        "status": "failed",
+        "earnedPoints": 0,
+        "chosenAnswer": "WRONG_ANSWER",
+        "submittedAt": "2026-10-11T18:32:02.373Z"
+      },
+      "1-1": {
+        "status": "solved",
+        "earnedPoints": 5,
+        "chosenAnswer": "A",
+        "submittedAt": "2026-10-11T18:32:02.375Z"
+      }
+    },
+    "VECNA-TEST-SEQ-1791743549282": {
+      "1-0": {
+        "status": "failed",
+        "earnedPoints": 0,
+        "chosenAnswer": "WRONG_ANSWER",
+        "submittedAt": "2026-10-11T18:32:29.287Z"
+      },
+      "1-1": {
+        "status": "solved",
+        "earnedPoints": 5,
+        "chosenAnswer": "A",
+        "submittedAt": "2026-10-11T18:32:29.288Z"
+      }
+    }
+  }
 }

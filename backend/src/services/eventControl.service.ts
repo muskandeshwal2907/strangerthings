@@ -62,6 +62,14 @@ export class EventControlService {
   }
 
   public static async startEvent(adminId: number = 1): Promise<EventRecord> {
+    // Validate all teams have a valid role assignment (PLAYER or VECNA)
+    const { db } = await import("./db.service");
+    const allTeams = db.getAllTeams();
+    const invalidTeams = allTeams.filter((t) => t.role !== "PLAYER" && t.role !== "VECNA");
+    if (invalidTeams.length > 0) {
+      throw new Error(`Cannot start event: ${invalidTeams.length} squad(s) have unassigned or invalid roles.`);
+    }
+
     const pool = tidb.pool;
     if (pool) {
       try {
@@ -107,6 +115,11 @@ export class EventControlService {
   }
 
   public static async resumeEvent(adminId: number = 1): Promise<EventRecord> {
+    const currentState = await this.getEventState();
+    if (currentState.status === "ended") {
+      throw new Error("Cannot resume an event that has permanently ended.");
+    }
+
     const pool = tidb.pool;
     if (pool) {
       try {
@@ -123,6 +136,26 @@ export class EventControlService {
     return state;
   }
 
+  public static async openLogin(adminId: number = 1): Promise<EventRecord> {
+    const currentState = await this.getEventState();
+    if (currentState.status === "ended") {
+      throw new Error("Cannot open login for an event that has ended.");
+    }
+
+    const pool = tidb.pool;
+    if (pool) {
+      try {
+        await pool.query("UPDATE events SET login_open = 1 WHERE event_id = 1");
+      } catch {}
+    }
+    this.localEvent.loginOpen = true;
+    await this.logAudit(adminId, "open_login");
+
+    const state = await this.getEventState();
+    socketService.broadcast("event:state_changed", state);
+    return state;
+  }
+
   public static async closeLogin(adminId: number = 1): Promise<EventRecord> {
     const pool = tidb.pool;
     if (pool) {
@@ -133,8 +166,29 @@ export class EventControlService {
     this.localEvent.loginOpen = false;
     await this.logAudit(adminId, "close_login");
 
-    socketService.broadcast("event:state_changed", this.localEvent);
-    return this.getEventState();
+    const state = await this.getEventState();
+    socketService.broadcast("event:state_changed", state);
+    return state;
+  }
+
+  public static async openSubmissions(adminId: number = 1): Promise<EventRecord> {
+    const currentState = await this.getEventState();
+    if (currentState.status === "ended") {
+      throw new Error("Cannot open submissions for an event that has ended.");
+    }
+
+    const pool = tidb.pool;
+    if (pool) {
+      try {
+        await pool.query("UPDATE events SET submissions_open = 1 WHERE event_id = 1");
+      } catch {}
+    }
+    this.localEvent.submissionsOpen = true;
+    await this.logAudit(adminId, "open_submissions");
+
+    const state = await this.getEventState();
+    socketService.broadcast("event:state_changed", state);
+    return state;
   }
 
   public static async stopSubmissions(adminId: number = 1): Promise<EventRecord> {
@@ -147,8 +201,9 @@ export class EventControlService {
     this.localEvent.submissionsOpen = false;
     await this.logAudit(adminId, "stop_submissions");
 
-    socketService.broadcast("event:state_changed", this.localEvent);
-    return this.getEventState();
+    const state = await this.getEventState();
+    socketService.broadcast("event:state_changed", state);
+    return state;
   }
 
   public static async endEvent(adminId: number = 1): Promise<EventRecord> {
@@ -166,7 +221,21 @@ export class EventControlService {
     this.localEvent.endedAt = new Date().toISOString();
     await this.logAudit(adminId, "event_end");
 
+    // Invalidate all active Hawkins team sessions and Vecna sessions
+    const { SessionService } = await import("./session.service");
+    await SessionService.resetAllSessions(adminId).catch(() => {});
+    await SessionService.deleteVecnaSession(1).catch(() => {});
+    await SessionService.deleteVecnaSession(2).catch(() => {});
+
+    // Terminate all socket connections and clear presence
+    socketService.clearAllOnlineTeams();
     socketService.broadcast("event:state_changed", this.localEvent);
+    socketService.broadcast("event:ended", {
+      status: "ended",
+      message: "The tournament has officially ended. All active sessions are terminated.",
+      endedAt: this.localEvent.endedAt,
+    });
+
     return this.getEventState();
   }
 

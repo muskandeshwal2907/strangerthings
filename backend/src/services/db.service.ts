@@ -20,12 +20,14 @@ interface DatabaseSnapshot {
   teams: Record<string, TeamRecord>;
   chapters: ChapterDef[];
   activeSabotages: Record<string, ActiveSabotage>; // key = sabotageId
+  vecnaProgress?: Record<string, Record<string, any>>;
 }
 
 class DatabaseService {
   private teams = new Map<string, TeamRecord>();
   private chapters: ChapterDef[] = [];
   private activeSabotages = new Map<string, ActiveSabotage>();
+  private vecnaQuestionProgress = new Map<string, Record<string, any>>();
   private isTiDBOnline = false;
 
   constructor() {
@@ -132,6 +134,11 @@ class DatabaseService {
             this.activeSabotages.set(k, v)
           );
         }
+        if (parsed.vecnaProgress) {
+          Object.entries(parsed.vecnaProgress).forEach(([k, v]) =>
+            this.vecnaQuestionProgress.set(k, v)
+          );
+        }
         console.log(
           `[DATABASE] Loaded snapshot: ${this.teams.size} teams, ${this.chapters.length} chapters.`
         );
@@ -156,10 +163,14 @@ class DatabaseService {
       const sabotagesObj: Record<string, ActiveSabotage> = {};
       this.activeSabotages.forEach((s, k) => (sabotagesObj[k] = s));
 
+      const vecnaProgObj: Record<string, Record<string, any>> = {};
+      this.vecnaQuestionProgress.forEach((p, k) => (vecnaProgObj[k] = p));
+
       const snapshot: DatabaseSnapshot = {
         teams: teamsObj,
         chapters: this.chapters,
         activeSabotages: sabotagesObj,
+        vecnaProgress: vecnaProgObj,
       };
 
       fs.writeFileSync(STATE_FILE, JSON.stringify(snapshot, null, 2), "utf-8");
@@ -274,6 +285,7 @@ class DatabaseService {
           unlocked_locations, unlocked_hints, completed_tasks, solved_chapters, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
+          role = VALUES(role),
           team_name = VALUES(team_name),
           squad_leader = VALUES(squad_leader),
           total_score = VALUES(total_score),
@@ -385,7 +397,7 @@ class DatabaseService {
   }
 
   public getAllTeams(): TeamRecord[] {
-    return Array.from(this.teams.values()).filter((t) => t.role === "PLAYER");
+    return Array.from(this.teams.values()).filter((t) => t.role === "PLAYER" || t.role === "VECNA");
   }
 
   public createTeam(teamName: string, leaderName: string, customId?: string, initialScore = 0): TeamRecord {
@@ -476,9 +488,18 @@ class DatabaseService {
       updatedAt: new Date().toISOString(),
     };
 
+    if (updates.taskScores) {
+      updated.taskScores = {
+        ...(existing.taskScores || {}),
+        ...updates.taskScores,
+      };
+    }
+
     // Recompute total score if breakdown or penalty changed
     if (updates.breakdown || updates.penalty !== undefined) {
       updated.totalScore = ScoreService.calculateTotalScore(updated.breakdown, updated.penalty);
+    } else if (updates.totalScore !== undefined) {
+      updated.totalScore = updates.totalScore;
     }
 
     this.teams.set(teamId, updated);
@@ -659,6 +680,45 @@ class DatabaseService {
       }
     });
     return active;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Vecna Question Progression & Sequential Access
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  public getVecnaProgress(
+    teamId: string,
+    trialId: number
+  ): Record<number, { status: "solved" | "failed"; earnedPoints: number; chosenAnswer: string; submittedAt: string }> {
+    const teamMap = this.vecnaQuestionProgress.get(teamId) || {};
+    const trialProgress: Record<number, { status: "solved" | "failed"; earnedPoints: number; chosenAnswer: string; submittedAt: string }> = {};
+    for (let i = 0; i < 10; i++) {
+      const key = `${trialId}-${i}`;
+      if (teamMap[key]) {
+        trialProgress[i] = teamMap[key];
+      }
+    }
+    return trialProgress;
+  }
+
+  public recordVecnaAttempt(
+    teamId: string,
+    trialId: number,
+    questionIdx: number,
+    status: "solved" | "failed",
+    earnedPoints: number,
+    chosenAnswer: string
+  ): void {
+    const key = `${trialId}-${questionIdx}`;
+    const teamMap = this.vecnaQuestionProgress.get(teamId) || {};
+    teamMap[key] = {
+      status,
+      earnedPoints,
+      chosenAnswer,
+      submittedAt: new Date().toISOString(),
+    };
+    this.vecnaQuestionProgress.set(teamId, teamMap);
+    this.saveSnapshot();
   }
 }
 

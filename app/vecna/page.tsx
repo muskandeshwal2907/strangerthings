@@ -12,6 +12,8 @@ import {
   publish,
   subscribe,
   RealtimeMessage,
+  getSocket,
+  authenticateSocket,
 } from "@/lib/realtime";
 import { API_BASE } from "@/lib/api";
 import CinematicBackground from "@/components/CinematicBackground";
@@ -86,18 +88,7 @@ const VECNA_TRIALS: VecnaTrial[] = [
   {
     id: 5,
     shortName: "STAGE 5",
-    title: "STAGE 5: DEEP WOODS RECON",
-    subtitle: "ROANE COUNTY WOODS // PINE RUNES",
-    category: "FIELD INVESTIGATION",
-    description:
-      "Field investigation into deep woods anomalies, coordinate markers, and dimensional boundaries.",
-    points: 50,
-    powersGranted: "TIME FREEZE · DEDUCT 2 MINS",
-  },
-  {
-    id: 6,
-    shortName: "STAGE 6",
-    title: "STAGE 6: RADIO TRANSMISSION",
+    title: "STAGE 5: RADIO TRANSMISSION",
     subtitle: "SIGNAL INTELLIGENCE // MORSE, BINARY & CIPHERS",
     category: "SIGNAL DECODING",
     description:
@@ -106,9 +97,9 @@ const VECNA_TRIALS: VecnaTrial[] = [
     powersGranted: "FREQUENCY SHIFT · STATIC SURGE",
   },
   {
-    id: 7,
-    shortName: "STAGE 7",
-    title: "STAGE 7: LAB-TYPE TASKS",
+    id: 6,
+    shortName: "STAGE 6",
+    title: "STAGE 6: LAB-TYPE TASKS",
     subtitle: "HAWKINS LAB EXPERIMENTAL TERMINAL // SYSTEM CHALLENGES",
     category: "TECHNICAL EXPERIMENTS",
     description:
@@ -131,6 +122,8 @@ export default function VecnaPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   // Solved status: keyed by `${trialId}-${qIdx}`
   const [solvedQuestions, setSolvedQuestions] = useState<Record<string, boolean>>({});
+  // Failed status: keyed by `${trialId}-${qIdx}` (wrong answers, permanently locked with 0 pts)
+  const [failedQuestions, setFailedQuestions] = useState<Record<string, boolean>>({});
   const [trialResults, setTrialResults] = useState<Record<number, boolean>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -163,15 +156,70 @@ export default function VecnaPage() {
       return;
     }
     setSession(s);
+    if ((s as any).token) {
+      authenticateSocket((s as any).token);
+    }
   }, [router]);
+
+  // Realtime logout & event termination handler (Issue 4 & 5)
+  useEffect(() => {
+    const unsub = subscribe((msg: any) => {
+      if (msg.type === "force_logout" || (msg.type === "event_state" && msg.status === "ended")) {
+        clearSession();
+        router.push("/");
+      }
+    });
+    return () => unsub();
+  }, [router]);
+
+  // Fetch authoritative trial progress from backend to enforce sequential progression (Issue 3)
+  useEffect(() => {
+    let isCancelled = false;
+    const fetchProgress = async () => {
+      try {
+        const stored = getStoredSession();
+        const token = stored && (stored as any).token ? (stored as any).token : "";
+        const res = await fetch(`${API_BASE}/vecna/trials/${activeTrialId}/progress`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok && !isCancelled) {
+          const data = await res.json();
+          if (data.success && data.progress) {
+            Object.entries(data.progress).forEach(([idxStr, att]: [string, any]) => {
+              const idx = parseInt(idxStr, 10);
+              if (att.status === "solved") {
+                setSolvedQuestions((prev) => ({ ...prev, [`${activeTrialId}-${idx}`]: true }));
+              } else if (att.status === "failed") {
+                setFailedQuestions((prev) => ({ ...prev, [`${activeTrialId}-${idx}`]: true }));
+              }
+              if (att.chosenAnswer) {
+                setSelectedAnswers((prev) => ({ ...prev, [`${activeTrialId}-${idx}`]: att.chosenAnswer }));
+              }
+            });
+            if (typeof data.maxUnlockedIdx === "number") {
+              setActiveQuestionIdx((curr) => Math.min(curr, data.maxUnlockedIdx));
+            }
+          }
+        }
+      } catch {}
+    };
+    fetchProgress();
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeTrialId]);
 
   const handleLogout = () => {
     sfx("click");
+    try {
+      getSocket()?.emit("team:logout");
+    } catch {}
     clearSession();
     router.push("/");
   };
 
   const handleSelectOption = (trialId: number, qIdx: number, optionId: string) => {
+    if (isLevelAttempted(trialId, qIdx)) return;
     sfx("click");
     setSelectedAnswers((prev) => ({
       ...prev,
@@ -184,73 +232,131 @@ export default function VecnaPage() {
   const currentQuestions = STAGE_QUIZ_CONFIGS[currentTrial.id]?.questions || [];
   const currentQuestion = currentQuestions[activeQuestionIdx] || currentQuestions[0];
   const totalQuestionsForTrial = currentQuestions.length;
-  const isQuestionSolved = !!solvedQuestions[`${currentTrial.id}-${activeQuestionIdx}`];
 
-  // Scoring logic: 1 question solved = 5 points across all 70 questions (350 points max)
+  const isLevelAttempted = (trialId: number, idx: number) =>
+    Boolean(solvedQuestions[`${trialId}-${idx}`] || failedQuestions[`${trialId}-${idx}`]);
+
+  const isLevelUnlocked = (trialId: number, idx: number) => {
+    if (idx === 0) return true;
+    for (let i = 0; i < idx; i++) {
+      if (!isLevelAttempted(trialId, i)) return false;
+    }
+    return true;
+  };
+
+  const isQuestionSolved = !!solvedQuestions[`${currentTrial.id}-${activeQuestionIdx}`];
+  const isQuestionFailed = !!failedQuestions[`${currentTrial.id}-${activeQuestionIdx}`];
+  const isQuestionAttempted = isQuestionSolved || isQuestionFailed;
+
+  // Scoring logic: 1 question solved = 5 points across all 60 questions (300 points max)
+  const [spentPowerPoints, setSpentPowerPoints] = useState(0);
   const totalVecnaSolved = Object.values(solvedQuestions).filter(Boolean).length;
-  const totalVecnaScore = totalVecnaSolved * 5;
+  const totalVecnaScore = Math.max(0, totalVecnaSolved * 5 - spentPowerPoints);
   const currentTrialSolvedCount = currentQuestions.filter((_, idx) => !!solvedQuestions[`${currentTrial.id}-${idx}`]).length;
   const currentTrialScore = currentTrialSolvedCount * 5;
 
-  const handleVerifyCurrentQuestion = () => {
-    if (!currentQuestion) return;
-
-    // If already solved, advance to next question
-    if (isQuestionSolved) {
-      if (activeQuestionIdx < totalQuestionsForTrial - 1) {
-        handleNextLevel();
-      } else {
-        sfx("boom");
-        setSuccessMessage("ALL 10 LEVELS CLEARED · 50/50 PTS UNLOCKED!");
-        setTimeout(() => setSuccessMessage(null), 2500);
-      }
-      return;
-    }
+  const handleVerifyCurrentQuestion = async () => {
+    if (!currentQuestion || isQuestionAttempted) return;
 
     let chosen = selectedAnswers[`${currentTrial.id}-${activeQuestionIdx}`];
     if (!chosen) {
-      setErrorMessage("SELECT AN OPTION BEFORE VERIFYING.");
+      setErrorMessage("COMPLETE THE QUESTION BEFORE SUBMITTING.");
       setTimeout(() => setErrorMessage(null), 2500);
       return;
     }
 
-    if (chosen === currentQuestion.correctAnswerId) {
-      sfx("boom");
-      setSolvedQuestions((prev) => ({
-        ...prev,
-        [`${currentTrial.id}-${activeQuestionIdx}`]: true,
-      }));
-      setSuccessMessage(`LEVEL ${activeQuestionIdx + 1} OVERRIDE CONFIRMED (+5 PTS)`);
-      setErrorMessage(null);
+    try {
+      const stored = getStoredSession();
+      const token = stored && (stored as any).token ? (stored as any).token : "";
+      const res = await fetch(`${API_BASE}/vecna/trials/${currentTrial.id}/questions/${activeQuestionIdx}/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ answer: chosen }),
+      });
 
-      // Check if all questions in this trial will be cleared
-      const willBeAllCleared = currentQuestions.every((_, idx) =>
-        idx === activeQuestionIdx ? true : !!solvedQuestions[`${currentTrial.id}-${idx}`]
-      );
-      if (willBeAllCleared) {
-        setTrialResults((prev) => ({ ...prev, [currentTrial.id]: true }));
-        publish({
-          type: "sabotage",
-          kind: "MESSAGE",
-          target: "all",
-          message: `VECNA PROTOCOL: TRIAL ${currentTrial.id} FULLY BREACHED. POWER UNLOCKED: ${currentTrial.powersGranted}`,
-          ts: Date.now(),
-        });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (data.error === "SEQUENTIAL_PROGRESSION_REQUIRED") {
+          setErrorMessage(data.message || "COMPLETE PRECEDING LEVEL FIRST.");
+          sfx("err");
+          setTimeout(() => setErrorMessage(null), 3000);
+          return;
+        }
+        if (data.error === "EVENT_PAUSED" || data.error === "SUBMISSIONS_CLOSED") {
+          setErrorMessage(data.message || "TOURNAMENT ACTIONS SUSPENDED.");
+          sfx("err");
+          setTimeout(() => setErrorMessage(null), 3000);
+          return;
+        }
       }
 
-      // Auto advance to next question after brief delay
-      if (activeQuestionIdx < totalQuestionsForTrial - 1) {
-        setTimeout(() => {
-          setActiveQuestionIdx((i) => i + 1);
-          setSuccessMessage(null);
-        }, 650);
+      const isCorrect = data.isCorrect ?? (chosen.trim().toUpperCase() === currentQuestion.correctAnswerId.trim().toUpperCase());
+
+      if (isCorrect) {
+        sfx("boom");
+        setSolvedQuestions((prev) => ({
+          ...prev,
+          [`${currentTrial.id}-${activeQuestionIdx}`]: true,
+        }));
+        setSuccessMessage(`LEVEL ${activeQuestionIdx + 1} OVERRIDE CONFIRMED (+5 PTS)`);
+        setErrorMessage(null);
+
+        // Check if all questions in this trial will be cleared
+        const willBeAllCleared = currentQuestions.every((_, idx) =>
+          idx === activeQuestionIdx ? true : !!solvedQuestions[`${currentTrial.id}-${idx}`]
+        );
+        if (willBeAllCleared) {
+          setTrialResults((prev) => ({ ...prev, [currentTrial.id]: true }));
+          publish({
+            type: "sabotage",
+            kind: "MESSAGE",
+            target: "all",
+            message: `VECNA PROTOCOL: TRIAL ${currentTrial.id} FULLY BREACHED. POWER UNLOCKED: ${currentTrial.powersGranted}`,
+            ts: Date.now(),
+          });
+        }
+
+        // Auto advance to next question after brief delay
+        if (activeQuestionIdx < totalQuestionsForTrial - 1) {
+          setTimeout(() => {
+            setActiveQuestionIdx((i) => i + 1);
+            setSuccessMessage(null);
+          }, 650);
+        } else {
+          setTimeout(() => setSuccessMessage(null), 2500);
+        }
       } else {
-        setTimeout(() => setSuccessMessage(null), 2500);
+        sfx("err");
+        setFailedQuestions((prev) => ({
+          ...prev,
+          [`${currentTrial.id}-${activeQuestionIdx}`]: true,
+        }));
+        setErrorMessage(`INCORRECT VECTOR · LEVEL ${activeQuestionIdx + 1} LOCKED (0 PTS)`);
+        setSuccessMessage(null);
+        setTimeout(() => setErrorMessage(null), 3000);
       }
-    } else {
-      sfx("err");
-      setErrorMessage("[ANOMALY] INCORRECT VECTOR. ACCESS DENIED.");
-      setTimeout(() => setErrorMessage(null), 2500);
+    } catch (e) {
+      // Local fallback
+      const isCorrect = chosen.trim().toUpperCase() === currentQuestion.correctAnswerId.trim().toUpperCase();
+      if (isCorrect) {
+        sfx("boom");
+        setSolvedQuestions((prev) => ({
+          ...prev,
+          [`${currentTrial.id}-${activeQuestionIdx}`]: true,
+        }));
+        setSuccessMessage(`LEVEL ${activeQuestionIdx + 1} OVERRIDE CONFIRMED (+5 PTS)`);
+      } else {
+        sfx("err");
+        setFailedQuestions((prev) => ({
+          ...prev,
+          [`${currentTrial.id}-${activeQuestionIdx}`]: true,
+        }));
+        setErrorMessage(`INCORRECT VECTOR · LEVEL ${activeQuestionIdx + 1} LOCKED (0 PTS)`);
+      }
     }
   };
 
@@ -265,6 +371,12 @@ export default function VecnaPage() {
 
   const handleNextLevel = () => {
     sfx("click");
+    if (!isLevelAttempted(currentTrial.id, activeQuestionIdx)) {
+      setErrorMessage("COMPLETE CURRENT LEVEL BEFORE ADVANCING.");
+      sfx("err");
+      setTimeout(() => setErrorMessage(null), 2500);
+      return;
+    }
     if (activeQuestionIdx < totalQuestionsForTrial - 1) {
       setActiveQuestionIdx((i) => i + 1);
       setErrorMessage(null);
@@ -274,14 +386,43 @@ export default function VecnaPage() {
 
   const handleSendMessage = (target: "all" | string, message: string) => {
     sfx("boom");
+
+    const TEAM_MAP: Record<string, string> = {
+      "Null Pointers": "T01",
+      "Stack Smashers": "T02",
+      "Rift Runners": "T03",
+      "Byte Byters": "T04",
+      "Shadow Walkers": "T05",
+      "Signal Seekers": "T05",
+      "Hellfire Club": "T06",
+      "Hawkins AV Club": "T07",
+      "Mind Flayers": "T08",
+    };
+    const targetTeamId = target === "all" ? undefined : (TEAM_MAP[target] || target);
+    const targetTeamName = target === "all" ? undefined : target;
+
     publish({
       type: "sabotage",
       kind: "MESSAGE",
       target,
+      targetTeamId,
+      targetTeamName,
       message,
       ts: Date.now(),
     });
-    // Persist to Express backend Vecna approval queue (Port 5000)
+
+    const sock = getSocket();
+    if (sock && sock.connected) {
+      sock.emit("sabotage", {
+        kind: "MESSAGE",
+        target,
+        targetTeamId,
+        message,
+        durationSec: 10,
+      });
+    }
+
+    // Persist to Express backend Vecna approval queue (Port 5055/5000)
     try {
       const stored = getStoredSession();
       const token = stored && (stored as any).token ? (stored as any).token : "";
@@ -294,7 +435,7 @@ export default function VecnaPage() {
         body: JSON.stringify({
           sourceType: "custom",
           recipientScope: target === "all" ? "all_teams" : "selected_teams",
-          selectedTeamIds: target === "all" ? undefined : [target],
+          selectedTeamIds: target === "all" ? undefined : [targetTeamId || target],
           bodyText: message.slice(0, 150),
         }),
       }).catch(() => {});
@@ -311,18 +452,31 @@ export default function VecnaPage() {
 
   const handleExecuteTrigger = (action: TriggerAction) => {
     sfx("boom");
-    const kind = (action.id === "RADIO_DISTORTION" ? "SIGNAL_JAM" : action.id) as any;
+    const cost = action.totalCost || (action.targetTeams && action.targetTeams.length > 0 ? action.targetTeams.length * 10 : 10);
+    setSpentPowerPoints((prev) => prev + cost);
+
+    const kind = action.id;
+    const duration = action.id === "LOCK" ? 120 : 45;
+    const targetTeams = action.targetTeams || [];
+
     publish({
       type: "sabotage",
       kind,
       target: selectedLocation,
+      teams: targetTeams,
+      duration,
       ts: Date.now(),
     });
     // Persist in database
     fetch("/api/vecna/sabotage", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target: selectedLocation, kind, duration: 45 }),
+      body: JSON.stringify({
+        target: selectedLocation,
+        kind,
+        duration,
+        targetTeams,
+      }),
     }).catch(() => {});
     setIsPowersOpen(false);
   };
@@ -451,7 +605,7 @@ export default function VecnaPage() {
                 textShadow: "0 0 10px rgba(255, 45, 58, 0.8)",
               }}
             >
-              {String(totalVecnaScore).padStart(3, "0")} / 350
+              {totalVecnaScore}
             </div>
           </div>
         </div>
@@ -602,10 +756,10 @@ export default function VecnaPage() {
         style={{
           position: "relative",
           zIndex: 10,
-          maxWidth: "1240px",
+          maxWidth: "min(1600px, 98vw)",
           width: "100%",
           margin: "0 auto",
-          padding: "26px 20px 140px 20px",
+          padding: "20px 16px 140px 16px",
           boxSizing: "border-box",
           flex: 1,
         }}
@@ -692,11 +846,20 @@ export default function VecnaPage() {
             {Array.from({ length: 10 }).map((_, idx) => {
               const isCurr = activeQuestionIdx === idx;
               const isSolved = !!solvedQuestions[`${currentTrial.id}-${idx}`];
+              const isFailed = !!failedQuestions[`${currentTrial.id}-${idx}`];
+              const isUnlocked = isLevelUnlocked(currentTrial.id, idx);
               return (
                 <button
                   key={idx}
                   type="button"
+                  disabled={!isUnlocked}
                   onClick={() => {
+                    if (!isUnlocked) {
+                      sfx("err");
+                      setErrorMessage(`LEVEL ${idx + 1} LOCKED · COMPLETE PRECEDING LEVEL FIRST`);
+                      setTimeout(() => setErrorMessage(null), 2500);
+                      return;
+                    }
                     sfx("click");
                     setActiveQuestionIdx(idx);
                     setErrorMessage(null);
@@ -713,21 +876,31 @@ export default function VecnaPage() {
                       ? "1.5px solid #ff2d3a"
                       : isSolved
                       ? "1px solid #81c784"
-                      : "1px solid rgba(255, 45, 58, 0.25)",
+                      : isFailed
+                      ? "1px solid #e57373"
+                      : isUnlocked
+                      ? "1px solid rgba(255, 45, 58, 0.35)"
+                      : "1px solid rgba(255, 45, 58, 0.15)",
                     background: isCurr
                       ? "#ff2d3a"
                       : isSolved
                       ? "rgba(129, 199, 132, 0.15)"
-                      : "rgba(15, 3, 6, 0.7)",
-                    color: isCurr ? "#000000" : isSolved ? "#81c784" : "#ffb3ba",
+                      : isFailed
+                      ? "rgba(229, 115, 115, 0.15)"
+                      : isUnlocked
+                      ? "rgba(15, 3, 6, 0.7)"
+                      : "rgba(10, 2, 4, 0.4)",
+                    color: isCurr ? "#000000" : isSolved ? "#81c784" : isFailed ? "#e57373" : isUnlocked ? "#ffb3ba" : "rgba(255, 179, 186, 0.3)",
                     fontWeight: isCurr ? 900 : "normal",
                     fontSize: "11px",
-                    cursor: "pointer",
+                    cursor: isUnlocked ? "pointer" : "not-allowed",
                     boxShadow: isCurr ? "0 0 10px #ff2d3a" : "none",
+                    opacity: isUnlocked ? 1 : 0.45,
                     transition: "all 0.12s ease",
                   }}
+                  title={!isUnlocked ? "Locked until preceding question is completed" : `Level ${idx + 1}`}
                 >
-                  {idx + 1}
+                  {isSolved ? "✔" : isFailed ? "✕" : idx + 1}
                 </button>
               );
             })}
@@ -769,21 +942,6 @@ export default function VecnaPage() {
           >
             {/* Left Header Section */}
             <div style={{ flex: 1, minWidth: "260px" }}>
-              <div
-                style={{
-                  display: "inline-block",
-                  fontSize: "10px",
-                  fontFamily: "'Courier New', monospace",
-                  fontWeight: 900,
-                  color: "#8f231e",
-                  letterSpacing: ".15em",
-                  marginBottom: "4px",
-                  borderBottom: "1px dashed #8f231e",
-                  paddingBottom: "2px",
-                }}
-              >
-                [VECNA PROTOCOL DOSSIER // STAGE {currentTrial.id} OF 7 · LEVEL {activeQuestionIdx + 1} OF 10]
-              </div>
               <h2
                 style={{
                   fontFamily:
@@ -858,7 +1016,7 @@ export default function VecnaPage() {
                   letterSpacing: "0.06em",
                 }}
               >
-                TRIAL: {currentTrialScore}/50 PTS · TOTAL: {totalVecnaScore}/350 PTS
+                TRIAL: {currentTrialScore} PTS · TOTAL: {totalVecnaScore} PTS
               </div>
             </div>
           </div>
@@ -971,21 +1129,21 @@ export default function VecnaPage() {
               <button
                 type="button"
                 onClick={handleNextLevel}
-                disabled={activeQuestionIdx === totalQuestionsForTrial - 1}
+                disabled={activeQuestionIdx === totalQuestionsForTrial - 1 || !isLevelAttempted(currentTrial.id, activeQuestionIdx)}
                 style={{
                   padding: "8px 14px",
                   background:
-                    activeQuestionIdx === totalQuestionsForTrial - 1
+                    activeQuestionIdx === totalQuestionsForTrial - 1 || !isLevelAttempted(currentTrial.id, activeQuestionIdx)
                       ? "rgba(0,0,0,0.06)"
                       : "#e6dcc6",
                   color:
-                    activeQuestionIdx === totalQuestionsForTrial - 1
+                    activeQuestionIdx === totalQuestionsForTrial - 1 || !isLevelAttempted(currentTrial.id, activeQuestionIdx)
                       ? "rgba(0,0,0,0.3)"
                       : "#2a1e15",
                   border: "1.5px solid #9c8973",
                   borderRadius: "3px",
                   cursor:
-                    activeQuestionIdx === totalQuestionsForTrial - 1
+                    activeQuestionIdx === totalQuestionsForTrial - 1 || !isLevelAttempted(currentTrial.id, activeQuestionIdx)
                       ? "not-allowed"
                       : "pointer",
                   fontFamily: "'Courier New', monospace",
@@ -993,19 +1151,21 @@ export default function VecnaPage() {
                   fontWeight: 800,
                   letterSpacing: "0.1em",
                 }}
+                title={!isLevelAttempted(currentTrial.id, activeQuestionIdx) ? "Complete current level before moving to next" : "Next level"}
               >
                 NEXT LVL ▶
               </button>
             </div>
 
-            {/* Right: Submit Button */}
+            {/* Right: Dedicated Submit Button */}
             <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
               <button
                 id="vecna-override-submit-btn"
                 type="button"
                 onClick={handleVerifyCurrentQuestion}
+                disabled={isQuestionAttempted}
                 style={{
-                  background: isQuestionSolved ? "#2e6930" : "#8f231e",
+                  background: isQuestionSolved ? "#2e6930" : isQuestionFailed ? "#66181b" : "#8f231e",
                   color: "#ffffff",
                   fontFamily: "'Benguiat Bold', 'ITC Benguiat', serif",
                   fontSize: "13.5px",
@@ -1014,31 +1174,26 @@ export default function VecnaPage() {
                   padding: "12px 26px",
                   border: "none",
                   borderRadius: "3px",
-                  cursor: "pointer",
+                  cursor: isQuestionAttempted ? "default" : "pointer",
                   boxShadow: isQuestionSolved
                     ? "0 3px 12px rgba(46, 105, 48, 0.45)"
+                    : isQuestionFailed
+                    ? "0 3px 12px rgba(102, 24, 27, 0.45)"
                     : "0 3px 12px rgba(143, 35, 30, 0.45)",
                   transition: "all 0.2s ease",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "8px",
                   textTransform: "uppercase",
+                  opacity: isQuestionAttempted ? 0.9 : 1,
                 }}
               >
                 {isQuestionSolved ? (
-                  activeQuestionIdx < totalQuestionsForTrial - 1 ? (
-                    <>
-                      <span>✓ LVL {activeQuestionIdx + 1} CLEARED (+5 PTS)</span>
-                      <span>—</span>
-                      <span>NEXT LVL ▶</span>
-                    </>
-                  ) : (
-                    <span>✓ ALL 10 LEVELS CLEARED (50/50 PTS)</span>
-                  )
+                  <span>✓ LEVEL CLEARED (+5 PTS)</span>
+                ) : isQuestionFailed ? (
+                  <span>✕ VECTOR LOCKED (0 PTS)</span>
                 ) : (
-                  <>
-                    <span>⚡ VERIFY LEVEL OVERRIDE (+5 PTS)</span>
-                  </>
+                  <span>SUBMIT LEVEL (+5 PTS)</span>
                 )}
               </button>
             </div>
@@ -1266,6 +1421,7 @@ export default function VecnaPage() {
                 selectedLocation={selectedLocation}
                 onSelectLocation={(locId) => setSelectedLocation(locId)}
                 onTriggerAction={handleExecuteTrigger}
+                currentVecnaScore={totalVecnaScore}
               />
             </motion.div>
           </motion.div>

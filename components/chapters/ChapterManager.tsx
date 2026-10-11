@@ -129,30 +129,6 @@ export const CHAPTERS: ChapterDef[] = [
   {
     id: 5,
     label: "CHAPTER 5",
-    tag: "CARVED RUNES",
-    archiveSector: "ROANE COUNTY WOODS",
-    archiveTitle: "FOREST",
-    archiveSubtitle: "DEEP WOODS · TRAIL 7 COORDINATE RUNES",
-    archiveLines: [
-      "Deep woods near Trail 7. Autumn fog hangs thick among towering pines.",
-      "Flashlight beams reveal strange geometric runes carved into ancient tree trunks.",
-      "Extract the three glowing pine digits left-to-right to lock the vector coordinates.",
-    ],
-    completionLoreTitle: "FOREST COORDINATES LOCKED · VECTOR 4-1-7",
-    completionLoreText:
-      "Trail coordinates 4 · 1 · 7 verified! The harmonic vector points directly to the high-altitude East Hill Radio Tower. Pip is waiting on frequency 14.3 MHz.",
-    completionLines: [
-      "FOREST RUNES DECODED: VECTOR 4 · 1 · 7.",
-      "Coordinates align with East Hill Radio Tower sublevel.",
-      "Ascend to the Radio Tower to calibrate the scrambled 5-pin radiometer.",
-    ],
-    bgSrc: "/creel-bg.jpg",
-    taskId: "ch5-forest",
-    points: 50,
-  },
-  {
-    id: 6,
-    label: "CHAPTER 6",
     tag: "5-PIN RADIOMETER",
     archiveSector: "EAST HILL",
     archiveTitle: "RADIO TOWER",
@@ -171,12 +147,12 @@ export const CHAPTERS: ChapterDef[] = [
       "The threshold into the Upside Down is open. Prepare for Vecna.",
     ],
     bgSrc: "/hawkins-gate-bg.jpg",
-    taskId: "ch6-radio-tower",
+    taskId: "ch5-radio-tower",
     points: 50,
   },
   {
-    id: 7,
-    label: "CHAPTER 7",
+    id: 6,
+    label: "CHAPTER 6",
     tag: "THE GATE RIFT",
     archiveSector: "PARALLEL ABYSS",
     archiveTitle: "UPSIDE DOWN",
@@ -195,7 +171,7 @@ export const CHAPTERS: ChapterDef[] = [
       "CONGRATULATIONS, RECON TEAM · TOURNAMENT VICTORY!",
     ],
     bgSrc: "/upsidedown-bg.jpg",
-    taskId: "ch7-upsidedown",
+    taskId: "ch6-upsidedown",
     points: 50,
   },
 ];
@@ -929,14 +905,13 @@ export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = 
     }
   }, [onBackToBoard, setViewMode]);
 
-  // Solved states for all 7 chapters
+  // Solved states for all 6 chapters
   const ch1Solved = !!s.completedTasks?.includes("ch1-quiz") || !!s.solved?.["ch1-quiz"];
   const ch2Solved = !!s.completedTasks?.includes("ch2-police") || !!s.solved?.["ch2-police"] || !!s.completedTasks?.includes("ch3-case-study");
   const ch3Solved = !!s.completedTasks?.includes("ch3-byers") || !!s.solved?.["ch3-byers"];
   const ch4Solved = !!s.completedTasks?.includes("ch4-lab") || !!s.solved?.["ch4-lab"] || !!s.completedTasks?.includes("ch2-coding");
-  const ch5Solved = !!s.completedTasks?.includes("ch5-forest") || !!s.solved?.["ch5-forest"] || !!s.completedTasks?.includes("forest-marks");
-  const ch6Solved = radiometerPinCount === 5 || s.radiometer.codeSolved || !!s.completedTasks?.includes("ch6-radio-tower") || !!s.solved?.["ch6-radio-tower"];
-  const ch7Solved = !!s.completedTasks?.includes("ch7-upsidedown") || !!s.solved?.["ch7-upsidedown"];
+  const ch5Solved = radiometerPinCount === 5 || s.radiometer.codeSolved || !!s.completedTasks?.includes("ch5-radio-tower") || !!s.solved?.["ch5-radio-tower"] || !!s.completedTasks?.includes("ch6-radio-tower");
+  const ch6Solved = !!s.completedTasks?.includes("ch6-upsidedown") || !!s.solved?.["ch6-upsidedown"] || !!s.completedTasks?.includes("ch7-upsidedown");
 
   // Active lore briefing state: pops up immediately upon opening a chapter!
   const [activeLoreChapterId, setActiveLoreChapterId] = useState<number | null>(() => activeChapterId);
@@ -953,7 +928,7 @@ export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = 
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search);
       const chParam = parseInt(p.get("chapter") || "", 10);
-      if ([1, 2, 3, 4, 5, 6, 7].includes(chParam)) {
+      if ([1, 2, 3, 4, 5, 6].includes(chParam)) {
         setActiveChapterId(chParam as ChapterId);
       }
     }
@@ -972,9 +947,7 @@ export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = 
       ? ch4Solved
       : currentChapter.id === 5
       ? ch5Solved
-      : currentChapter.id === 6
-      ? ch6Solved
-      : ch7Solved;
+      : ch6Solved;
 
   const [quizErrorMap, setQuizErrorMap] = useState<Record<number, boolean>>({});
 
@@ -1030,7 +1003,12 @@ export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = 
     }
 
     sfx("ok");
-    submitTask(taskId, totalPointsAwarded, `Chapter ${chapterId} Docket Verified (${correctCount}/${questions.length} Solved)`);
+    submitTask(
+      taskId,
+      totalPointsAwarded,
+      `Chapter ${chapterId} Docket Verified (${correctCount}/${questions.length} Solved)`,
+      serverResponded
+    );
     // Return directly to Investigation Board instead of auto opening next stage
     handleBackToBoard();
   };

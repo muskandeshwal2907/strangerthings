@@ -232,9 +232,11 @@ export class SessionService {
       ts: Date.now(),
     };
 
-    // Notify connected sockets in team room and revoke session immediately
+    // Notify connected sockets in team room and revoke session immediately across all channels
     socketService.emitToTeam(teamId, "session:revoked", payload);
     socketService.emitToTeam(teamId, "team:force_logged_out", payload);
+    socketService.broadcastEvent("session:revoked", payload);
+    socketService.broadcastEvent("team:force_logged_out", payload);
     socketService.setTeamOffline(teamId);
 
     return true;

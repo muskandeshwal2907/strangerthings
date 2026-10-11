@@ -52,23 +52,43 @@ export async function PATCH(req: NextRequest) {
     const base = getApiBase();
     const token = req.headers.get("authorization") || "Bearer HAWKINS_CHIEF_1983";
 
-    if (body.status === "paused") {
+    if (body.status === "ended") {
+      await fetch(`${base}/admin/event/end`, { method: "POST", headers: { Authorization: token } });
+    } else if (body.status === "paused") {
       await fetch(`${base}/admin/event/pause`, { method: "POST", headers: { Authorization: token } });
     } else if (body.status === "active") {
-      // Trigger start event (sets status to active, submissionsOpen to true)
-      await fetch(`${base}/admin/event/start`, { method: "POST", headers: { Authorization: token } });
       await fetch(`${base}/admin/event/resume`, { method: "POST", headers: { Authorization: token } });
     }
 
-    if (body.loginOpen === false) {
+    if (body.loginOpen === true) {
+      await fetch(`${base}/admin/event/open-login`, { method: "POST", headers: { Authorization: token } });
+    } else if (body.loginOpen === false) {
       await fetch(`${base}/admin/event/close-login`, { method: "POST", headers: { Authorization: token } });
     }
 
-    if (body.submissionsOpen === false) {
+    if (body.submissionsOpen === true) {
+      await fetch(`${base}/admin/event/open-submissions`, { method: "POST", headers: { Authorization: token } });
+    } else if (body.submissionsOpen === false) {
       await fetch(`${base}/admin/event/stop-submissions`, { method: "POST", headers: { Authorization: token } });
     }
 
-    return NextResponse.json({ success: true, message: "Event state updated" });
+    // Read authoritative state from backend
+    const stateRes = await fetch(`${base}/event/state`, { cache: "no-store" });
+    const stateData = await stateRes.json().catch(() => ({}));
+    const ev = stateData.event || {};
+
+    return NextResponse.json({
+      success: true,
+      message: "Event state updated",
+      eventState: {
+        id: 1,
+        status: ev.status || (body.status || "active"),
+        login_open: ev.loginOpen !== undefined ? Boolean(ev.loginOpen) : body.loginOpen !== false,
+        submissions_open: ev.submissionsOpen !== undefined ? Boolean(ev.submissionsOpen) : body.submissionsOpen !== false,
+        current_round_max: 7,
+        is_paused: Boolean(ev.isPaused),
+      },
+    });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

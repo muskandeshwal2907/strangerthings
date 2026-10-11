@@ -9,6 +9,7 @@ import {
   resetAdminChapters,
   fetchAdminLeaderboard,
   updateAdminTeamScore,
+  updateAdminTeamRole,
   AdminChapterData,
   AdminLeaderboardItem,
 } from "@/lib/api";
@@ -26,10 +27,12 @@ import {
   getTiDBLogs,
   broadcastComponentConnection,
   subscribeToTelemetry,
+  subscribeToPresence,
   getConnectionStatus,
   AdminLogItem,
   ConnectionStatus,
 } from "@/lib/tidbService";
+import { authenticateSocket, publish } from "@/lib/realtime";
 import { sfx } from "@/lib/audio";
 
 export default function AdminPage() {
@@ -408,7 +411,21 @@ export default function AdminPage() {
       loadData();
     });
 
-    // 3. Automated background refresh cycle (controllable interval & pause/resume)
+    // 3. Subscribe to real-time live presence updates
+    if (token) {
+      authenticateSocket(token);
+    }
+    const unsubPresence = subscribeToPresence(({ teamId, isOnline }) => {
+      setLeaderboard((prev) =>
+        prev.map((item) =>
+          item.teamId === teamId
+            ? { ...item, isOnline, status: isOnline ? "ACTIVE" : "OFFLINE" }
+            : item
+        )
+      );
+    });
+
+    // 4. Automated background refresh cycle (controllable interval & pause/resume)
     const autoRefreshTimer = setInterval(() => {
       setAutoRefreshSec((prev) => {
         if (!autoRefreshEnabled) return prev;
@@ -425,8 +442,9 @@ export default function AdminPage() {
       unsubTelemetry();
       unsubLiveScores();
       unsubscribeLb();
+      unsubPresence();
     };
-  }, [loadData, autoRefreshEnabled, autoRefreshInterval]);
+  }, [loadData, autoRefreshEnabled, autoRefreshInterval, token]);
 
   // Ping and verify all 3 connections
   const handlePingAllConnections = () => {
@@ -600,6 +618,34 @@ export default function AdminPage() {
       if (content) setImportText(content);
     };
     reader.readAsText(file);
+  };
+
+  // Assign squad role (HAWKINS vs VECNA)
+  const handleRoleChange = async (teamId: string, teamName: string, newRole: "PLAYER" | "VECNA") => {
+    if (eventState.status === "active") {
+      alert("Role changes are locked while the event is active. Pause or end event to reconfigure.");
+      return;
+    }
+    const roleLabel = newRole === "VECNA" ? "VECNA" : "HAWKINS";
+    if (!confirm(`Reassign squad "${teamName}" to ${roleLabel}?`)) {
+      return;
+    }
+    try {
+      const res = await updateAdminTeamRole(teamId, newRole);
+      if (res.success) {
+        sfx("ok");
+        setStatusMessage(`Squad "${teamName}" assigned to ${roleLabel} protocol.`);
+        setLeaderboard((prev) =>
+          prev.map((t) => (t.teamId === teamId ? { ...t, role: newRole } : t))
+        );
+        loadData();
+      } else {
+        sfx("err");
+        alert(res.error || res.message || "Failed to update squad role.");
+      }
+    } catch (err: any) {
+      alert("Error updating squad role: " + err.message);
+    }
   };
 
   // Open team details modal
@@ -1309,7 +1355,7 @@ export default function AdminPage() {
                   >
                     ▶ RESUME EVENT
                   </button>
-                ) : (
+                ) : eventState.status === "active" ? (
                   <button
                     type="button"
                     disabled={isUpdatingEvent}
@@ -1328,6 +1374,25 @@ export default function AdminPage() {
                   >
                     ⏸ PAUSE EVENT
                   </button>
+                ) : (
+                  <div
+                    style={{
+                      padding: "7px 16px",
+                      fontSize: 11,
+                      fontWeight: "bold",
+                      letterSpacing: ".06em",
+                      backgroundColor: "rgba(255, 45, 58, 0.1)",
+                      border: "1px solid #ff2d3a",
+                      color: "#ff2d3a",
+                      borderRadius: 4,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span>⏹</span>
+                    <span>EVENT CONCLUDED</span>
+                  </div>
                 )}
 
                 {/* Reset all scores utility button */}
@@ -1368,22 +1433,26 @@ export default function AdminPage() {
 
                 <button
                   type="button"
-                  disabled={isUpdatingEvent}
+                  disabled={isUpdatingEvent || eventState.status === "ended"}
                   onClick={() => updateEventStateAction({ submissionsOpen: !eventState.submissions_open })}
                   style={{
                     padding: "7px 14px",
                     fontSize: 11,
                     fontWeight: "bold",
                     letterSpacing: ".06em",
-                    backgroundColor: eventState.submissions_open
+                    backgroundColor: eventState.status === "ended"
+                      ? "rgba(100, 100, 100, 0.15)"
+                      : eventState.submissions_open
                       ? "rgba(255, 45, 58, 0.15)"
                       : "rgba(54, 224, 196, 0.15)",
-                    border: eventState.submissions_open
+                    border: eventState.status === "ended"
+                      ? "1px solid #555555"
+                      : eventState.submissions_open
                       ? "1px solid #ff2d3a"
                       : "1px solid #36e0c4",
-                    color: eventState.submissions_open ? "#ff2d3a" : "#36e0c4",
+                    color: eventState.status === "ended" ? "#777777" : eventState.submissions_open ? "#ff2d3a" : "#36e0c4",
                     borderRadius: 4,
-                    cursor: "pointer",
+                    cursor: eventState.status === "ended" ? "not-allowed" : "pointer",
                   }}
                 >
                   {eventState.submissions_open ? "⛔ STOP SUBMISSIONS" : "✓ OPEN SUBMISSIONS"}
@@ -1391,20 +1460,26 @@ export default function AdminPage() {
 
                 <button
                   type="button"
-                  disabled={isUpdatingEvent}
+                  disabled={isUpdatingEvent || eventState.status === "ended"}
                   onClick={() => updateEventStateAction({ loginOpen: !eventState.login_open })}
                   style={{
                     padding: "7px 14px",
                     fontSize: 11,
                     fontWeight: "bold",
                     letterSpacing: ".06em",
-                    backgroundColor: eventState.login_open
+                    backgroundColor: eventState.status === "ended"
+                      ? "rgba(100, 100, 100, 0.15)"
+                      : eventState.login_open
                       ? "rgba(255, 45, 58, 0.15)"
                       : "rgba(54, 224, 196, 0.15)",
-                    border: eventState.login_open ? "1px solid #ff2d3a" : "1px solid #36e0c4",
-                    color: eventState.login_open ? "#ff2d3a" : "#36e0c4",
+                    border: eventState.status === "ended"
+                      ? "1px solid #555555"
+                      : eventState.login_open
+                      ? "1px solid #ff2d3a"
+                      : "1px solid #36e0c4",
+                    color: eventState.status === "ended" ? "#777777" : eventState.login_open ? "#ff2d3a" : "#36e0c4",
                     borderRadius: 4,
-                    cursor: "pointer",
+                    cursor: eventState.status === "ended" ? "not-allowed" : "pointer",
                   }}
                 >
                   {eventState.login_open ? "🔒 CLOSE LOGIN" : "🔓 OPEN LOGIN"}
@@ -1412,10 +1487,10 @@ export default function AdminPage() {
 
                 <button
                   type="button"
-                  disabled={isUpdatingEvent}
+                  disabled={isUpdatingEvent || eventState.status === "ended"}
                   onClick={() => {
-                    if (confirm("Are you sure you want to END the event? Submissions will close globally.")) {
-                      updateEventStateAction({ status: "ended", submissionsOpen: false });
+                    if (confirm("Are you sure you want to END the event? Active participant sessions will be terminated and logins permanently closed.")) {
+                      updateEventStateAction({ status: "ended", submissionsOpen: false, loginOpen: false });
                     }
                   }}
                   style={{
@@ -1423,14 +1498,14 @@ export default function AdminPage() {
                     fontSize: 11,
                     fontWeight: "bold",
                     letterSpacing: ".06em",
-                    backgroundColor: "rgba(255, 45, 58, 0.2)",
+                    backgroundColor: eventState.status === "ended" ? "rgba(255, 45, 58, 0.05)" : "rgba(255, 45, 58, 0.2)",
                     border: "1px solid #ff2d3a",
-                    color: "#ff2d3a",
+                    color: eventState.status === "ended" ? "#883338" : "#ff2d3a",
                     borderRadius: 4,
-                    cursor: "pointer",
+                    cursor: eventState.status === "ended" ? "not-allowed" : "pointer",
                   }}
                 >
-                  ⏹ END EVENT
+                  {eventState.status === "ended" ? "⏹ EVENT ENDED" : "⏹ END EVENT"}
                 </button>
               </div>
             </div>
@@ -1628,6 +1703,7 @@ export default function AdminPage() {
                   <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.12)", backgroundColor: "#0b0b12", color: "#888899" }}>
                     <th style={{ padding: "12px 16px", width: 60, backgroundColor: "#0b0b12" }}>RANK</th>
                     <th style={{ padding: "12px 16px", backgroundColor: "#0b0b12" }}>SQUAD (NAME / LEADER)</th>
+                    <th style={{ padding: "12px 16px", backgroundColor: "#0b0b12", width: 120 }}>ROLE</th>
                     <th style={{ padding: "12px 16px", backgroundColor: "#0b0b12", color: "#36e0c4" }}>USERNAME</th>
                     <th style={{ padding: "12px 16px", backgroundColor: "#0b0b12", color: "#ffb454" }}>PASSWORD (RECOVERY)</th>
                     <th style={{ padding: "12px 16px", backgroundColor: "#0b0b12" }}>STAGE / SOLVED</th>
@@ -1666,37 +1742,91 @@ export default function AdminPage() {
                         </td>
                         <td style={{ padding: "14px 16px" }}>
                           <div>
-                            <div style={{ fontWeight: 600, color: "#ffffff", fontSize: 14 }}>{item.teamName}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontWeight: 600, color: item.role === "VECNA" ? "#ff4d58" : "#ffffff", fontSize: 14 }}>
+                                {item.teamName}
+                              </span>
+                              {item.role === "VECNA" && (
+                                <span
+                                  style={{
+                                    fontSize: 9.5,
+                                    padding: "2px 6px",
+                                    borderRadius: 3,
+                                    backgroundColor: "rgba(255, 45, 58, 0.2)",
+                                    border: "1px solid #ff2d3a",
+                                    color: "#ff2d3a",
+                                    fontWeight: 900,
+                                    letterSpacing: "0.1em",
+                                  }}
+                                >
+                                  VECNA OPS
+                                </span>
+                              )}
+                            </div>
                             <div style={{ fontSize: 11, color: "#666677" }}>Leader: {item.leaderName} · ID: {item.teamId}</div>
                           </div>
                         </td>
-                        <td style={{ padding: "14px 16px", fontFamily: "var(--font-mono)", color: "#36e0c4", fontWeight: "bold" }}>
+                        <td style={{ padding: "14px 16px" }}>
+                          <select
+                            value={item.role === "VECNA" ? "VECNA" : "PLAYER"}
+                            disabled={eventState.status === "active"}
+                            onChange={(e) => handleRoleChange(item.teamId, item.teamName, e.target.value as "PLAYER" | "VECNA")}
+                            title={eventState.status === "active" ? "Role locked while event is active" : "Change squad role"}
+                            style={{
+                              padding: "4px 8px",
+                              fontSize: 11,
+                              fontWeight: "bold",
+                              letterSpacing: "0.05em",
+                              backgroundColor: item.role === "VECNA" ? "rgba(255, 45, 58, 0.15)" : "rgba(54, 224, 196, 0.15)",
+                              border: item.role === "VECNA" ? "1px solid #ff2d3a" : "1px solid #36e0c4",
+                              color: item.role === "VECNA" ? "#ff4d58" : "#36e0c4",
+                              borderRadius: 4,
+                              cursor: eventState.status === "active" ? "not-allowed" : "pointer",
+                              outline: "none",
+                            }}
+                          >
+                            <option value="PLAYER" style={{ backgroundColor: "#0b0b12", color: "#36e0c4" }}>
+                              HAWKINS
+                            </option>
+                            <option value="VECNA" style={{ backgroundColor: "#0b0b12", color: "#ff4d58" }}>
+                              VECNA
+                            </option>
+                          </select>
+                        </td>
+                        <td style={{ padding: "14px 16px", fontFamily: "var(--font-mono)", color: item.role === "VECNA" ? "#ff4d58" : "#36e0c4", fontWeight: "bold" }}>
                           {item.username || item.teamId}
                         </td>
                         <td style={{ padding: "14px 16px" }}>
                           <span
                             onClick={() => {
-                              navigator.clipboard.writeText(item.password || "hawkins83_01");
-                              alert(`Copied password for ${item.teamName}: ${item.password || "hawkins83_01"}`);
+                              const pass = item.password || (item.role === "VECNA" ? "HAWKINS1986" : "hawkins83_01");
+                              navigator.clipboard.writeText(pass);
+                              alert(`Copied password for ${item.teamName}: ${pass}`);
                             }}
                             title="Click to copy password"
                             style={{
                               padding: "4px 8px",
-                              backgroundColor: "rgba(255, 180, 84, 0.12)",
-                              border: "1px solid rgba(255, 180, 84, 0.35)",
-                              color: "#ffb454",
+                              backgroundColor: item.role === "VECNA" ? "rgba(255, 45, 58, 0.15)" : "rgba(255, 180, 84, 0.12)",
+                              border: item.role === "VECNA" ? "1px solid rgba(255, 45, 58, 0.35)" : "1px solid rgba(255, 180, 84, 0.35)",
+                              color: item.role === "VECNA" ? "#ff8a80" : "#ffb454",
                               borderRadius: 4,
                               fontFamily: "var(--font-mono)",
                               fontSize: 12,
                               cursor: "pointer",
                             }}
                           >
-                            {item.password || "hawkins83_01"} 📋
+                            {item.password || (item.role === "VECNA" ? "HAWKINS1986" : "hawkins83_01")} 📋
                           </span>
                         </td>
                         <td style={{ padding: "14px 16px" }}>
-                          <span style={{ color: "#36e0c4", fontWeight: "bold" }}>Stage {item.currentStage || 1}/7</span>
-                          <span style={{ color: "#555566", fontSize: 12, marginLeft: 6 }}>({item.solvedCount} solves)</span>
+                          {item.role === "VECNA" ? (
+                            <span style={{ color: "#ff4d58", fontWeight: "bold", fontSize: 12 }}>Omniscient Control</span>
+                          ) : (
+                            <>
+                              <span style={{ color: "#36e0c4", fontWeight: "bold" }}>Stage {item.currentStage || 1}/6</span>
+                              <span style={{ color: "#555566", fontSize: 12, marginLeft: 6 }}>({item.solvedCount} solves)</span>
+                            </>
+                          )}
                         </td>
                         <td style={{ padding: "14px 16px" }}>
                           {item.isOnline ? (
@@ -1764,12 +1894,19 @@ export default function AdminPage() {
                               type="button"
                               onClick={async () => {
                                 if (confirm(`Force logout squad "${item.teamName}"?`)) {
+                                  // 1. Instant local/socket revocation dispatch
+                                  publish({ type: "force_logout", target: item.teamId });
+                                  publish({ type: "force_logout", target: item.teamName });
+                                  // 2. Authoritative backend termination
                                   await fetch("/api/admin/teams/force-logout", {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ teamId: item.teamId }),
                                   });
-                                  alert(`Squad "${item.teamName}" logged out.`);
+                                  // 3. Immediately reflect in local state without delay
+                                  setLeaderboard((prev) =>
+                                    prev.map((t) => (t.teamId === item.teamId ? { ...t, isOnline: false, status: "OFFLINE", hasSession: false } : t))
+                                  );
                                   loadData();
                                 }
                               }}
@@ -1793,7 +1930,7 @@ export default function AdminPage() {
                   })}
                   {filteredLeaderboard.length === 0 && (
                     <tr>
-                      <td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "#666" }}>
+                      <td colSpan={9} style={{ padding: "32px", textAlign: "center", color: "#666" }}>
                         {loading ? "Loading tournament data..." : "No teams match the filter criteria."}
                       </td>
                     </tr>

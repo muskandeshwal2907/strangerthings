@@ -62,19 +62,50 @@ export default function HopperPoliceReportQuiz({
 
   const totalQuestions = questions.length;
   const [currentIdx, setCurrentIdx] = useState(0);
+  const { s, unlockHint, isHintUnlocked, score, isPaused, say } = useGame();
+  const teamId = s?.team?.id || "anon";
+
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`hawkins_quiz_answers_ch${chapterNumber}_${s?.team?.id || "anon"}`);
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
     if (legacySelectedId) {
       return { 0: legacySelectedId };
     }
     return {};
   });
 
-  // Track attempts (max 2), completion status, and points awarded per question
+  // Track attempts, completion status, and points awarded per question
   const [questionStates, setQuestionStates] = useState<
     Record<number, { attempts: number; status: "unanswered" | "wrong_first_try" | "solved" | "failed"; earnedPoints: number }>
-  >({});
+  >(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`hawkins_quiz_states_ch${chapterNumber}_${s?.team?.id || "anon"}`);
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return {};
+  });
 
-  const { unlockHint, isHintUnlocked, score, isPaused, say } = useGame();
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`hawkins_quiz_answers_ch${chapterNumber}_${s?.team?.id || "anon"}`, JSON.stringify(selectedAnswers));
+      } catch {}
+    }
+  }, [selectedAnswers, chapterNumber, s?.team?.id]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`hawkins_quiz_states_ch${chapterNumber}_${s?.team?.id || "anon"}`, JSON.stringify(questionStates));
+      } catch {}
+    }
+  }, [questionStates, chapterNumber, s?.team?.id]);
   const [unlockingHintKey, setUnlockingHintKey] = useState<string | null>(null);
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -142,8 +173,10 @@ export default function HopperPoliceReportQuiz({
     setUnansweredPrompt(false);
   };
 
-  // Verify answer against correct answer with strict 2-try limit
+  // Verify answer against correct answer: locked permanently on submission (Issue 2)
   const handleVerifyCurrentQuestion = () => {
+    if (isCurrentDone) return; // Cannot re-submit once completed
+
     const chosen = selectedAnswers[currentIdx];
     if (!chosen || !chosen.trim()) {
       sfx("err");
@@ -158,37 +191,32 @@ export default function HopperPoliceReportQuiz({
       setQuestionStates((prev) => ({
         ...prev,
         [currentIdx]: {
-          attempts: (prev[currentIdx]?.attempts || 0) + 1,
+          attempts: 1,
           status: "solved",
           earnedPoints: 5,
         },
       }));
     } else {
-      const nextAttempts = (currentQState.attempts || 0) + 1;
-      if (nextAttempts === 1) {
-        // Attempt 1 failed -> allow second attempt
-        sfx("err");
-        setQuestionStates((prev) => ({
-          ...prev,
-          [currentIdx]: {
-            attempts: 1,
-            status: "wrong_first_try",
-            earnedPoints: 0,
-          },
-        }));
-      } else {
-        // Attempt 2 failed -> exhausted, lock with 0 points
-        sfx("alarm");
-        setQuestionStates((prev) => ({
-          ...prev,
-          [currentIdx]: {
-            attempts: 2,
-            status: "failed",
-            earnedPoints: 0,
-          },
-        }));
-      }
+      sfx("err");
+      setQuestionStates((prev) => ({
+        ...prev,
+        [currentIdx]: {
+          attempts: 1,
+          status: "failed",
+          earnedPoints: 0,
+        },
+      }));
     }
+
+    // Persist submission attempt to backend asynchronously
+    try {
+      const qCode = currentQ.id || `ch${chapterNumber}-q${currentIdx + 1}`;
+      fetch(`/api/questions/${encodeURIComponent(qCode)}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answer: chosen, teamId }),
+      }).catch(() => {});
+    } catch {}
   };
 
   // Tab unlock condition: cannot advance to tab N until 0..(N-1) are completed
@@ -278,7 +306,7 @@ export default function HopperPoliceReportQuiz({
       {/* ─── DESK ACCESSORIES (TOP ACTIONS TOOLBAR) ─── */}
       <div
         style={{
-          maxWidth: 960,
+          maxWidth: "min(1560px, 98vw)",
           margin: "0 auto 12px",
           display: "flex",
           alignItems: "center",
@@ -453,7 +481,7 @@ export default function HopperPoliceReportQuiz({
         animate={error ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}}
         transition={{ duration: 0.55 }}
         style={{
-          maxWidth: 960,
+          maxWidth: "min(1560px, 98vw)",
           margin: "0 auto",
           background: "#f4eedf",
           backgroundImage:
@@ -879,16 +907,15 @@ export default function HopperPoliceReportQuiz({
                   }}
                 >
                   {currentQState.status === "solved" && "✔ EVIDENCE VERIFIED ACCURATE · [+5 PTS AWARDED]"}
-                  {currentQState.status === "failed" && "✕ TESTIMONY REJECTED · ATTEMPTS EXHAUSTED (2/2) · [0 PTS]"}
-                  {currentQState.status === "wrong_first_try" && "⚠ ATTEMPT 1 INCORRECT · 1 ATTEMPT REMAINING. RE-EVALUATE EVIDENCE!"}
-                  {currentQState.status === "unanswered" && "ITEM PENDING CONFIRMATION · [2 TRIES PER QUESTION]"}
+                  {currentQState.status === "failed" && "✕ TESTIMONY REJECTED · QUESTION LOCKED · [0 PTS]"}
+                  {currentQState.status === "unanswered" && "ITEM PENDING CONFIRMATION"}
                 </div>
                 <div style={{ fontSize: 11, color: "#6e5d4d", fontFamily: "'Courier New', monospace" }}>
                   {!isCurrentDone
-                    ? `Attempts used: ${currentQState.attempts} of 2 (Question locked once verified)`
+                    ? `Item pending: Question locked once verified`
                     : currentQState.status === "solved"
                     ? "Question completed: +5 PTS awarded. Next question unlocked."
-                    : "Question completed: Both tries exhausted. Next question unlocked."}
+                    : "Question completed: 0 PTS awarded. Next question unlocked."}
                 </div>
               </div>
 
@@ -899,7 +926,7 @@ export default function HopperPoliceReportQuiz({
                   onClick={handleVerifyCurrentQuestion}
                   style={{
                     padding: "9px 22px",
-                    background: currentQState.status === "wrong_first_try" ? "#d35400" : "#24130d",
+                    background: "#24130d",
                     color: "#ffffff",
                     border: "1.5px solid #8f2d24",
                     borderRadius: 3,
@@ -919,16 +946,11 @@ export default function HopperPoliceReportQuiz({
                     e.currentTarget.style.background = "#8f1218";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background =
-                      currentQState.status === "wrong_first_try" ? "#d35400" : "#24130d";
+                    e.currentTarget.style.background = "#24130d";
                   }}
                 >
                   <span>🔒</span>
-                  <span>
-                    {currentQState.attempts === 0
-                      ? "CONFIRM ANSWER (TRY 1/2)"
-                      : "CONFIRM ANSWER (FINAL TRY 2/2)"}
-                  </span>
+                  <span>SUBMIT LEVEL (+5 PTS)</span>
                 </button>
               ) : (
                 <div
@@ -938,13 +960,13 @@ export default function HopperPoliceReportQuiz({
                     letterSpacing: ".1em",
                     color: currentQState.status === "solved" ? "#1b7a41" : "#9e151b",
                     fontFamily: "'Courier New', monospace",
-                    border: `1px solid ${currentQState.status === "solved" ? "#27ae60" : "#b81d24"}`,
-                    padding: "4px 10px",
+                    border: `1.5px solid ${currentQState.status === "solved" ? "#27ae60" : "#b81d24"}`,
+                    padding: "6px 14px",
                     borderRadius: 3,
-                    background: "#fff",
+                    background: currentQState.status === "solved" ? "#e8f5e9" : "#ffebee",
                   }}
                 >
-                  {currentQState.status === "solved" ? "SOLVED (+5 PTS)" : "EXHAUSTED (0 PTS)"}
+                  {currentQState.status === "solved" ? "✓ LEVEL CLEARED (+5 PTS)" : "✕ TESTIMONY REJECTED (0 PTS)"}
                 </div>
               )}
             </div>

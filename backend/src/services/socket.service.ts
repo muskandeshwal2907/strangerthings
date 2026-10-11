@@ -45,12 +45,15 @@ class SocketService {
       // 1. Emit revocation notices across team room and public broadcast
       const revocationPayload = {
         teamId,
+        target: teamId,
         reason: "admin_force_logout",
         message: "An administrator has terminated your active session.",
         ts: Date.now(),
       };
       this.io.to(`team:${teamId}`).emit("session:revoked", revocationPayload);
       this.io.to(`team:${teamId}`).emit("team:force_logged_out", revocationPayload);
+      this.io.to("public:broadcast").emit("session:revoked", revocationPayload);
+      this.io.to("public:broadcast").emit("team:force_logged_out", revocationPayload);
       this.io.to(`team:${teamId}`).emit("team:session_terminated", { teamId, reason: "LOGOUT" });
 
       const room = this.io.sockets.adapter.rooms.get(`team:${teamId}`);
@@ -76,6 +79,7 @@ class SocketService {
     if (this.io) {
       const revocationPayload = {
         teamId: "all",
+        target: "all",
         reason: "admin_reset_all_sessions",
         message: "All active participant sessions have been terminated by tournament command.",
         ts: Date.now(),
@@ -100,6 +104,13 @@ class SocketService {
       if (sess.role === "VECNA") {
         socket.join("role:vecna");
         socket.join(`vecna-sender:${sess.teamId}`);
+        socket.join(`team:${sess.teamId}`);
+        if (sess.teamId) {
+          this.onlineTeams.add(sess.teamId);
+          this.io?.to("admins").emit("presence:update", { teamId: sess.teamId, isOnline: true });
+          this.io?.to("public:broadcast").emit("presence:update", { teamId: sess.teamId, isOnline: true });
+          this.broadcastLeaderboard();
+        }
       } else if (sess.role === "ADMIN") {
         socket.join("role:admin");
         socket.join("admins");
@@ -107,8 +118,9 @@ class SocketService {
         socket.join(`team:${sess.teamId}`);
         if (sess.teamId) {
           this.onlineTeams.add(sess.teamId);
-          // Broadcast live presence to admins immediately
+          // Broadcast live presence to admins and all clients immediately
           this.io?.to("admins").emit("presence:update", { teamId: sess.teamId, isOnline: true });
+          this.io?.to("public:broadcast").emit("presence:update", { teamId: sess.teamId, isOnline: true });
           this.broadcastLeaderboard();
         }
       }
@@ -140,7 +152,9 @@ class SocketService {
 
     socket.on("disconnect", () => {
       if (session && session.teamId) {
-        const remaining = this.io?.sockets.adapter.rooms.get(`team:${session.teamId}`)?.size || 0;
+        const teamRoomSize = this.io?.sockets.adapter.rooms.get(`team:${session.teamId}`)?.size || 0;
+        const vecnaRoomSize = this.io?.sockets.adapter.rooms.get(`vecna-sender:${session.teamId}`)?.size || 0;
+        const remaining = Math.max(teamRoomSize, vecnaRoomSize);
         if (remaining <= 0) {
           this.onlineTeams.delete(session.teamId);
           this.broadcastLeaderboard();
@@ -154,13 +168,17 @@ class SocketService {
     socket.join("public:broadcast");
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 1. Telemetry Heartbeat (Player -> Server -> Vecna)
+    // 1. Telemetry Heartbeat (Player -> Server -> Vecna & Admin)
     // ─────────────────────────────────────────────────────────────────────────
     socket.on("presence", (payload: TelemetryPayload) => {
-      if (!payload || !payload.team) return;
+      if (!payload || !session || !session.teamId) return;
 
-      if (payload.teamId) {
-        this.onlineTeams.add(payload.teamId);
+      const targetTeamId = session.teamId;
+      const wasOnline = this.onlineTeams.has(targetTeamId);
+      this.onlineTeams.add(targetTeamId);
+      if (!wasOnline) {
+        this.io?.to("admins").emit("presence:update", { teamId: targetTeamId, isOnline: true });
+        this.io?.to("public:broadcast").emit("presence:update", { teamId: targetTeamId, isOnline: true });
       }
 
       // Update state in db
@@ -192,19 +210,39 @@ class SocketService {
         operatorName?: string;
         durationSec?: number;
       }) => {
-        if (!session || (session.role !== "VECNA" && session.role !== "ADMIN")) {
+        if (!session) {
+          const authTok = socket.handshake.auth?.token;
+          if (authTok) {
+            session = AuthService.verifyToken(authTok);
+          }
+        }
+        const isAuthorized = session && (session.role === "VECNA" || session.role === "ADMIN");
+        if (!isAuthorized) {
           console.warn("[SOCKET] Unauthorized sabotage attempt blocked from socket:", socket.id);
           return;
         }
 
         const durationSec = data.durationSec || 30;
+
+        // Map team name to team ID if necessary
+        let targetTeamId = data.target;
+        const allTeams = db.getAllTeams();
+        const matched = allTeams.find(
+          (t) =>
+            t.teamName.trim().toLowerCase() === String(data.target || "").trim().toLowerCase() ||
+            t.id.trim().toLowerCase() === String(data.target || "").trim().toLowerCase()
+        );
+        if (matched) {
+          targetTeamId = matched.id;
+        }
+
         const sabotageRecord: ActiveSabotage = {
           id: Date.now(),
           kind: data.kind,
           target: data.target,
           pinIndex: data.pinIndex,
           message: data.message,
-          operatorName: data.operatorName || (session.role === "VECNA" ? "HENRY CREEL" : "CHIEF ADMIN"),
+          operatorName: data.operatorName || (session?.role === "VECNA" ? "HENRY CREEL" : "CHIEF ADMIN"),
           expiresAt: Date.now() + durationSec * 1000,
         };
 
@@ -213,19 +251,23 @@ class SocketService {
         const eventPayload = {
           type: "sabotage",
           ...sabotageRecord,
+          targetTeamId,
+          targetTeamName: matched ? matched.teamName : undefined,
           ts: Date.now(),
         };
 
-        if (!data.target || data.target === "all") {
-          this.io?.to("public:broadcast").emit("sabotage", eventPayload);
-        } else {
-          // Send to specific team room and to public for local name matching
-          this.io?.to(`team:${data.target}`).emit("sabotage", eventPayload);
-          this.io?.to("public:broadcast").emit("sabotage", eventPayload);
+        // Always broadcast across public channel for reliable client reception
+        this.io?.to("public:broadcast").emit("sabotage", eventPayload);
+        this.io?.to("public:broadcast").emit("sabotage:received", eventPayload);
+
+        // Also emit directly into team room if targeted
+        if (targetTeamId && targetTeamId !== "all") {
+          this.io?.to(`team:${targetTeamId}`).emit("sabotage", eventPayload);
+          this.io?.to(`team:${targetTeamId}`).emit("sabotage:received", eventPayload);
         }
 
         console.log(
-          `[SABOTAGE DISPATCHED] ${data.kind} -> Target: ${data.target} (${durationSec}s)`
+          `[SABOTAGE DISPATCHED] ${data.kind} -> Target: ${data.target} (${targetTeamId}) (${durationSec}s)`
         );
       }
     );

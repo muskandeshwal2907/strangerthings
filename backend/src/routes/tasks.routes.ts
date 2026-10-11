@@ -6,5 +6,6 @@ const router = Router();
 
 router.post("/validate", validationRateLimiter, TasksController.validateTask);
 router.post("/hint/unlock", TasksController.unlockHint);
+router.post("/progress", TasksController.saveProgress);
 
 export default router;

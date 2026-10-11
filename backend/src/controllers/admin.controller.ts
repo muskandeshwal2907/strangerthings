@@ -135,9 +135,13 @@ export const AdminController = {
    */
   getLeaderboard(_req: Request, res: Response) {
     const leaderboard = db.getLeaderboard();
+    const enriched = leaderboard.map((t) => ({
+      ...t,
+      isOnline: socketService.isTeamOnline(t.teamId),
+    }));
     return res.json({
       success: true,
-      leaderboard,
+      leaderboard: enriched,
     });
   },
 
@@ -162,6 +166,53 @@ export const AdminController = {
       success: true,
       team,
       message: `TEAM [${teamName}] REGISTERED FOR THE HAWKINS PROTOCOL`,
+    });
+  },
+
+  /**
+   * PUT /api/admin/teams/:id/role — Updates team role (HAWKINS vs VECNA)
+   * Only permitted before event start. Roles are strictly locked once the event is active.
+   */
+  async updateTeamRole(req: Request, res: Response) {
+    const teamId = req.params.id;
+    const { role } = req.body;
+
+    if (!role || (role !== "PLAYER" && role !== "VECNA")) {
+      return res.status(400).json({
+        success: false,
+        error: "INVALID_ROLE",
+        message: "Role must be 'PLAYER' (Hawkins) or 'VECNA'.",
+      });
+    }
+
+    // Role locking check: If event is active, reject modification
+    const eventState = await EventControlService.getEventState();
+    if (eventState.status === "active") {
+      return res.status(403).json({
+        success: false,
+        error: "ROLE_LOCKED",
+        message: "Roles are permanently locked while the event is active.",
+      });
+    }
+
+    const team = db.getTeamById(teamId);
+    if (!team) {
+      return res.status(404).json({ success: false, error: "TEAM_NOT_FOUND" });
+    }
+
+    const updated = db.updateTeam(teamId, { role });
+    const adminId = (req.user as any)?.adminId || 1;
+    await EventControlService.logAudit(adminId, "update_team_role", "team", teamId, {
+      previousRole: team.role,
+      newRole: role,
+    });
+
+    socketService.broadcastLeaderboard();
+
+    return res.json({
+      success: true,
+      team: updated,
+      message: `Team [${team.teamName}] assigned role ${role === "VECNA" ? "VECNA" : "HAWKINS"}.`,
     });
   },
 
@@ -312,10 +363,11 @@ export const AdminController = {
    * GET /api/admin/teams — Search/filter/sort teams with active session status
    */
   async getTeams(req: Request, res: Response) {
-    const rawTeams = db.getAllTeams().filter((t) => t.role === "PLAYER");
+    const rawTeams = db.getAllTeams().filter((t) => t.role === "PLAYER" || t.role === "VECNA");
 
     // Sort descending by totalScore, then ascending by earliest lastSolvedAt (tie-breaker)
     rawTeams.sort((a, b) => {
+      // Keep Vecna at the bottom or top depending on score, but normal sort
       const scoreDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
       if (scoreDiff !== 0) return scoreDiff;
       if (a.lastSolvedAt && b.lastSolvedAt) {
@@ -340,8 +392,8 @@ export const AdminController = {
     const teams = rawTeams.map((t, idx) => {
       const isSocketOnline = socketService.isTeamOnline(t.id);
       const hasActiveSession = activeSessionTeamIds.has(t.id) || SessionService.hasActiveSessionSync(t.id);
-      // Truly online only if socket is live AND valid active session exists
-      const isOnline = isSocketOnline && hasActiveSession;
+      // Online if socket is connected OR an active session exists
+      const isOnline = isSocketOnline || hasActiveSession;
       const numPart = t.id.replace(/\D/g, "") || String(idx + 1);
 
       const distinctStages = new Set<number>();
@@ -357,18 +409,20 @@ export const AdminController = {
         }
       });
 
+      const isVecna = t.role === "VECNA";
+
       return {
         ...t,
         rank: idx + 1,
         teamId: t.id,
         score: typeof t.totalScore === "number" ? t.totalScore : 0,
         totalScore: typeof t.totalScore === "number" ? t.totalScore : 0,
-        username: (t as any).username || `TEAM${numPart.padStart(2, "0")}`,
-        password: (t as any).password || `hawkins83_${numPart.padStart(2, "0")}`,
+        username: isVecna ? "VECNA-001" : ((t as any).username || `TEAM${numPart.padStart(2, "0")}`),
+        password: isVecna ? "HAWKINS1986" : ((t as any).password || `hawkins83_${numPart.padStart(2, "0")}`),
         isOnline,
         hasSession: hasActiveSession,
-        solvedCount: distinctStages.size,
-        currentStage: 1,
+        solvedCount: isVecna ? 6 : distinctStages.size,
+        currentStage: isVecna ? 6 : Math.min(6, distinctStages.size + 1),
       };
     });
 
@@ -393,8 +447,21 @@ export const AdminController = {
   },
 
   async resumeEvent(_req: Request, res: Response) {
-    const event = await EventControlService.resumeEvent();
-    return res.json({ success: true, event });
+    try {
+      const event = await EventControlService.resumeEvent();
+      return res.json({ success: true, event });
+    } catch (err: any) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+  },
+
+  async openLogin(_req: Request, res: Response) {
+    try {
+      const event = await EventControlService.openLogin();
+      return res.json({ success: true, event });
+    } catch (err: any) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
   },
 
   async closeLogin(_req: Request, res: Response) {
@@ -402,9 +469,22 @@ export const AdminController = {
     return res.json({ success: true, event });
   },
 
+  async openSubmissions(_req: Request, res: Response) {
+    try {
+      const event = await EventControlService.openSubmissions();
+      return res.json({ success: true, event });
+    } catch (err: any) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+  },
+
   async stopSubmissions(_req: Request, res: Response) {
     const event = await EventControlService.stopSubmissions();
     return res.json({ success: true, event });
+  },
+
+  async closeSubmissions(req: Request, res: Response) {
+    return this.stopSubmissions(req, res);
   },
 
   async endEvent(_req: Request, res: Response) {

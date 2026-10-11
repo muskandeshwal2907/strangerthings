@@ -57,6 +57,24 @@ export const AuthService = {
       };
     }
 
+    // Check event lifecycle state
+    const { EventControlService } = await import("./eventControl.service");
+    const eventState = await EventControlService.getEventState();
+    if (eventState.status === "ended") {
+      return {
+        success: false,
+        error: "EVENT_ENDED",
+        message: "The Hawkins tournament has ended. Participant logins are permanently closed.",
+      };
+    }
+    if (!eventState.loginOpen) {
+      return {
+        success: false,
+        error: "LOGIN_CLOSED",
+        message: "Participant login is currently closed by the tournament administrator.",
+      };
+    }
+
     // 1. Check Vecna credentials
     if (
       normTeam === VECNA_CREDENTIAL.teamName.toLowerCase() &&
@@ -101,18 +119,18 @@ export const AuthService = {
         db.updateTeam(team.id, { startedAt: new Date().toISOString() });
       }
 
-      const playerSession: TeamSession = {
+      const teamSession: TeamSession = {
         teamId: team.id,
         teamName: team.teamName,
         leaderName: team.leaderName,
-        role: "PLAYER",
+        role: team.role || "PLAYER",
       };
-      const token = this.generateToken(playerSession);
+      const token = this.generateToken(teamSession);
 
       return {
         success: true,
         token,
-        session: playerSession,
+        session: teamSession,
         team: db.getTeamById(team.id),
         message: "TELEMETRY VERIFIED · CLEARANCE GRANTED",
       };

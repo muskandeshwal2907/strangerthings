@@ -8,9 +8,9 @@
 export const getApiBase = (): string => {
   if (typeof window !== "undefined") {
     const host = window.location.hostname || "localhost";
-    return `http://${host}:5000/api`;
+    return `http://${host}:5055/api`;
   }
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5055/api";
 };
 
 export const API_BASE = {
@@ -85,10 +85,20 @@ export async function validateChapterOnServer(
   teamId?: string
 ): Promise<BackendValidationResult> {
   try {
+    let token = "";
+    try {
+      const stored = localStorage.getItem("hawkins-protocol:session");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        token = parsed.token || "";
+      }
+    } catch {}
+
     const res = await fetch(`${API_BASE}/chapters/validate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
         chapterId,
@@ -115,8 +125,43 @@ export async function validateChapterOnServer(
       success: false,
       pointsAwarded: 0,
       error: "BACKEND_UNREACHABLE",
-      message: "Security backend is offline. Ensure backend is running on port 5000.",
+      message: "Security backend is offline. Ensure backend is running.",
     };
+  }
+}
+
+export async function saveTeamProgressToServer(progress: {
+  teamId: string;
+  completedTasks?: string[];
+  solvedChapters?: number[];
+  taskScores?: Record<string, number>;
+  unlockedLocations?: Record<string, boolean>;
+  storyProgress?: number;
+  breakdown?: any;
+  totalScore?: number;
+  penalty?: number;
+}): Promise<{ success: boolean; team?: any; error?: string }> {
+  try {
+    let token = "";
+    try {
+      const stored = localStorage.getItem("hawkins-protocol:session");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        token = parsed.token || "";
+      }
+    } catch {}
+
+    const res = await fetch("/api/tasks/progress", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(progress),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
 }
 
@@ -200,6 +245,7 @@ export interface AdminChapterData {
 export interface AdminLeaderboardItem {
   rank: number;
   teamId: string;
+  role?: string;
   username?: string;
   password?: string;
   teamName: string;
@@ -315,6 +361,7 @@ export async function fetchAdminLeaderboard(_token?: string): Promise<{ success:
       const items: AdminLeaderboardItem[] = data.teams.map((t: any, idx: number) => ({
         rank: t.rank || idx + 1,
         teamId: t.teamId || t.id || `T${String(idx + 1).padStart(2, "0")}`,
+        role: t.role || (t.teamId === "VECNA-001" || t.teamName?.toLowerCase() === "vecna" ? "VECNA" : "PLAYER"),
         username: t.username || t.teamId || t.id || `TEAM${String(idx + 1).padStart(2, "0")}`,
         password: t.password || `hawkins83_${String(idx + 1).padStart(2, "0")}`,
         teamName: t.teamName || "Squad",
@@ -349,6 +396,20 @@ export async function forceLogoutTeam(teamId: string): Promise<{ success: boolea
     return await res.json();
   } catch (err) {
     return { success: false };
+  }
+}
+
+export async function updateAdminTeamRole(teamId: string, role: "PLAYER" | "VECNA"): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const res = await fetch(`/api/admin/teams/${teamId}/role`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
+    });
+    const data = await res.json();
+    return data;
+  } catch (err: any) {
+    return { success: false, error: err.message || "NETWORK_ERROR" };
   }
 }
 

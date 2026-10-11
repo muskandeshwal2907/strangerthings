@@ -34,7 +34,7 @@ export default function LoginScreen() {
         sfx("boom");
 
         if (authResult.session.role === "VECNA") {
-          saveSession(authResult.session);
+          saveSession({ ...authResult.session, token: authResult.token });
           router.push("/vecna");
         } else {
           // Player credentials -> go to player game (cinematic intro, then map)
@@ -48,6 +48,7 @@ export default function LoginScreen() {
             penalty: authResult.team?.penalty,
             completedTasks: authResult.team?.completedTasks,
             solvedChapters: authResult.team?.solvedChapters,
+            taskScores: authResult.team?.taskScores,
             unlockedLocations: authResult.team?.unlockedLocations,
             storyProgress: authResult.team?.storyProgress,
           });

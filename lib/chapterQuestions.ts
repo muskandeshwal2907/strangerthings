@@ -1083,184 +1083,19 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
   },
 
   // ─────────────────────────────────────────────────────────────────
-  // STAGE 5: AS-IS (PRESERVED FROM CHAPTER 5)
+  // STAGE 5: RADIO TRANSMISSION (DECIPHERS, CIPHERS, MORSE, SIGNALS)
   // ─────────────────────────────────────────────────────────────────
   5: {
     chapterId: 5,
-    stageName: "THE FOREST",
-    stageType: "standard",
-    stageSubtitle: "DEEP WOODS RUNIC VECTORS",
-    docketNumber: "FORM HPD-05-83 // CLASSIFIED FOREST RECON DOCKET",
-    sectionHeader: "STAGE 05 — FORMAL INQUIRY // DEEP WOODS RUNIC VECTORS",
+    stageName: "THE TOWER",
+    stageType: "radio",
+    stageSubtitle: "RADIO TRANSMISSION INTERCEPTS & CIPHER DECODING",
+    docketNumber: "FORM HPD-05-83 // CLASSIFIED RADIO INTERCEPT DOCKET",
+    sectionHeader: "STAGE 05 — RADIO TRANSMISSION // DECODE AIRWAVE CIPHERS",
     points: 50,
     questions: [
       {
         id: "ch5-q1",
-        itemNumber: 1,
-        subHeader: "DEMO Q1 · ITEM 01: TREE PORTAL ANOMALY",
-        question: "What tree landmark in Mirkwood concealed an organic portal into the Upside Down discovered by Nancy Wheeler?",
-        options: [
-          { id: "A", text: "Hollowed Rotting Sycamore Trunk with Dripping Slime" },
-          { id: "B", text: "Lightning-Struck Charred Pine Tree" },
-          { id: "C", text: "Ancient Oak with Carved Coordinates" },
-          { id: "D", text: "Overgrown Weeping Willow near Sattler Quarry" },
-        ],
-        correctAnswerId: "A",
-        hint: "Nancy crawled through the pulsating fleshy opening inside the sycamore base.",
-        docketTag: "PORTAL COORD",
-      },
-      {
-        id: "ch5-q2",
-        itemNumber: 2,
-        subHeader: "DEMO Q2 · ITEM 02: PREDATOR SCENT VECTOR",
-        question: "What behavioral vulnerability was observed when tracking Demogorgon scent signatures through the forest?",
-        options: [
-          { id: "A", text: "Highly Attracted to the Scent of Fresh Blood" },
-          { id: "B", text: "Triggered Exclusively by Ultrasonic Whistles" },
-          { id: "C", text: "Drawn Exclusively to Bright Ultraviolet Light" },
-          { id: "D", text: "Paralyzed by High-Frequency Radio Waves" },
-        ],
-        correctAnswerId: "A",
-        hint: "A single drop of blood cuts through the dimensional barrier like a beacon.",
-        docketTag: "BEHAVIORAL BIO",
-      },
-      {
-        id: "ch5-q3",
-        itemNumber: 3,
-        subHeader: "DEMO Q3 · ITEM 03: RUNIC VECTOR TRIANGULATION",
-        question: "What runic vector pattern was marked on the three perimeter surveillance trees along Trail 7?",
-        options: [
-          { id: "A", text: "Vector 4 - 1 - 7 (North-East Triangulation)" },
-          { id: "B", text: "Vector 9 - 2 - 5 (South-West Convergence)" },
-          { id: "C", text: "Vector 1 - 1 - 0 (Azimuth Dead Reckoning)" },
-          { id: "D", text: "Vector 8 - 3 - 4 (Radial Offset Quadrant)" },
-        ],
-        correctAnswerId: "A",
-        hint: "Extract the glowing red pine runes left-to-right to find vector 4-1-7.",
-        docketTag: "RUNIC VECTOR",
-      },
-      {
-        id: "ch5-q4",
-        itemNumber: 4,
-        subHeader: "DEMO Q4 · ITEM 04: TRAP COUNTERMEASURES",
-        question: "What makeshift countermeasures did Nancy Wheeler and Jonathan Byers prepare at the Byers house to trap the predator?",
-        options: [
-          { id: "A", text: "Bear Trap, Gasoline Fire, and Nail-Studded Bat" },
-          { id: "B", text: "High-Voltage Electrical Cattle Prod & Net" },
-          { id: "C", text: "Liquid Nitrogen Aerosers" },
-          { id: "D", text: "Magnesium Flares and Fireworks Battery" },
-        ],
-        correctAnswerId: "A",
-        hint: "Steve Harrington joined with the nail-spiked Louisville Slugger bat.",
-        docketTag: "TACTICAL DEFENSE",
-      },
-      {
-        id: "ch5-q5",
-        itemNumber: 5,
-        subHeader: "DEMO Q5 · ITEM 05: D&D ANALOG BEAST",
-        question: "In Mike Wheeler's Dungeons & Dragons campaign, which two-headed monster piece was knocked over by Will's failed fireball roll?",
-        options: [
-          { id: "A", text: "The Demogorgon (Prince of Demons)" },
-          { id: "B", text: "The Thessalhydra with Eight Maw Heads" },
-          { id: "C", text: "The Beholder with Eye Rays" },
-          { id: "D", text: "The Mind Flayer Illithid" },
-        ],
-        correctAnswerId: "A",
-        hint: "Will rolled a 7 on his twenty-sided die, failing to cast fireball.",
-        docketTag: "LORE ANALOG",
-      },
-      {
-        id: "ch5-q6",
-        itemNumber: 6,
-        subHeader: "DEMO Q6 · ITEM 06: MIRKWOOD INTERSECTION ROAD SIGN",
-        question: "What two rural roads cross at the infamous Mirkwood intersection near the lab fence line?",
-        options: [
-          { id: "A", text: "Cornwallis Road & Kerley Lane" },
-          { id: "B", text: "Maple Street & Elm Avenue" },
-          { id: "C", text: "Cherry Lane & Sattler Way" },
-          { id: "D", text: "Lover's Lake Road & Highway 27" },
-        ],
-        correctAnswerId: "A",
-        hint: "The boys nicknamed the desolate dark corner 'Mirkwood' from Tolkien's books.",
-        docketTag: "GEOGRAPHY",
-      },
-      {
-        id: "ch5-q7",
-        itemNumber: 7,
-        subHeader: "DEMO Q7 · ITEM 07: FLASHLIGHT AMBER SPORE EFFECT",
-        question: "What floating phenomenon was visible in flashlight beams near the forest portal site?",
-        options: [
-          { id: "A", text: "Bioluminescent Amber Spores Drifting Slowly in Mid-Air" },
-          { id: "B", text: "Black Ash Flakes Emitting Electrostatic Shocks" },
-          { id: "C", text: "Green Iridescent Insects Swarming in Circles" },
-          { id: "D", text: "Tiny Freezing Ice Needles Suspended Against Gravity" },
-        ],
-        correctAnswerId: "A",
-        hint: "Particles suspended like underwater snow drifted outward through the portal opening.",
-        docketTag: "AIR MONITORING",
-      },
-      {
-        id: "ch5-q8",
-        itemNumber: 8,
-        subHeader: "DEMO Q8 · ITEM 08: STEVE'S MODIFIED WEAPON",
-        question: "What weapon modification did Jonathan construct on the Louisville Slugger baseball bat?",
-        options: [
-          { id: "A", text: "Hammered Rows of 2-Inch Steel Carpenter Nails" },
-          { id: "B", text: "Wrapped Barbed Razor Wire Around the Barrel" },
-          { id: "C", text: "Bolted Serrated Lawnmower Blades Along the Tip" },
-          { id: "D", text: "Soaked Heavy Burlap in Gasoline for a Torch Bat" },
-        ],
-        correctAnswerId: "A",
-        hint: "Steve swung the nail-studded bat in the living room to drive back the creature.",
-        docketTag: "IMPROVISED WEAPON",
-      },
-      {
-        id: "ch5-q9",
-        itemNumber: 9,
-        subHeader: "DEMO Q9 · ITEM 09: TRAIL 7 COMPASS ROTATION",
-        question: "How did the boys recognize they were approaching the laboratory's perimeter fence on Trail 7?",
-        options: [
-          { id: "A", text: "All Compass Needles Began Slowly Rotating Counter-Clockwise" },
-          { id: "B", text: "Their Walkie-Talkies Emitted Static Morbid Whispers" },
-          { id: "C", text: "The Pine Trees Lost All Needles and Turned Black" },
-          { id: "D", text: "Ground Temperatures Dropped Below Zero Degrees" },
-        ],
-        correctAnswerId: "A",
-        hint: "Dustin realized they were following a magnetic deviation towards the lab.",
-        docketTag: "ANOMALOUS FLUX",
-      },
-      {
-        id: "ch5-q10",
-        itemNumber: 10,
-        subHeader: "DEMO Q10 · ITEM 10: WOUNDED DEER TRACKING",
-        question: "What prey animal was dragged into the Sycamore tree portal right before Nancy climbed in?",
-        options: [
-          { id: "A", text: "A Wounded Forest Deer Shot by Local Hunters" },
-          { id: "B", text: "A Stray Red Fox with a Injured Leg" },
-          { id: "C", text: "A Raccoon from Benny's Dumpster" },
-          { id: "D", text: "A Golden Retriever Hunting Dog" },
-        ],
-        correctAnswerId: "A",
-        hint: "Nancy and Jonathan tracked blood droplets from a deer until it vanished inside the tree.",
-        docketTag: "PREDATOR TRACKS",
-      },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────────────
-  // STAGE 6: RADIO TRANSMISSION (DECIPHERS, CIPHERS, MORSE, SIGNALS)
-  // ─────────────────────────────────────────────────────────────────
-  6: {
-    chapterId: 6,
-    stageName: "THE TOWER",
-    stageType: "radio",
-    stageSubtitle: "RADIO TRANSMISSION INTERCEPTS & CIPHER DECODING",
-    docketNumber: "FORM HPD-06-83 // CLASSIFIED RADIO INTERCEPT DOCKET",
-    sectionHeader: "STAGE 06 — RADIO TRANSMISSION // DECODE AIRWAVE CIPHERS",
-    points: 50,
-    questions: [
-      {
-        id: "ch6-q1",
         itemNumber: 1,
         stageType: "radio",
         subHeader: "SIGNAL 01 · CAESAR CIPHER BROADCAST",
@@ -1283,7 +1118,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "RADIO INTERCEPT",
       },
       {
-        id: "ch6-q2",
+        id: "ch5-q2",
         itemNumber: 2,
         stageType: "radio",
         subHeader: "SIGNAL 02 · 8-BIT BINARY TELEMETRY",
@@ -1306,7 +1141,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "BINARY STREAM",
       },
       {
-        id: "ch6-q3",
+        id: "ch5-q3",
         itemNumber: 3,
         stageType: "radio",
         subHeader: "SIGNAL 03 · RUSSIAN ENCRYPTED BROADCAST",
@@ -1329,7 +1164,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "RUSSIAN CIPHER",
       },
       {
-        id: "ch6-q4",
+        id: "ch5-q4",
         itemNumber: 4,
         stageType: "radio",
         subHeader: "SIGNAL 04 · MORSE CODE DISTRESS BEACON",
@@ -1352,7 +1187,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "MORSE LOG",
       },
       {
-        id: "ch6-q5",
+        id: "ch5-q5",
         itemNumber: 5,
         stageType: "radio",
         subHeader: "SIGNAL 05 · REVERSE AUDIO PHONOGRAM",
@@ -1375,7 +1210,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "AUDIO PHONOGRAM",
       },
       {
-        id: "ch6-q6",
+        id: "ch5-q6",
         itemNumber: 6,
         stageType: "radio",
         subHeader: "SIGNAL 06 · HEATHKIT HAM RADIO TRANSCEIVER",
@@ -1398,8 +1233,8 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "HAM RADIO",
       },
       {
-        id: "ch6-q7",
-        itemNumber: 6,
+        id: "ch5-q7",
+        itemNumber: 7,
         stageType: "radio",
         subHeader: "SIGNAL 07 · CEREBRO REPEATER TELEMETRY",
         question: "What radio communication device did Dustin Henderson assemble on Weathertop to reach his girlfriend Suzie in Utah?",
@@ -1421,7 +1256,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "CEREBRO LOG",
       },
       {
-        id: "ch6-q8",
+        id: "ch5-q8",
         itemNumber: 8,
         stageType: "radio",
         subHeader: "SIGNAL 08 · STARCOURT VAULT ACCESS CIPHER",
@@ -1444,7 +1279,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "VAULT CIPHER",
       },
       {
-        id: "ch6-q9",
+        id: "ch5-q9",
         itemNumber: 9,
         stageType: "radio",
         subHeader: "SIGNAL 09 · ELECTROMAGNETIC VECTOR ANOMALY",
@@ -1467,7 +1302,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "FLUX TELEMETRY",
       },
       {
-        id: "ch6-q10",
+        id: "ch5-q10",
         itemNumber: 10,
         stageType: "radio",
         subHeader: "SIGNAL 10 · SUB-BASIN GATE CONVERGENCE",
@@ -1493,19 +1328,19 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
   },
 
   // ─────────────────────────────────────────────────────────────────
-  // STAGE 7: LAB-TYPE TASKS (TECHNICAL INTERACTIVE CHALLENGES)
+  // STAGE 6: LAB-TYPE TASKS (TECHNICAL INTERACTIVE CHALLENGES)
   // ─────────────────────────────────────────────────────────────────
-  7: {
-    chapterId: 7,
+  6: {
+    chapterId: 6,
     stageName: "THE UPSIDE DOWN",
     stageType: "lab_task",
     stageSubtitle: "TECHNICAL SIMULATIONS & LAB OPERATIONS",
-    docketNumber: "FORM HPD-07-83 // CLASSIFIED LAB TASK DOCKET",
-    sectionHeader: "STAGE 07 — LAB-TYPE TASKS // SYSTEM REPAIR & SIMULATION",
+    docketNumber: "FORM HPD-06-83 // CLASSIFIED LAB TASK DOCKET",
+    sectionHeader: "STAGE 06 — LAB-TYPE TASKS // SYSTEM REPAIR & SIMULATION",
     points: 50,
     questions: [
       {
-        id: "ch7-q1",
+        id: "ch6-q1",
         itemNumber: 1,
         stageType: "lab_task",
         subHeader: "LAB TASK 01 · LOGICAL SEQUENCE (EXPERIMENT IDS)",
@@ -1526,7 +1361,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "LAB SEQUENCE",
       },
       {
-        id: "ch7-q2",
+        id: "ch6-q2",
         itemNumber: 2,
         stageType: "lab_task",
         subHeader: "LAB TASK 02 · BOOLEAN LOGIC CIRCUIT EVALUATION",
@@ -1547,7 +1382,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "GATE LOGIC",
       },
       {
-        id: "ch7-q3",
+        id: "ch6-q3",
         itemNumber: 3,
         stageType: "lab_task",
         subHeader: "LAB TASK 03 · SYSTEM OPERATIONS (KILL ROGUE PID)",
@@ -1568,7 +1403,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "UNIX TERMINAL",
       },
       {
-        id: "ch7-q4",
+        id: "ch6-q4",
         itemNumber: 4,
         stageType: "lab_task",
         subHeader: "LAB TASK 04 · SYSTEM OPERATIONS (POWER RESTORATION ORDER)",
@@ -1589,7 +1424,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "POWER SEQUENCE",
       },
       {
-        id: "ch7-q5",
+        id: "ch6-q5",
         itemNumber: 5,
         stageType: "lab_task",
         subHeader: "LAB TASK 05 · FUNCTION RESTORATION (BUGGY SIGHTING COUNTER)",
@@ -1610,7 +1445,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "PYTHON DEBUG",
       },
       {
-        id: "ch7-q6",
+        id: "ch6-q6",
         itemNumber: 6,
         stageType: "lab_task",
         subHeader: "LAB TASK 06 · FUNCTION RESTORATION (INFINITE RECURSION)",
@@ -1631,7 +1466,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "RECURSION BUG",
       },
       {
-        id: "ch7-q7",
+        id: "ch6-q7",
         itemNumber: 7,
         stageType: "lab_task",
         subHeader: "LAB TASK 07 · DATA ANALYSIS (LIGHT FLICKER METRICS)",
@@ -1652,7 +1487,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "STATISTICS",
       },
       {
-        id: "ch7-q8",
+        id: "ch6-q8",
         itemNumber: 8,
         stageType: "lab_task",
         subHeader: "LAB TASK 08 · DATA ANALYSIS (ZONE PERCENTAGE CONCENTRATION)",
@@ -1673,7 +1508,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "ZONE ANALYSIS",
       },
       {
-        id: "ch7-q9",
+        id: "ch6-q9",
         itemNumber: 9,
         stageType: "lab_task",
         subHeader: "LAB TASK 09 · SIMULATED EXPERIMENT (TEMPERATURE CORRELATION)",
@@ -1694,7 +1529,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
         docketTag: "EXPERIMENT LOG",
       },
       {
-        id: "ch7-q10",
+        id: "ch6-q10",
         itemNumber: 10,
         stageType: "lab_task",
         subHeader: "LAB TASK 10 · SIMULATED EXPERIMENT (GATE EXPONENTIAL DOUBLING)",
@@ -1717,3 +1552,4 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
     ],
   },
 };
+
