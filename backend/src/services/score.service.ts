@@ -7,12 +7,12 @@ export const ScoreService = {
    */
   calculateTotalScore(breakdown: ScoreBreakdown, penalty = 0): number {
     const raw =
-      breakdown.tech * ENV.WEIGHTS.tech +
-      breakdown.puzzle * ENV.WEIGHTS.puzzle +
-      breakdown.speed * ENV.WEIGHTS.speed +
-      breakdown.clue * ENV.WEIGHTS.clue +
-      breakdown.story * ENV.WEIGHTS.story +
-      breakdown.teamwork * ENV.WEIGHTS.teamwork -
+      (breakdown.tech || 0) +
+      (breakdown.puzzle || 0) +
+      (breakdown.speed || 0) +
+      (breakdown.clue || 0) +
+      (breakdown.story || 0) +
+      (breakdown.teamwork || 0) -
       penalty;
 
     return Math.max(0, Math.round(raw));

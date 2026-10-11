@@ -186,1140 +186,1980 @@ export const CHAPTER_METADATA = [
 ];
 
 export const RAW_CHAPTER_QUESTIONS: Record<number, ChapterQuestion[]> = {
-  1: [
+  "1": [
     {
-      id: "ch1-q1",
-      chapterId: 1,
-      itemNumber: 1,
-      subHeader: "DEMO Q1 · ITEM 01: SUBLEVEL 04 ANOMALY",
-      question: "During the covert November 1983 incident at Hawkins National Laboratory, which classified Department of Energy project resulted in the initial psychokinetic rift and the escape of test subjects?",
-      options: [
-        { id: "A", text: "Project MKUltra / Sublevel 04" },
-        { id: "B", text: "Operation Paperclip / Echo Division" },
-        { id: "C", text: "Stargate Surveillance Protocol" },
-        { id: "D", text: "Project Blue Book Sub-Archive" },
+      "id": "ch1-q1",
+      "chapterId": 1,
+      "itemNumber": 1,
+      "subHeader": "QUIZ Q1 · D&D CAMPAIGN ROLL",
+      "question": "In Season 1 Episode 1, what roll did Will need on the twenty-sided die (d20) to successfully cast Fireball against the Demogorgon?",
+      "options": [
+        {
+          "id": "A",
+          "text": "14 or higher"
+        },
+        {
+          "id": "B",
+          "text": "13 or higher"
+        },
+        {
+          "id": "C",
+          "text": "15 or higher"
+        },
+        {
+          "id": "D",
+          "text": "7 or higher"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Callahan logged unusual psychokinetic activity near Sublevel 4 under MKUltra.",
-      docketTag: "CLASSIFIED DOSSIER",
+      "correctAnswerId": "B",
+      "hint": "Will rolled a 7 and said, 'Did the rest of you see that? It got me.' He needed a 13 or higher.",
+      "docketTag": "D&D LOG"
     },
     {
-      id: "ch1-q2",
-      chapterId: 1,
-      itemNumber: 2,
-      subHeader: "DEMO Q2 · ITEM 02: RADIO INTERFERENCE FREQUENCY",
-      question: "What radio frequency band was monitored by Hawkins Middle AV Club when receiving the first anomalous subspace broadcast?",
-      options: [
-        { id: "A", text: "Heathkit 14.175 MHz CB Band" },
-        { id: "B", text: "98.5 MHz FM Commercial Carrier" },
-        { id: "C", text: "2.4 GHz Microwave Vector" },
-        { id: "D", text: "433 MHz Digital Telemetry Link" },
+      "id": "ch1-q2",
+      "chapterId": 1,
+      "itemNumber": 2,
+      "subHeader": "QUIZ Q2 · AV CLUB FACULTY",
+      "question": "What is the full name of Hawkins Middle School's science teacher who runs the A.V. Club?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Scott A. Clarke"
+        },
+        {
+          "id": "B",
+          "text": "Arthur C. Clarke"
+        },
+        {
+          "id": "C",
+          "text": "Robert A. Clarke"
+        },
+        {
+          "id": "D",
+          "text": "Richard M. Clarke"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Mr. Clarke helped the club assemble the Heathkit ham radio transceiver.",
-      docketTag: "SIGNAL LOG",
+      "correctAnswerId": "A",
+      "hint": "Mr. Clarke is known for his enthusiastic support and Heathkit ham radio demonstrations.",
+      "docketTag": "FACULTY DOSSIER"
     },
     {
-      id: "ch1-q3",
-      chapterId: 1,
-      itemNumber: 3,
-      subHeader: "DEMO Q3 · ITEM 03: MUNICIPAL GRID SURGE",
-      question: "Which municipal utility experienced catastrophic power surging simultaneously with the gate opening?",
-      options: [
-        { id: "A", text: "Roane County Power Grid & North Elm Substation" },
-        { id: "B", text: "Sattler Quarry Water Reservoir" },
-        { id: "C", text: "Cornwallis Telephone Exchange" },
-        { id: "D", text: "Hawkins High Heating Boiler" },
+      "id": "ch1-q3",
+      "chapterId": 1,
+      "itemNumber": 3,
+      "subHeader": "QUIZ Q3 · SENSORY DEPRIVATION POOL",
+      "question": "How much salt did Mr. Clarke calculate was required for the improvised sensory deprivation pool in the gym?",
+      "options": [
+        {
+          "id": "A",
+          "text": "1,500 lb"
+        },
+        {
+          "id": "B",
+          "text": "1,200 lb"
+        },
+        {
+          "id": "C",
+          "text": "800 lb"
+        },
+        {
+          "id": "D",
+          "text": "1,000 lb"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Deputies noted voltage spikes tracking toward the DOE perimeter line.",
-      docketTag: "POWER TELEMETRY",
+      "correctAnswerId": "B",
+      "hint": "Dustin called Mr. Clarke late at night while he was watching 'The Thing from Another World'.",
+      "docketTag": "PHYSICS CALC"
     },
     {
-      id: "ch1-q4",
-      chapterId: 1,
-      itemNumber: 4,
-      subHeader: "DEMO Q4 · ITEM 04: SUBJECT 011 PHYSIOLOGY",
-      question: "What physiological indicator consistently accompanied Eleven's remote viewing and sensory deprivation tank sessions?",
-      options: [
-        { id: "A", text: "Unilateral Nasal Hemorrhage (Nosebleed)" },
-        { id: "B", text: "Retinal Color Inversion" },
-        { id: "C", text: "Complete Auditory Silence" },
-        { id: "D", text: "Thermal Body Hypothermia" },
+      "id": "ch1-q4",
+      "chapterId": 1,
+      "itemNumber": 4,
+      "subHeader": "QUIZ Q4 · CASSETTE MIXTAPE",
+      "question": "Which iconic Clash song does Jonathan play on cassette in Will's room to bond over music?",
+      "options": [
+        {
+          "id": "A",
+          "text": "\"Should I Stay or Should I Go\""
+        },
+        {
+          "id": "B",
+          "text": "\"Atmosphere\""
+        },
+        {
+          "id": "C",
+          "text": "\"Running Up That Hill\""
+        },
+        {
+          "id": "D",
+          "text": "\"Elegia\""
+        }
       ],
-      correctAnswerId: "A",
-      hint: "High psychokinetic output causes blood vessels in the nasal cavity to rupture.",
-      docketTag: "MEDICAL OBSERVATION",
+      "correctAnswerId": "A",
+      "hint": "Will later sings this song to stay grounded while trapped in the Upside Down.",
+      "docketTag": "AUDIO EVIDENCE"
     },
     {
-      id: "ch1-q5",
-      chapterId: 1,
-      itemNumber: 5,
-      subHeader: "DEMO Q5 · ITEM 05: BENNY'S DINER FIRST SIGHTING",
-      question: "Where was Subject 011 first spotted seeking refuge immediately following her escape from the lab perimeter?",
-      options: [
-        { id: "A", text: "Benny's Burgers Kitchen & Diner" },
-        { id: "B", text: "The Palace Arcade on Main Street" },
-        { id: "C", text: "Melvald's General Store Basement" },
-        { id: "D", text: "Bradley's Big Buy Supermarket" },
+      "id": "ch1-q5",
+      "chapterId": 1,
+      "itemNumber": 5,
+      "subHeader": "QUIZ Q5 · BENNY'S BURGERS",
+      "question": "What is the name of the kind diner owner who discovers Eleven and offers her food after her escape?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Gary Hammond"
+        },
+        {
+          "id": "B",
+          "text": "Earl Benny"
+        },
+        {
+          "id": "C",
+          "text": "Benny Hammond"
+        },
+        {
+          "id": "D",
+          "text": "Benny Baker"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Benny Hammond caught the young girl taking leftover fries from the kitchen.",
-      docketTag: "INCIDENT REPORT",
+      "correctAnswerId": "C",
+      "hint": "He owned Benny's Burgers and gave her fresh burgers before DOE agents arrived.",
+      "docketTag": "WITNESS LOG"
     },
     {
-      id: "ch1-q6",
-      chapterId: 1,
-      itemNumber: 6,
-      subHeader: "DEMO Q6 · ITEM 06: AV CLUB HEATHKIT TRANSCEIVER",
-      question: "Which teacher at Hawkins Middle School provided the students with the high-powered Heathkit ham radio equipment?",
-      options: [
-        { id: "A", text: "Mr. Scott Clarke (Science Instructor)" },
-        { id: "B", text: "Principal Coleman" },
-        { id: "C", text: "Coach Russell" },
-        { id: "D", text: "Mr. Hauser" },
+      "id": "ch1-q6",
+      "chapterId": 1,
+      "itemNumber": 6,
+      "subHeader": "QUIZ Q6 · MORGUE AUTOPSY REVELATION",
+      "question": "What material does Chief Hopper discover stuffed inside Will's decoy body in the Hawkins morgue?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Dry Wood Sawdust"
+        },
+        {
+          "id": "B",
+          "text": "Foam Batting and Cotton"
+        },
+        {
+          "id": "C",
+          "text": "Shredded Lab Paper"
+        },
+        {
+          "id": "D",
+          "text": "Polyfill Synthetic Stuffing"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Mr. Clarke always supported the boys' AV club curiosities and late-night calls.",
-      docketTag: "WITNESS LOG",
+      "correctAnswerId": "D",
+      "hint": "Hopper cut open the torso seam with a pocket knife, confirming the state troopers planted a dummy.",
+      "docketTag": "CORONER REPORT"
     },
     {
-      id: "ch1-q7",
-      chapterId: 1,
-      itemNumber: 7,
-      subHeader: "DEMO Q7 · ITEM 07: POWER SUBSTATION DRAW DROP",
-      question: "What magnitude of power draw anomaly was logged across the municipal grid during the rift event?",
-      options: [
-        { id: "A", text: "Sudden 40-Megawatt Surge & Transformer Blowout" },
-        { id: "B", text: "Gradual 5% Voltage Drop" },
-        { id: "C", text: "Zero Observable Electrical Fluctuations" },
-        { id: "D", text: "Continuous 120Hz Resonance Harmonics" },
+      "id": "ch1-q7",
+      "chapterId": 1,
+      "itemNumber": 7,
+      "subHeader": "QUIZ Q7 · PALACE ARCADE RECORD",
+      "question": "What Dig Dug high score does Max Mayfield achieve at the Palace Arcade under the handle 'MADMAX'?",
+      "options": [
+        {
+          "id": "A",
+          "text": "651,990"
+        },
+        {
+          "id": "B",
+          "text": "751,300"
+        },
+        {
+          "id": "C",
+          "text": "850,220"
+        },
+        {
+          "id": "D",
+          "text": "900,100"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Transformers blew across North Elm street causing town-wide flickering.",
-      docketTag: "TELEMETRY METRICS",
+      "correctAnswerId": "B",
+      "hint": "Dustin was shocked to find his previous top score dethroned by MADMAX.",
+      "docketTag": "ARCADE TELEMETRY"
     },
     {
-      id: "ch1-q8",
-      chapterId: 1,
-      itemNumber: 8,
-      subHeader: "DEMO Q8 · ITEM 08: DOE SURVEILLANCE VEHICLE COVERT ID",
-      question: "What company logo was emblazoned on the Department of Energy surveillance vans intercepting telephone wiretaps?",
-      options: [
-        { id: "A", text: "Hawkins Power & Light Utility Service" },
-        { id: "B", text: "Indiana Bell Telephone Company" },
-        { id: "C", text: "Federal Postal Delivery Service" },
-        { id: "D", text: "Roane County Water Authority" },
+      "id": "ch1-q8",
+      "chapterId": 1,
+      "itemNumber": 8,
+      "subHeader": "QUIZ Q8 · DEMODOG DIET",
+      "question": "What specific candy bar does Dustin feed Dart the juvenile Demodog to domesticate it?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Three Musketeers"
+        },
+        {
+          "id": "B",
+          "text": "Snickers"
+        },
+        {
+          "id": "C",
+          "text": "Baby Ruth"
+        },
+        {
+          "id": "D",
+          "text": "Butterfinger"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The vans were disguised as routine power and light municipal trucks.",
-      docketTag: "SURVEILLANCE DOSSIER",
+      "correctAnswerId": "A",
+      "hint": "Dustin gave Dart the chocolate bar in his bedroom terrarium, calling it 'nougat'.",
+      "docketTag": "SPECIMEN LOG"
     },
     {
-      id: "ch1-q9",
-      chapterId: 1,
-      itemNumber: 9,
-      subHeader: "DEMO Q9 · ITEM 09: MAGNETIC COMPASS DEVIATION",
-      question: "What physical anomaly revealed the location of the dimensional gate when Dustin used his pocket compass?",
-      options: [
-        { id: "A", text: "Needles Deflected Toward Hawkins Lab (True Magnetic Anomaly)" },
-        { id: "B", text: "Needles Spun Rapidly at 60 RPM" },
-        { id: "C", text: "Needles Froze Completely Solid Pointing South" },
-        { id: "D", text: "Compass Glass Shattered under High Pressure" },
+      "id": "ch1-q9",
+      "chapterId": 1,
+      "itemNumber": 9,
+      "subHeader": "QUIZ Q9 · LAB SECURITY REBOOT",
+      "question": "Which programming language does Bob Newby use on Hawkins Lab's terminals to override the security door lockouts?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Fortran"
+        },
+        {
+          "id": "B",
+          "text": "COBOL"
+        },
+        {
+          "id": "C",
+          "text": "BASIC"
+        },
+        {
+          "id": "D",
+          "text": "C++"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The massive electromagnetic tear drew compass needles away from True North.",
-      docketTag: "FIELD NAVIGATION",
+      "correctAnswerId": "C",
+      "hint": "Bob founded the Hawkins Middle AV Club and remarked that he learned BASIC for computer engineering.",
+      "docketTag": "SYSTEM LOG"
     },
     {
-      id: "ch1-q10",
-      chapterId: 1,
-      itemNumber: 10,
-      subHeader: "DEMO Q10 · ITEM 10: ELEVEN'S FAVORED RATION",
-      question: "What grocery item did Eleven acquire during the Bradley's Big Buy incident to sustain her energy?",
-      options: [
-        { id: "A", text: "Boxes of Frozen Kellogg's Eggo Waffles" },
-        { id: "B", text: "Three Bags of 3 Musketeers Chocolate Bars" },
-        { id: "C", text: "Cases of Coca-Cola Classic Cans" },
-        { id: "D", text: "Cartons of Strawberry Milk" },
+      "id": "ch1-q10",
+      "chapterId": 1,
+      "itemNumber": 10,
+      "subHeader": "QUIZ Q10 · LAB INHIBITOR IMPLANT",
+      "question": "What is the name of the miniature psychokinetic inhibitor capsule surgically implanted into Henry Creel (001)?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Project MK-Tracker"
+        },
+        {
+          "id": "B",
+          "text": "Soteria"
+        },
+        {
+          "id": "C",
+          "text": "Cerberus"
+        },
+        {
+          "id": "D",
+          "text": "Promethium"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "She walked straight through the sliding glass doors carrying arms full of Eggos.",
-      docketTag: "SUPPLY LOG",
-    },
+      "correctAnswerId": "B",
+      "hint": "Eleven used her telekinesis to rip the Soteria chip out of Henry's neck in 1979.",
+      "docketTag": "LAB DOSSIER"
+    }
   ],
-  2: [
+  "2": [
     {
-      id: "ch2-q1",
-      chapterId: 2,
-      itemNumber: 1,
-      subHeader: "DEMO Q1 · ITEM 01: ANOMALY EPICENTER",
-      question: "Chief Hopper's incident board correlates witness reports, power station voltage drops, and RF interference. Which facility is the primary epicenter of the anomaly?",
-      options: [
-        { id: "A", text: "Hawkins National Laboratory (Sublevel 4)" },
-        { id: "B", text: "Cornwallis Municipal Substation" },
-        { id: "C", text: "Roane County Water Tower Reservoir" },
-        { id: "D", text: "Sattler Quarry Abandoned Basin" },
+      "id": "ch2-q1",
+      "chapterId": 2,
+      "itemNumber": 1,
+      "subHeader": "CONNECTION 01 · HAWKINS BY THE NUMBERS",
+      "question": "Match each Stranger Things number in Column A to its matching converted computer value in Column B.",
+      "options": [
+        {
+          "id": "A",
+          "text": "1–b, 2–d, 3–c, 4–a (11 = 1011₂, 9 = 1001₂, 1983 = 7BF₁₆, 88 = 58₁₆)"
+        },
+        {
+          "id": "B",
+          "text": "1–a, 2–b, 3–c, 4–d (Direct ascending map)"
+        },
+        {
+          "id": "C",
+          "text": "1–c, 2–a, 3–d, 4–b (Inverted hexadecimal map)"
+        },
+        {
+          "id": "D",
+          "text": "1–d, 2–b, 3–a, 4–c (Binary inverted offset)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "All field vectors and radio recordings converge directly on Hawkins Lab.",
-      docketTag: "GROUND ZERO",
+      "correctAnswerId": "A",
+      "hint": "11 in binary is 8+2+1 = 1011₂. 9 in binary is 8+1 = 1001₂. 1983 in hex is 7BF₁₆.",
+      "docketTag": "NUMERIC MATRIX"
     },
     {
-      id: "ch2-q2",
-      chapterId: 2,
-      itemNumber: 2,
-      subHeader: "DEMO Q2 · ITEM 02: MIRKWOOD ROADWAY RECON",
-      question: "What vehicle was found abandoned near the Mirkwood perimeter road on the night Will Byers disappeared?",
-      options: [
-        { id: "A", text: "1980 Ross Apollo Green Bicycle" },
-        { id: "B", text: "1978 Chevy K5 Blazer" },
-        { id: "C", text: "1974 Ford Pinto Hatchback" },
-        { id: "D", text: "1982 Honda Civic Sedan" },
+      "id": "ch2-q2",
+      "chapterId": 2,
+      "itemNumber": 2,
+      "subHeader": "CONNECTION 02 · GATES OF THE UPSIDE DOWN",
+      "question": "Match each Hawkins operational situation to the logic gate that governs its exact behavior.",
+      "options": [
+        {
+          "id": "A",
+          "text": "1–AND, 2–OR, 3–NOT, 4–XOR"
+        },
+        {
+          "id": "B",
+          "text": "1–NAND, 2–NOR, 3–XNOR, 4–AND"
+        },
+        {
+          "id": "C",
+          "text": "1–OR, 2–AND, 3–XOR, 4–NOT"
+        },
+        {
+          "id": "D",
+          "text": "1–XOR, 2–NOT, 3–AND, 4–OR"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Found tipped over in the ditch with the headlight still faintly running.",
-      docketTag: "PHYSICAL EVIDENCE",
+      "correctAnswerId": "A",
+      "hint": "Exclusive choice is XOR; inversion is NOT; simultaneous required conditions is AND.",
+      "docketTag": "BOOLEAN LOGIC"
     },
     {
-      id: "ch2-q3",
-      chapterId: 2,
-      itemNumber: 3,
-      subHeader: "DEMO Q3 · ITEM 03: PERIMETER SLIME RESIDUE",
-      question: "What chemical substance was discovered on the perimeter fences of the Department of Energy facility during morning recon?",
-      options: [
-        { id: "A", text: "Corrosive Biological Slime with Organic Spores" },
-        { id: "B", text: "High-Octane Transformer Dielectric Oil" },
-        { id: "C", text: "Liquid Nitrogen Cooling Residue" },
-        { id: "D", text: "Refined Sulfuric Battery Acid" },
+      "id": "ch2-q3",
+      "chapterId": 2,
+      "itemNumber": 3,
+      "subHeader": "CONNECTION 03 · HAWKINS DATA STRUCTURES",
+      "question": "Match each town scenario to the computer science data structure it mirrors.",
+      "options": [
+        {
+          "id": "A",
+          "text": "1–Stack, 2–Queue, 3–Tree, 4–Graph"
+        },
+        {
+          "id": "B",
+          "text": "1–Queue, 2–Stack, 3–Array, 4–Tree"
+        },
+        {
+          "id": "C",
+          "text": "1–Graph, 2–Tree, 3–Stack, 4–Queue"
+        },
+        {
+          "id": "D",
+          "text": "1–Array, 2–Linked List, 3–Binary Tree, 4–Heap"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The biological mucus leaves glowing organic spore residues under UV light.",
-      docketTag: "CHEMICAL BIOHAZARD",
+      "correctAnswerId": "A",
+      "hint": "Last-in First-out is Stack; First-in First-out is Queue; Networks of arbitrary connections are Graphs.",
+      "docketTag": "STRUCTURE MAP"
     },
     {
-      id: "ch2-q4",
-      chapterId: 2,
-      itemNumber: 4,
-      subHeader: "DEMO Q4 · ITEM 04: DISPATCH RECON OFFICERS",
-      question: "Which Hawkins Police Department officers assisted Chief Hopper in reviewing the surveillance logs from the main gate checkpoint?",
-      options: [
-        { id: "A", text: "Officer Callahan & Officer Powell" },
-        { id: "B", text: "Agent Frazier & Special Agent Miller" },
-        { id: "C", text: "Sheriff Clark & Deputy Owens" },
-        { id: "D", text: "Officer Bradley & Sergeant Hicks" },
+      "id": "ch2-q4",
+      "chapterId": 2,
+      "itemNumber": 4,
+      "subHeader": "CONNECTION 04 · MIND FLAYER VS CYBERSECURITY",
+      "question": "Match each Hawkins threat vector to the cyber attack classification it exemplifies.",
+      "options": [
+        {
+          "id": "A",
+          "text": "1–Botnet, 2–DDoS Attack, 3–Trojan Horse, 4–Spyware"
+        },
+        {
+          "id": "B",
+          "text": "1–Ransomware, 2–Phishing, 3–Spyware, 4–Botnet"
+        },
+        {
+          "id": "C",
+          "text": "1–Trojan Horse, 2–Botnet, 3–DDoS, 4–Ransomware"
+        },
+        {
+          "id": "D",
+          "text": "1–Man-in-the-Middle, 2–Zero Day, 3–Rootkit, 4–Worm"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Callahan and Powell are the two main deputies at the Hawkins precinct.",
-      docketTag: "PERSONNEL RECORD",
+      "correctAnswerId": "A",
+      "hint": "A puppet army is a Botnet; resource starvation via swarms is DDoS; deceptive camouflage is a Trojan.",
+      "docketTag": "SECURITY THREAT"
     },
     {
-      id: "ch2-q5",
-      chapterId: 2,
-      itemNumber: 5,
-      subHeader: "DEMO Q5 · ITEM 05: MORGUE RECON AUTOPSY REPORT",
-      question: "What shocking anomaly did Chief Hopper discover when he cut open the body recovered from Sattler Quarry in the county morgue?",
-      options: [
-        { id: "A", text: "The Body was a Counterfeit Stuffed with Cotton Batting" },
-        { id: "B", text: "The Body was Completely Frozen in Carbonite" },
-        { id: "C", text: "The Body was a Robotic Mannequin with Copper Wiring" },
-        { id: "D", text: "The Internal Organs Were Transmuted into Ash" },
+      "id": "ch2-q5",
+      "chapterId": 2,
+      "itemNumber": 5,
+      "subHeader": "CONNECTION 05 · HAWKINS VERSION CONTROL",
+      "question": "Treat Hawkins history as a Git repository. Match each event to its corresponding Git operation.",
+      "options": [
+        {
+          "id": "A",
+          "text": "1–git branch, 2–git merge, 3–git commit, 4–git revert"
+        },
+        {
+          "id": "B",
+          "text": "1–git clone, 2–git push, 3–git pull, 4–git reset"
+        },
+        {
+          "id": "C",
+          "text": "1–git stash, 2–git checkout, 3–git rebase, 4–git cherry-pick"
+        },
+        {
+          "id": "D",
+          "text": "1–git init, 2–git remote, 3–git fetch, 4–git diff"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Hopper sliced into the stomach with a pocket knife and pulled out cotton stuffing.",
-      docketTag: "FORENSIC DISCREPANCY",
+      "correctAnswerId": "A",
+      "hint": "Divergent timeline is a branch; combining is merge; recording snapshot is commit; safe undo is revert.",
+      "docketTag": "GIT TOPOLOGY"
     },
     {
-      id: "ch2-q6",
-      chapterId: 2,
-      itemNumber: 6,
-      subHeader: "DEMO Q6 · ITEM 06: BENNY HAMMOND AUTOPSY CLASSIFICATION",
-      question: "How did state investigators fraudulently rule the violent death of diner owner Benny Hammond?",
-      options: [
-        { id: "A", text: "Self-Inflicted Gunshot Suicide" },
-        { id: "B", text: "Accidental Kitchen Appliance Explosion" },
-        { id: "C", text: "Robbery by Transients" },
-        { id: "D", text: "Heart Attack Caused by Smoke Inhalation" },
+      "id": "ch2-q6",
+      "chapterId": 2,
+      "itemNumber": 6,
+      "subHeader": "CONNECTION 06 · THE SEARCH FOR WILL",
+      "question": "Match each investigative search strategy used by Hawkins residents to its fundamental algorithm.",
+      "options": [
+        {
+          "id": "A",
+          "text": "1–Linear Search, 2–Binary Search, 3–Depth-First Search, 4–Breadth-First Search"
+        },
+        {
+          "id": "B",
+          "text": "1–Binary Search, 2–Linear Search, 3–Breadth-First, 4–Depth-First"
+        },
+        {
+          "id": "C",
+          "text": "1–Dijkstra, 2–A* Search, 3–Floyd-Warshall, 4–Bellman-Ford"
+        },
+        {
+          "id": "D",
+          "text": "1–Quick Select, 2–Merge Search, 3–Jump Search, 4–Interpolation Search"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Agent Frazier shot Benny and immediately staged a suicide note and pistol.",
-      docketTag: "PRECINCT CLASSIFICATION",
+      "correctAnswerId": "A",
+      "hint": "Step-by-step is Linear; halving sorted items is Binary; going deep is DFS; expanding ripples is BFS.",
+      "docketTag": "ALGORITHM MAP"
     },
     {
-      id: "ch2-q7",
-      chapterId: 2,
-      itemNumber: 7,
-      subHeader: "DEMO Q7 · ITEM 07: STATE POLICE JURISDICTIONAL LOCKOUT",
-      question: "Why were Chief Hopper and his deputies barred from approaching the quarry retrieval site?",
-      options: [
-        { id: "A", text: "Federal State Troopers Imposed Immediate Martial Clearance" },
-        { id: "B", text: "Toxic Waste Runoff Quarantine" },
-        { id: "C", text: "Flooding on Quarry Access Trail 9" },
-        { id: "D", text: "A Broken Down Heavy Crane Blocking the Pass" },
+      "id": "ch2-q7",
+      "chapterId": 2,
+      "itemNumber": 7,
+      "subHeader": "CONNECTION 07 · HOW FAST IS HAWKINS? (TIME COMPLEXITY)",
+      "question": "Match each Hawkins computation or operational task to its asymptotic Big-O time complexity.",
+      "options": [
+        {
+          "id": "A",
+          "text": "1–O(1), 2–O(n), 3–O(n log n), 4–O(n²)"
+        },
+        {
+          "id": "B",
+          "text": "1–O(n), 2–O(1), 3–O(n²), 4–O(n log n)"
+        },
+        {
+          "id": "C",
+          "text": "1–O(log n), 2–O(n²), 3–O(2ⁿ), 4–O(n!)"
+        },
+        {
+          "id": "D",
+          "text": "1–O(1), 2–O(log n), 3–O(n), 4–O(2ⁿ)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Unknown federal troopers took command of the perimeter and pushed local police away.",
-      docketTag: "SECURITY PROTOCOL",
+      "correctAnswerId": "A",
+      "hint": "Instant top-stack access is O(1); scanning list is O(n); divide-and-conquer sort is O(n log n); pairwise pairs is O(n²).",
+      "docketTag": "ASYMPTOTICS"
     },
     {
-      id: "ch2-q8",
-      chapterId: 2,
-      itemNumber: 8,
-      subHeader: "DEMO Q8 · ITEM 08: CHIEF'S VEHICLE IDENTIFICATION",
-      question: "What vehicle model does Chief Jim Hopper operate as his official patrol command vehicle?",
-      options: [
-        { id: "A", text: "1980 Chevrolet K5 Blazer Police Special" },
-        { id: "B", text: "1977 Ford Crown Victoria Cruiser" },
-        { id: "C", text: "1982 Dodge Diplomat Sedan" },
-        { id: "D", text: "1975 Jeep Cherokee Pioneer" },
+      "id": "ch2-q8",
+      "chapterId": 2,
+      "itemNumber": 8,
+      "subHeader": "CONNECTION 08 · CLASSES OF HAWKINS (OOP PRINCIPLES)",
+      "question": "Match each Hawkins scenario to the Object-Oriented Programming (OOP) pillar it demonstrates.",
+      "options": [
+        {
+          "id": "A",
+          "text": "1–Inheritance, 2–Polymorphism, 3–Encapsulation, 4–Abstraction"
+        },
+        {
+          "id": "B",
+          "text": "1–Abstraction, 2–Encapsulation, 3–Polymorphism, 4–Inheritance"
+        },
+        {
+          "id": "C",
+          "text": "1–Polymorphism, 2–Inheritance, 3–Abstraction, 4–Encapsulation"
+        },
+        {
+          "id": "D",
+          "text": "1–Coupling, 2–Cohesion, 3–Overloading, 4–Aggregation"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The beige and brown two-tone Chevrolet K5 Blazer with roof siren.",
-      docketTag: "VEHICLE LOG",
+      "correctAnswerId": "A",
+      "hint": "Extending a parent is Inheritance; one method with different forms is Polymorphism; hiding internals is Abstraction.",
+      "docketTag": "OOP MATRIX"
     },
     {
-      id: "ch2-q9",
-      chapterId: 2,
-      itemNumber: 9,
-      subHeader: "DEMO Q9 · ITEM 09: RESIDENTIAL SURVEILLANCE BUG",
-      question: "Where did Chief Hopper discover the covert listening device planted inside his cabin home?",
-      options: [
-        { id: "A", text: "Inside the Living Room Ceiling Light Fixture" },
-        { id: "B", text: "Inside the Refrigerator Compressor Coil" },
-        { id: "C", text: "Inside His Bathroom Medicine Cabinet" },
-        { id: "D", text: "Taped Behind the Kitchen Rotary Phone" },
+      "id": "ch2-q9",
+      "chapterId": 2,
+      "itemNumber": 9,
+      "subHeader": "CONNECTION 09 · HAWKINS OPERATING SYSTEM CONCEPTS",
+      "question": "Match each situation among the Hawkins kids to the operating system concurrency concept it exhibits.",
+      "options": [
+        {
+          "id": "A",
+          "text": "1–Round Robin, 2–Deadlock, 3–Mutual Exclusion (Mutex), 4–Multithreading"
+        },
+        {
+          "id": "B",
+          "text": "1–Paging, 2–Semaphore, 3–Deadlock, 4–Thrashing"
+        },
+        {
+          "id": "C",
+          "text": "1–Deadlock, 2–Round Robin, 3–Multithreading, 4–Mutex"
+        },
+        {
+          "id": "D",
+          "text": "1–Context Switch, 2–Virtual Memory, 3–Interrupt, 4–Daemon"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "He tore his house apart with a knife until finding the microphone in the lamp.",
-      docketTag: "COUNTER-INTEL",
+      "correctAnswerId": "A",
+      "hint": "Time slice rotation is Round Robin; circular mutual blocking is Deadlock; single access lock is Mutex.",
+      "docketTag": "OS PRINCIPLES"
     },
     {
-      id: "ch2-q10",
-      chapterId: 2,
-      itemNumber: 10,
-      subHeader: "DEMO Q10 · ITEM 10: PRECINCT EVIDENCE LOCKER #4",
-      question: "What item recovered from the Mirkwood ditch was cataloged into the Hawkins evidence locker on Day 1?",
-      options: [
-        { id: "A", text: "Will's Stitched Winter Puffer Vest & Hand Flashlight" },
-        { id: "B", text: "A Set of 20-Sided D&D Polyhedral Dice" },
-        { id: "C", text: "A Torn Notebook Page of Mirkwood Maps" },
-        { id: "D", text: "A Broken Walkie-Talkie Antenna" },
+      "id": "ch2-q10",
+      "chapterId": 2,
+      "itemNumber": 10,
+      "subHeader": "CONNECTION 10 · DUSTIN'S MEMORY HIERARCHY",
+      "question": "Match Dustin's expedition equipment items to their counterparts in a computer's memory hierarchy.",
+      "options": [
+        {
+          "id": "A",
+          "text": "1–Register, 2–Cache, 3–RAM, 4–Hard Disk / SSD"
+        },
+        {
+          "id": "B",
+          "text": "1–Cache, 2–Register, 3–Hard Disk, 4–RAM"
+        },
+        {
+          "id": "C",
+          "text": "1–RAM, 2–ROM, 3–Cache, 4–Registers"
+        },
+        {
+          "id": "D",
+          "text": "1–Virtual Memory, 2–Flash, 3–EEPROM, 4–Optical Disc"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The vest and flashlight were gathered by search volunteers at sunrise.",
-      docketTag: "EVIDENCE LOG",
-    },
+      "correctAnswerId": "A",
+      "hint": "Fastest in-hand is Register; fast buffer is Cache; active temporary is RAM; bulk persistent is Hard Disk.",
+      "docketTag": "STORAGE TIERS"
+    }
   ],
-  3: [
+  "3": [
     {
-      id: "ch3-q1",
-      chapterId: 3,
-      itemNumber: 1,
-      subHeader: "DEMO Q1 · ITEM 01: WALL INTERFACE ARRAY",
-      question: "What household decoration did Joyce Byers string across the living room to establish direct alphabetic contact with Will?",
-      options: [
-        { id: "A", text: "26 Multicolored Christmas String Lights (A through Z)" },
-        { id: "B", text: "Rotary Telephone Handset Bells" },
-        { id: "C", text: "Cassette Tape Magnetic Ribbons" },
-        { id: "D", text: "Flashlight Morse Code Reflectors" },
+      "id": "ch3-q1",
+      "chapterId": 3,
+      "itemNumber": 1,
+      "subHeader": "REARRANGE 01 · SCRAMBLED WORD (ALGORITHM)",
+      "question": "Hawkins Lab decoder intercept received scrambled letters for a 'step-by-step procedure for solving a computational problem'. Arrange into the correct word.",
+      "options": [
+        {
+          "id": "A",
+          "text": "A → L → G → O → R → I → T → H → M (ALGORITHM)"
+        },
+        {
+          "id": "B",
+          "text": "L → O → Garithm → A → R (LOGARITHM)"
+        },
+        {
+          "id": "C",
+          "text": "M → O → R → T → A → L → I → G → H (MORTALIGH)"
+        },
+        {
+          "id": "D",
+          "text": "T → E → L → E → G → R → A → M → S (TELEGRAMS)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Joyce painted 26 English letters on the floral wallpaper beneath each bulb.",
-      docketTag: "INTERFACE SCHEMATIC",
+      "correctAnswerId": "A",
+      "hint": "Unscramble TLHIGROMA: It begins with A and defines every automated program.",
+      "docketTag": "CIPHER WORD"
     },
     {
-      id: "ch3-q2",
-      chapterId: 3,
-      itemNumber: 2,
-      subHeader: "DEMO Q2 · ITEM 02: URGENT WALL CIPHER",
-      question: "What urgent warning did Will spell out through the wall lights before the Demogorgon burst through the wallpaper?",
-      options: [
-        { id: "A", text: "R - U - N (RUN)" },
-        { id: "B", text: "H - I - D - E (HIDE)" },
-        { id: "C", text: "H - E - L - P (HELP)" },
-        { id: "D", text: "B - A - C - K (BACK)" },
+      "id": "ch3-q2",
+      "chapterId": 3,
+      "itemNumber": 2,
+      "subHeader": "REARRANGE 02 · SCRAMBLED WORD (RECURSION)",
+      "question": "Unscramble the letters describing the core programming technique where a function calls itself repeatedly until reaching a base condition.",
+      "options": [
+        {
+          "id": "A",
+          "text": "R → E → C → U → R → S → I → O → N (RECURSION)"
+        },
+        {
+          "id": "B",
+          "text": "C → Uursion → R → E → S → O → N (CURSIONER)"
+        },
+        {
+          "id": "C",
+          "text": "S → U → C → C → E → S → S → I → O (SUCCESSION)"
+        },
+        {
+          "id": "D",
+          "text": "R → E → S → O → U → R → C → I → N (RESOURCING)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Three rapid pulses spelled out the single imperative word to flee.",
-      docketTag: "DECODED TRANSMISSION",
+      "correctAnswerId": "A",
+      "hint": "Unscramble ECROSNIRU: Like two mirrors facing each other in the Upside Down.",
+      "docketTag": "CIPHER WORD"
     },
     {
-      id: "ch3-q3",
-      chapterId: 3,
-      itemNumber: 3,
-      subHeader: "DEMO Q3 · ITEM 03: CASSETTE GROUNDING TRACK",
-      question: "Which rock anthem did Jonathan play on his cassette deck in Will's bedroom to keep his spirits grounded?",
-      options: [
-        { id: "A", text: "The Clash — 'Should I Stay or Should I Go'" },
-        { id: "B", text: "Joy Division — 'Atmosphere'" },
-        { id: "C", text: "Echo & the Bunnymen — 'Nocturnal Me'" },
-        { id: "D", text: "Peter Gabriel — 'Heroes'" },
+      "id": "ch3-q3",
+      "chapterId": 3,
+      "itemNumber": 3,
+      "subHeader": "REARRANGE 03 · SCRAMBLED STATEMENT (PYTHON LOOP)",
+      "question": "Arrange the scrambled syntax tokens to construct a valid Python loop header that executes exactly 5 iterations.",
+      "options": [
+        {
+          "id": "A",
+          "text": "for → i → in → range → ( → 5 → ) → :"
+        },
+        {
+          "id": "B",
+          "text": "range → ( → 5 → ) → for → i → in → :"
+        },
+        {
+          "id": "C",
+          "text": "for → in → range → ( → 5 → ) → i → :"
+        },
+        {
+          "id": "D",
+          "text": ": → for → i → in → range → 5 → ( → )"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "From Combat Rock (1982), Will sang this track while hiding in Castle Byers.",
-      docketTag: "AUDIO EVIDENCE",
+      "correctAnswerId": "A",
+      "hint": "Standard Python loop syntax: 'for <variable> in range(<count>):'",
+      "docketTag": "TOKEN SYNTAX"
     },
     {
-      id: "ch3-q4",
-      chapterId: 3,
-      itemNumber: 4,
-      subHeader: "DEMO Q4 · ITEM 04: DIMENSIONAL MEMBRANE",
-      question: "What physical barrier anomaly formed behind the wallpaper when Joyce tried to reach through to her son?",
-      options: [
-        { id: "A", text: "A Translucent, Membrane-Like Dimensional Wall" },
-        { id: "B", text: "Solidified Black Obsidian Glass" },
-        { id: "C", text: "An Invisible High-Voltage Electrical Field" },
-        { id: "D", text: "A Vacuum Air Pocket with Freezing Frost" },
+      "id": "ch3-q4",
+      "chapterId": 3,
+      "itemNumber": 4,
+      "subHeader": "REARRANGE 04 · SCRAMBLED STATEMENT (SQL QUERY)",
+      "question": "Arrange these SQL clauses in correct execution sequence to fetch names of characters with power above 5, sorted alphabetically.",
+      "options": [
+        {
+          "id": "A",
+          "text": "SELECT name → FROM characters → WHERE power > 5 → ORDER BY name;"
+        },
+        {
+          "id": "B",
+          "text": "FROM characters → SELECT name → ORDER BY name; → WHERE power > 5"
+        },
+        {
+          "id": "C",
+          "text": "WHERE power > 5 → SELECT name → FROM characters → ORDER BY name;"
+        },
+        {
+          "id": "D",
+          "text": "ORDER BY name; → SELECT name → FROM characters → WHERE power > 5"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The wall stretched like elastic latex as the Upside Down intersected our world.",
-      docketTag: "ANOMALY ANALYSIS",
+      "correctAnswerId": "A",
+      "hint": "Standard SQL clause order: SELECT ... FROM ... WHERE ... ORDER BY ...",
+      "docketTag": "DATABASE QUERY"
     },
     {
-      id: "ch3-q5",
-      chapterId: 3,
-      itemNumber: 5,
-      subHeader: "DEMO Q5 · ITEM 05: ROTARY TELEPHONE ELECTRICAL DISCHARGE",
-      question: "What occurred to the Byers kitchen rotary telephone during Will's first transmission attempt?",
-      options: [
-        { id: "A", text: "High-Voltage Overload Burned and Melted the Receiver Coils" },
-        { id: "B", text: "The Dial Spun Continuously Counter-Clockwise" },
-        { id: "C", text: "The Cord Detached and Slithered like a Snake" },
-        { id: "D", text: "A Piercing 20,000 Hz Ultrasound Shattered the Glass" },
+      "id": "ch3-q5",
+      "chapterId": 3,
+      "itemNumber": 5,
+      "subHeader": "REARRANGE 05 · SCRAMBLED CODE (RECURSIVE FACTORIAL)",
+      "question": "The lines of this recursive factorial calculation function are jumbled. Arrange them in valid working order. (What does factorial(5) return?)",
+      "options": [
+        {
+          "id": "A",
+          "text": "B → C → D → A (Returns 120)"
+        },
+        {
+          "id": "B",
+          "text": "A → B → C → D (Returns 0)"
+        },
+        {
+          "id": "C",
+          "text": "C → D → B → A (SyntaxError)"
+        },
+        {
+          "id": "D",
+          "text": "B → A → C → D (Infinite Recursion)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Joyce heard breathing and static before an electrical blast melted the plastic handset.",
-      docketTag: "TELECOM FORENSICS",
+      "correctAnswerId": "A",
+      "hint": "Function definition first (B), then base case condition (C) and base return (D), followed by recursive step (A).",
+      "docketTag": "PYTHON CODE"
     },
     {
-      id: "ch3-q6",
-      chapterId: 3,
-      itemNumber: 6,
-      subHeader: "DEMO Q6 · ITEM 06: CASTLE BYERS SANCTUARY",
-      question: "What outdoor structure in the woods served as Will's secret refuge before it was discovered by the predator?",
-      options: [
-        { id: "A", text: "Castle Byers (Stick and Tarp Fortress)" },
-        { id: "B", text: "An Abandoned Cornwallis Bus" },
-        { id: "C", text: "The Old Mill Grain Silo" },
-        { id: "D", text: "A Underground Storm Bunker" },
+      "id": "ch3-q6",
+      "chapterId": 3,
+      "itemNumber": 6,
+      "subHeader": "REARRANGE 06 · SCRAMBLED CODE (STRING REVERSAL)",
+      "question": "Rearrange the lines to build a string-reversing function. (Calling it with 'NWOD' reveals a crucial Upside Down clue!)",
+      "options": [
+        {
+          "id": "A",
+          "text": "B → D → C → E → A (reverse('NWOD') reveals 'DOWN')"
+        },
+        {
+          "id": "B",
+          "text": "B → C → D → E → A (UnboundLocalError)"
+        },
+        {
+          "id": "C",
+          "text": "D → B → E → C → A (NameError)"
+        },
+        {
+          "id": "D",
+          "text": "E → D → C → B → A (SyntaxError)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "A handmade wooden shelter marked by a painted wooden shingle sign.",
-      docketTag: "LOCATION INTEL",
+      "correctAnswerId": "A",
+      "hint": "Initialize empty string accumulator before loop: B, then D, loop C, prepend E, return A.",
+      "docketTag": "PYTHON CODE"
     },
     {
-      id: "ch3-q7",
-      chapterId: 3,
-      itemNumber: 7,
-      subHeader: "DEMO Q7 · ITEM 07: JOYCE'S DEFENSIVE WEAPON",
-      question: "What tool did Joyce Byers clutch constantly while waiting in the armchair for the living room breach?",
-      options: [
-        { id: "A", text: "A Heavy Wood-Splitting Axe" },
-        { id: "B", text: "A Double-Barreled 12-Gauge Shotgun" },
-        { id: "C", text: "A Magnesium Emergency Road Flare" },
-        { id: "D", text: "An Iron Fireplace Poker" },
+      "id": "ch3-q7",
+      "chapterId": 3,
+      "itemNumber": 7,
+      "subHeader": "REARRANGE 07 · SCRAMBLED CODE (SUM OF EVEN NUMBERS)",
+      "question": "Arrange the lines so the script calculates the sum of all even numbers from 1 to 10. What is the printed output?",
+      "options": [
+        {
+          "id": "A",
+          "text": "B → E → A → D → C (Output: 30)"
+        },
+        {
+          "id": "B",
+          "text": "E → B → A → D → C (Output: 20)"
+        },
+        {
+          "id": "C",
+          "text": "B → A → E → D → C (SyntaxError)"
+        },
+        {
+          "id": "D",
+          "text": "C → B → E → A → D (Output: 0)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "She chopped through the drywall with an axe when the wall began groaning.",
-      docketTag: "TACTICAL OBSERVATION",
+      "correctAnswerId": "A",
+      "hint": "Initialize accumulator B, iterate range E, check modulo A, accumulate D, print total C. 2+4+6+8+10 = 30.",
+      "docketTag": "PYTHON CODE"
     },
     {
-      id: "ch3-q8",
-      chapterId: 3,
-      itemNumber: 8,
-      subHeader: "DEMO Q8 · ITEM 08: JONATHAN'S PHOTOGRAPHIC EVIDENCE",
-      question: "What mysterious silhouette did Jonathan accidentally photograph in the woods behind Steve Harrington's home?",
-      options: [
-        { id: "A", text: "The Faceless Demogorgon Looming Near the Pool" },
-        { id: "B", text: "A Department of Energy Hazmat Squad" },
-        { id: "C", text: "A Swarm of Interdimensional Bats" },
-        { id: "D", text: "Chief Hopper's Patrol Blazer" },
+      "id": "ch3-q8",
+      "chapterId": 3,
+      "itemNumber": 8,
+      "subHeader": "REARRANGE 08 · SCRAMBLED CODE (HTML STRUCTURE)",
+      "question": "Arrange the jumbled HTML tags to form a valid document displaying heading 'Hawkins Lab'.",
+      "options": [
+        {
+          "id": "A",
+          "text": "C → B → E → D → A (<html> <body> <h1>...</h1> </body> </html>)"
+        },
+        {
+          "id": "B",
+          "text": "B → C → E → A → D (Mismatched tags)"
+        },
+        {
+          "id": "C",
+          "text": "E → C → B → D → A (Invalid root)"
+        },
+        {
+          "id": "D",
+          "text": "C → E → B → D → A (Heading outside body)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "His 35mm camera caught the elongated creature right before Barb disappeared.",
-      docketTag: "OPTICAL EVIDENCE",
+      "correctAnswerId": "A",
+      "hint": "Document root <html> opens first, then <body>, content inside, then </body> and </html> close.",
+      "docketTag": "HTML MARKUP"
     },
     {
-      id: "ch3-q9",
-      chapterId: 3,
-      itemNumber: 9,
-      subHeader: "DEMO Q9 · ITEM 09: DOG BEHAVIORAL WARNING",
-      question: "How did the Byers family dog alert the household to the approaching entity on the night of the breach?",
-      options: [
-        { id: "A", text: "Barking Frantically at the Empty Backyard Shed" },
-        { id: "B", text: "Whimpering and Hiding Underneath Jonathan's Bed" },
-        { id: "C", text: "Refusing to Step Onto the Front Porch Steps" },
-        { id: "D", text: "Scratching Claw Marks Into the Living Room Floor" },
+      "id": "ch3-q9",
+      "chapterId": 3,
+      "itemNumber": 9,
+      "subHeader": "REARRANGE 09 · SCRAMBLED STEPS (GIT BUGFIX WORKFLOW)",
+      "question": "Put the professional Git workflow for creating a feature branch, committing fixes, and pushing in correct chronological order.",
+      "options": [
+        {
+          "id": "A",
+          "text": "C → E → B → D → A (Clone → Branch → Stage → Commit → Push)"
+        },
+        {
+          "id": "B",
+          "text": "C → B → D → E → A (Commit on main before branch)"
+        },
+        {
+          "id": "C",
+          "text": "E → C → B → D → A (Branch before clone failure)"
+        },
+        {
+          "id": "D",
+          "text": "B → D → A → C → E (Push uninitialized repo)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The dog barked hysterically at the shed as the outdoor floodlight flickered.",
-      docketTag: "BIOLOGICAL SENSORS",
+      "correctAnswerId": "A",
+      "hint": "First clone repo (C), make branch (E), stage modifications (B), commit message (D), push upstream (A).",
+      "docketTag": "DEV WORKFLOW"
     },
     {
-      id: "ch3-q10",
-      chapterId: 3,
-      itemNumber: 10,
-      subHeader: "DEMO Q10 · ITEM 10: WALLPAPER TEAR HEALING",
-      question: "What happened to the physical living room wall after the Demogorgon pressed through and receded?",
-      options: [
-        { id: "A", text: "The Punctured Hole Rapidly Contracted and Resealed" },
-        { id: "B", text: "It Left a Permanent 6-Foot Hole into Subzero Void" },
-        { id: "C", text: "The Entire Wall Collapsed into Wooden Splinters" },
-        { id: "D", text: "Liquid Slime Poured Out Flooding the Living Room" },
+      "id": "ch3-q10",
+      "chapterId": 3,
+      "itemNumber": 10,
+      "subHeader": "REARRANGE 10 · SCRAMBLED STEPS (AUTHENTICATION FLOW)",
+      "question": "Arrange the chronological steps of a secure client-server user authentication protocol.",
+      "options": [
+        {
+          "id": "A",
+          "text": "B → D → C → A → E (Submit → Transmit → Verify Hash → Issue Token → Access Granted)"
+        },
+        {
+          "id": "B",
+          "text": "D → B → C → A → E (Transmission before input)"
+        },
+        {
+          "id": "C",
+          "text": "B → C → D → A → E (Client-side database comparison)"
+        },
+        {
+          "id": "D",
+          "text": "A → B → D → C → E (Token generation before authentication)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Like a living organic membrane, the tear knit back together once the entity pulled back.",
-      docketTag: "MEMBRANE REPAIR",
-    },
+      "correctAnswerId": "A",
+      "hint": "User inputs (B), browser posts (D), backend hashes and checks (C), server issues token (A), client navigates (E).",
+      "docketTag": "SECURITY PROTOCOL"
+    }
   ],
-  4: [
+  "4": [
     {
-      id: "ch4-q1",
-      chapterId: 4,
-      itemNumber: 1,
-      subHeader: "DEMO Q1 · ITEM 01: BUFFER PARITY ROUTINE",
-      question: "In the Sublevel 3 telemetry router, what parity logic routine stabilized the crashed data packet buffer?",
-      options: [
-        { id: "A", text: "Double Even Integers (* 2) and Add 1 to Odds (+ 1)" },
-        { id: "B", text: "Bitwise XOR Shift Right by 2 Bits" },
-        { id: "C", text: "Cyclic Redundancy Check Polynomial 0x1021" },
-        { id: "D", text: "Invert Odd Bytes and Sum Modulo 256" },
+      "id": "ch4-q1",
+      "chapterId": 4,
+      "itemNumber": 1,
+      "subHeader": "CASE 01 · SUBSTATION SATURATION BREACH",
+      "question": "Analyze the incident evidence from Hawkins Power & Light Substation 03. What type of cyber attack caused the total terminal lockout?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Distributed Denial of Service (DDoS) Attack"
+        },
+        {
+          "id": "B",
+          "text": "SQL Injection Database Exfiltration"
+        },
+        {
+          "id": "C",
+          "text": "Cross-Site Scripting (XSS) Session Hijack"
+        },
+        {
+          "id": "D",
+          "text": "Ransomware Cryptographic Drive Encryption"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Check the Hawkins Lab telemetry parity script in Sublevel 3.",
-      docketTag: "LOGIC SCHEMATIC",
+      "correctAnswerId": "A",
+      "hint": "Mass distributed connection flooding that exhausts service resources without attempting authentication is a classic DDoS attack.",
+      "docketTag": "INCIDENT REPORT"
     },
     {
-      id: "ch4-q2",
-      chapterId: 4,
-      itemNumber: 2,
-      subHeader: "DEMO Q2 · ITEM 02: LEAD RESEARCH DIRECTOR",
-      question: "Who was the senior research scientist overseeing Project Indigo and the psychokinetic child experiments at Hawkins Lab?",
-      options: [
-        { id: "A", text: "Dr. Martin Brenner ('Papa')" },
-        { id: "B", text: "Dr. Sam Owens" },
-        { id: "C", text: "Dr. Alexei" },
-        { id: "D", text: "Agent Connie Frazier" },
+      "id": "ch4-q2",
+      "chapterId": 4,
+      "itemNumber": 2,
+      "subHeader": "CASE 02 · ARCADE LEADERBOARD CORRUPTION",
+      "question": "Review the database diagnostic dump from the Palace Arcade mainframe. What database integrity constraint was violated?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Duplicate Key / Uniqueness Constraint Violation on PRIMARY KEY"
+        },
+        {
+          "id": "B",
+          "text": "Foreign Key Referential Cascade Failure"
+        },
+        {
+          "id": "C",
+          "text": "Table Schema Drop Cascade Lockout"
+        },
+        {
+          "id": "D",
+          "text": "Null Pointer Dereference Exception"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Brenner ran the classified sensory deprivation program throughout the 1970s and 1980s.",
-      docketTag: "DIRECTOR PROFILE",
+      "correctAnswerId": "A",
+      "hint": "A PRIMARY KEY column strictly enforces uniqueness; inserting an existing key (101) triggers a uniqueness violation.",
+      "docketTag": "DATABASE AUDIT"
     },
     {
-      id: "ch4-q3",
-      chapterId: 4,
-      itemNumber: 3,
-      subHeader: "DEMO Q3 · ITEM 03: SENSORY ISOLATION TANK",
-      question: "What isolation apparatus was utilized in Hawkins Lab to amplify test subjects' extra-sensory perception into the Void?",
-      options: [
-        { id: "A", text: "Saline-Filled Sensory Deprivation Immersion Tank" },
-        { id: "B", text: "Hyperbaric Oxygen Compression Chamber" },
-        { id: "C", text: "Faraday Cage Electromagnetic Room" },
-        { id: "D", text: "Sub-Zero Cryogenic Suspension Capsule" },
+      "id": "ch4-q3",
+      "chapterId": 4,
+      "itemNumber": 3,
+      "subHeader": "CASE 03 · BYERS WALL CIRCUIT RECONSTRUCTION",
+      "question": "Inspect Joyce Byers' living room light grid evidence. What message is being transmitted across the dimensional boundary?",
+      "options": [
+        {
+          "id": "A",
+          "text": "\"RUN\" (Warning of imminent Demogorgon wall breach)"
+        },
+        {
+          "id": "B",
+          "text": "\"WAR\" (Military alert)"
+        },
+        {
+          "id": "C",
+          "text": "\"HURT\" (Eleven status indicator)"
+        },
+        {
+          "id": "D",
+          "text": "\"GATE\" (Sublevel 04 coordinate)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Filled with hundreds of pounds of salt to allow complete zero-gravity floatation.",
-      docketTag: "EQUIPMENT LOG",
+      "correctAnswerId": "A",
+      "hint": "Shift each letter backward by 3 in the alphabet: U->R, X->U, Q->N. The lights spell 'RUN'.",
+      "docketTag": "SIGNAL CIPHER"
     },
     {
-      id: "ch4-q4",
-      chapterId: 4,
-      itemNumber: 4,
-      subHeader: "DEMO Q4 · ITEM 04: FIRST GATE INTRUDER",
-      question: "What creature first breached through the dimensional gate following Subject 011's psychic contact in the Void?",
-      options: [
-        { id: "A", text: "The Demogorgon (Flower-Headed Predator)" },
-        { id: "B", text: "The Mind Flayer (Shadow Monster)" },
-        { id: "C", text: "The Demodog Quadruped Pack" },
-        { id: "D", text: "The Meat Puppet Collective" },
+      "id": "ch4-q4",
+      "chapterId": 4,
+      "itemNumber": 4,
+      "subHeader": "CASE 04 · MUNICIPAL POWER INFRASTRUCTURE COLLAPSE",
+      "question": "Based on engineering topology documents, what critical system architecture vulnerability caused the total town blackout?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Single Point of Failure (SPOF) Architecture"
+        },
+        {
+          "id": "B",
+          "text": "Asynchronous Deadlock Livelock"
+        },
+        {
+          "id": "C",
+          "text": "Unbounded Memory Thrashing"
+        },
+        {
+          "id": "D",
+          "text": "Byzantine General Consensus Failure"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The humanoid creature with petal-like jaw mandibles entered our realm first.",
-      docketTag: "ENTITY IDENTIFICATION",
+      "correctAnswerId": "A",
+      "hint": "A system where a single component's failure brings down the entire network suffers from a Single Point of Failure (SPOF).",
+      "docketTag": "SYSTEM ARCHITECTURE"
     },
     {
-      id: "ch4-q5",
-      chapterId: 4,
-      itemNumber: 5,
-      subHeader: "DEMO Q5 · ITEM 05: SUBLEVEL 4 ELEVATOR SHAFT HAZARD",
-      question: "What environmental biological growth completely colonized the Hawkins Lab elevator shaft down to Sublevel 4?",
-      options: [
-        { id: "A", text: "Pulsating Fleshy Webbing and Toxic Tendrils" },
-        { id: "B", text: "Crystalline Sulfur Mineral Deposits" },
-        { id: "C", text: "Black Slime Algae Colonies" },
-        { id: "D", text: "Radioactive Cobalt Slag Dust" },
+      "id": "ch4-q5",
+      "chapterId": 4,
+      "itemNumber": 5,
+      "subHeader": "CASE 05 · WILL'S TELEMETRY CONCURRENT LINK",
+      "question": "Evaluate the Season 2 hospital telemetry logs. What physiological countermeasure severed the Mind Flayer's shared vision?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Blindfolding Will and closing his eyes to sever the optical reconnaissance link"
+        },
+        {
+          "id": "B",
+          "text": "Administering full-spectrum sedative paralysis"
+        },
+        {
+          "id": "C",
+          "text": "Broadcasting high-decibel acoustic interference"
+        },
+        {
+          "id": "D",
+          "text": "Lowering room temperature to freezing levels"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Thick vascular vines spread from the rift, choking the elevator cables.",
-      docketTag: "BIOHAZARD SPREAD",
+      "correctAnswerId": "A",
+      "hint": "Mike realized: 'He's a spy! He can see where they are!' and yelled for everyone to close Will's eyes.",
+      "docketTag": "MEDICAL TELEMETRY"
     },
     {
-      id: "ch4-q6",
-      chapterId: 4,
-      itemNumber: 6,
-      subHeader: "DEMO Q6 · ITEM 06: HAZMAT RECON TETHER INCIDENT",
-      question: "What terrifying outcome occurred when hazmat scout Shepherd was tethered and sent into the rift on Sublevel 4?",
-      options: [
-        { id: "A", text: "His Steel Safety Cable Was Reeled Back Severed and Bloodied" },
-        { id: "B", text: "His Radio Telemetry Transmitted Inverted Morse Code" },
-        { id: "C", text: "He Returned Mutated with Insectoid Antennae" },
-        { id: "D", text: "The Winch Motor Seized and Melted From Extreme Heat" },
+      "id": "ch4-q6",
+      "chapterId": 4,
+      "itemNumber": 6,
+      "subHeader": "CASE 06 · CREEL HOUSE PSYCHIC CURSE ANCHOR",
+      "question": "Examine the psychological dossiers of Vecna's victims. What acoustic mechanism allows a captive to escape Vecna's mind lair?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Acoustic resonance of favorite personal music via headphones anchoring reality"
+        },
+        {
+          "id": "B",
+          "text": "Direct electrical shock to the cerebral cortex"
+        },
+        {
+          "id": "C",
+          "text": "Administering high-potency epinephrine injections"
+        },
+        {
+          "id": "D",
+          "text": "Reflecting visual laser beams into the pupils"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The winch pulled back a snapped, mangled cable covered in creature slime.",
-      docketTag: "RECON CASUALTY",
+      "correctAnswerId": "A",
+      "hint": "Favorite music acts as a lifeline, reconnecting the victim's emotional memory to physical reality.",
+      "docketTag": "PSYCHIC PHENOMENON"
     },
     {
-      id: "ch4-q7",
-      chapterId: 4,
-      itemNumber: 7,
-      subHeader: "DEMO Q7 · ITEM 07: SUBLEVEL 3 MAINFRAME TERMINAL ID",
-      question: "What computer operating system architecture was installed on the Sublevel 3 central surveillance mainframe?",
-      options: [
-        { id: "A", text: "DEC VAX-11/780 Running Unix V7" },
-        { id: "B", text: "Apple IIe Running ProDOS" },
-        { id: "C", text: "IBM PC/XT Running MS-DOS 2.0" },
-        { id: "D", text: "Commodore 64 Kernel System" },
+      "id": "ch4-q7",
+      "chapterId": 4,
+      "itemNumber": 7,
+      "subHeader": "CASE 07 · SUBLEVEL 04 EMERGENCY AIRLOCK",
+      "question": "Analyze the boolean sensor telemetry for Hawkins Lab Airlock Door 04. What is the current door status?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Door is OPEN (The manual override evaluates the OR condition to True)"
+        },
+        {
+          "id": "B",
+          "text": "Door is LOCKED (Missing physical key causes total circuit short)"
+        },
+        {
+          "id": "C",
+          "text": "Door is UNPOWERED (Incompatible voltage detected)"
+        },
+        {
+          "id": "D",
+          "text": "Door is DESTROYED (Thermal overload triggered)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The massive DEC VAX rack systems processed telemetry across the whole compound.",
-      docketTag: "COMPUTER ARCHITECTURE",
+      "correctAnswerId": "A",
+      "hint": "In boolean logic, (True AND False) is False, but False OR True evaluates to True. The door unlocks.",
+      "docketTag": "CIRCUIT LOGIC"
     },
     {
-      id: "ch4-q8",
-      chapterId: 4,
-      itemNumber: 8,
-      subHeader: "DEMO Q8 · ITEM 08: THE VOID PSYCHIC TOPOGRAPHY",
-      question: "How did Eleven visually perceive the astral plane of the Void during sensory immersion?",
-      options: [
-        { id: "A", text: "An Infinite Black Expanse with an Ankle-Deep Water Floor" },
-        { id: "B", text: "A Dense Foggy Forest Illuminated by Crimson Lightning" },
-        { id: "C", text: "A Endless White Room Without Doors or Shadows" },
-        { id: "D", text: "A Cavern Filled with Suspended Red Spores" },
+      "id": "ch4-q8",
+      "chapterId": 4,
+      "itemNumber": 8,
+      "subHeader": "CASE 08 · STARCOURT SUBTERRANEAN LOGISTICS",
+      "question": "Investigate delivery manifest records for Starcourt Mall. What disguised mechanism facilitated Soviet subterranean expansion?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A disguised deep-shaft hydraulic freight elevator behind mall stockrooms"
+        },
+        {
+          "id": "B",
+          "text": "An abandoned coal rail tunnel connected to Cornwallis Quarry"
+        },
+        {
+          "id": "C",
+          "text": "A subterranean pneumatic tube canister conduit system"
+        },
+        {
+          "id": "D",
+          "text": "A fleet of covert municipal sewage vacuum tankers"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Pitch black silence with ripples forming under her footsteps.",
-      docketTag: "ASTRAL TOPOGRAPHY",
+      "correctAnswerId": "A",
+      "hint": "The Scoops Ahoy crew got trapped inside the secret freight elevator as it plummeted deep beneath the mall.",
+      "docketTag": "LOGISTICS INQUIRY"
     },
     {
-      id: "ch4-q9",
-      chapterId: 4,
-      itemNumber: 9,
-      subHeader: "DEMO Q9 · ITEM 09: COLD WAR ESPIONAGE TARGET",
-      question: "Who was Eleven tasked with eavesdropping on in the Void right before accidentally discovering the interdimensional creature?",
-      options: [
-        { id: "A", text: "A Soviet General Stationed Inside a Moscow Military Complex" },
-        { id: "B", text: "A KGB Submarine Commander in the Pacific Ocean" },
-        { id: "C", text: "An East German Stasi Cryptographer in Berlin" },
-        { id: "D", text: "A Cuban Missile Telemetry Engineer in Havana" },
+      "id": "ch4-q9",
+      "chapterId": 4,
+      "itemNumber": 9,
+      "subHeader": "CASE 09 · ANOMALY SIGHTING DISTRIBUTION ANALYSIS",
+      "question": "Examine the geographic field records of 50 documented paranormal encounters. Which location represents the primary epicenter, and at what percentage?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Mirkwood Forest at 40% (Primary epicenter of entity incursions)"
+        },
+        {
+          "id": "B",
+          "text": "Hawkins National Laboratory at 30%"
+        },
+        {
+          "id": "C",
+          "text": "Starcourt Mall at 20%"
+        },
+        {
+          "id": "D",
+          "text": "Hawkins High School at 10%"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "She recited Russian military transmissions into the lab's tape recorders.",
-      docketTag: "ESPIONAGE MISSION",
+      "correctAnswerId": "A",
+      "hint": "20 out of 50 total sightings is exactly 40%, placing Mirkwood Forest as the heaviest concentration.",
+      "docketTag": "STATISTICAL AUDIT"
     },
     {
-      id: "ch4-q10",
-      chapterId: 4,
-      itemNumber: 10,
-      subHeader: "DEMO Q10 · ITEM 10: PERIMETER ALARM SENSOR CODE",
-      question: "What alarm classification was triggered at Hawkins Lab when Eleven breached the gate and escaped through the drainage pipe?",
-      options: [
-        { id: "A", text: "Code Red: Bio-Containment Breach & Perimeter Alert" },
-        { id: "B", text: "Code Yellow: Minor Telemetry Disconnect" },
-        { id: "C", text: "Code Blue: High Voltage Transformer Fault" },
-        { id: "D", text: "Code Orange: Weather Warning Alarm" },
+      "id": "ch4-q10",
+      "chapterId": 4,
+      "itemNumber": 10,
+      "subHeader": "CASE 10 · PROJECT NINA SYNAPTIC RESTORATION",
+      "question": "Review Dr. Martin Brenner's neurological research dossier. How did Project Nina successfully restore Eleven's lost abilities?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Sensory deprivation immersion paired with neuro-playback confronting repressed 1979 trauma"
+        },
+        {
+          "id": "B",
+          "text": "Direct surgical implantation of an artificial psychokinetic transceiver"
+        },
+        {
+          "id": "C",
+          "text": "High-voltage electroconvulsive therapy sessions"
+        },
+        {
+          "id": "D",
+          "text": "Synthetic adrenal hormone infusions"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Sirens echoed through the perimeter woods alerting Brenner's security forces.",
-      docketTag: "ALARM LOG",
-    },
+      "correctAnswerId": "A",
+      "hint": "Project Nina was named after the opera: re-experiencing buried memories in the sensory tank re-ignited her neural circuits.",
+      "docketTag": "MEDICAL REPORT"
+    }
   ],
-  5: [
+  "5": [
     {
-      id: "ch5-q1",
-      chapterId: 5,
-      itemNumber: 1,
-      subHeader: "DEMO Q1 · ITEM 01: TREE PORTAL ANOMALY",
-      question: "What tree landmark in Mirkwood concealed an organic portal into the Upside Down discovered by Nancy Wheeler?",
-      options: [
-        { id: "A", text: "Hollowed Rotting Sycamore Trunk with Dripping Slime" },
-        { id: "B", text: "Lightning-Struck Charred Pine Tree" },
-        { id: "C", text: "Ancient Oak with Carved Coordinates" },
-        { id: "D", text: "Overgrown Weeping Willow near Sattler Quarry" },
+      "id": "ch5-q1",
+      "chapterId": 5,
+      "itemNumber": 1,
+      "subHeader": "DEMO Q1 · ITEM 01: TREE PORTAL ANOMALY",
+      "question": "What tree landmark in Mirkwood concealed an organic portal into the Upside Down discovered by Nancy Wheeler?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Hollowed Rotting Sycamore Trunk with Dripping Slime"
+        },
+        {
+          "id": "B",
+          "text": "Lightning-Struck Charred Pine Tree"
+        },
+        {
+          "id": "C",
+          "text": "Ancient Oak with Carved Coordinates"
+        },
+        {
+          "id": "D",
+          "text": "Overgrown Weeping Willow near Sattler Quarry"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Nancy crawled through the pulsating fleshy opening inside the sycamore base.",
-      docketTag: "PORTAL COORD",
+      "correctAnswerId": "A",
+      "hint": "Nancy crawled through the pulsating fleshy opening inside the sycamore base.",
+      "docketTag": "PORTAL COORD"
     },
     {
-      id: "ch5-q2",
-      chapterId: 5,
-      itemNumber: 2,
-      subHeader: "DEMO Q2 · ITEM 02: PREDATOR SCENT VECTOR",
-      question: "What behavioral vulnerability was observed when tracking Demogorgon scent signatures through the forest?",
-      options: [
-        { id: "A", text: "Highly Attracted to the Scent of Fresh Blood" },
-        { id: "B", text: "Triggered Exclusively by Ultrasonic Whistles" },
-        { id: "C", text: "Drawn Exclusively to Bright Ultraviolet Light" },
-        { id: "D", text: "Paralyzed by High-Frequency Radio Waves" },
+      "id": "ch5-q2",
+      "chapterId": 5,
+      "itemNumber": 2,
+      "subHeader": "DEMO Q2 · ITEM 02: PREDATOR SCENT VECTOR",
+      "question": "What behavioral vulnerability was observed when tracking Demogorgon scent signatures through the forest?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Highly Attracted to the Scent of Fresh Blood"
+        },
+        {
+          "id": "B",
+          "text": "Triggered Exclusively by Ultrasonic Whistles"
+        },
+        {
+          "id": "C",
+          "text": "Drawn Exclusively to Bright Ultraviolet Light"
+        },
+        {
+          "id": "D",
+          "text": "Paralyzed by High-Frequency Radio Waves"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "A single drop of blood cuts through the dimensional barrier like a beacon.",
-      docketTag: "BEHAVIORAL BIO",
+      "correctAnswerId": "A",
+      "hint": "A single drop of blood cuts through the dimensional barrier like a beacon.",
+      "docketTag": "BEHAVIORAL BIO"
     },
     {
-      id: "ch5-q3",
-      chapterId: 5,
-      itemNumber: 3,
-      subHeader: "DEMO Q3 · ITEM 03: RUNIC VECTOR TRIANGULATION",
-      question: "What runic vector pattern was marked on the three perimeter surveillance trees along Trail 7?",
-      options: [
-        { id: "A", text: "Vector 4 - 1 - 7 (North-East Triangulation)" },
-        { id: "B", text: "Vector 9 - 2 - 5 (South-West Convergence)" },
-        { id: "C", text: "Vector 1 - 1 - 0 (Azimuth Dead Reckoning)" },
-        { id: "D", text: "Vector 8 - 3 - 4 (Radial Offset Quadrant)" },
+      "id": "ch5-q3",
+      "chapterId": 5,
+      "itemNumber": 3,
+      "subHeader": "DEMO Q3 · ITEM 03: RUNIC VECTOR TRIANGULATION",
+      "question": "What runic vector pattern was marked on the three perimeter surveillance trees along Trail 7?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Vector 4 - 1 - 7 (North-East Triangulation)"
+        },
+        {
+          "id": "B",
+          "text": "Vector 9 - 2 - 5 (South-West Convergence)"
+        },
+        {
+          "id": "C",
+          "text": "Vector 1 - 1 - 0 (Azimuth Dead Reckoning)"
+        },
+        {
+          "id": "D",
+          "text": "Vector 8 - 3 - 4 (Radial Offset Quadrant)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Extract the glowing red pine runes left-to-right to find vector 4-1-7.",
-      docketTag: "RUNIC VECTOR",
+      "correctAnswerId": "A",
+      "hint": "Extract the glowing red pine runes left-to-right to find vector 4-1-7.",
+      "docketTag": "RUNIC VECTOR"
     },
     {
-      id: "ch5-q4",
-      chapterId: 5,
-      itemNumber: 4,
-      subHeader: "DEMO Q4 · ITEM 04: TRAP COUNTERMEASURES",
-      question: "What makeshift countermeasures did Nancy Wheeler and Jonathan Byers prepare at the Byers house to trap the predator?",
-      options: [
-        { id: "A", text: "Bear Trap, Gasoline Fire, and Nail-Studded Bat" },
-        { id: "B", text: "High-Voltage Electrical Cattle Prod & Net" },
-        { id: "C", text: "Liquid Nitrogen Aerosers" },
-        { id: "D", text: "Magnesium Flares and Fireworks Battery" },
+      "id": "ch5-q4",
+      "chapterId": 5,
+      "itemNumber": 4,
+      "subHeader": "DEMO Q4 · ITEM 04: TRAP COUNTERMEASURES",
+      "question": "What makeshift countermeasures did Nancy Wheeler and Jonathan Byers prepare at the Byers house to trap the predator?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Bear Trap, Gasoline Fire, and Nail-Studded Bat"
+        },
+        {
+          "id": "B",
+          "text": "High-Voltage Electrical Cattle Prod & Net"
+        },
+        {
+          "id": "C",
+          "text": "Liquid Nitrogen Aerosers"
+        },
+        {
+          "id": "D",
+          "text": "Magnesium Flares and Fireworks Battery"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Steve Harrington joined with the nail-spiked Louisville Slugger bat.",
-      docketTag: "TACTICAL DEFENSE",
+      "correctAnswerId": "A",
+      "hint": "Steve Harrington joined with the nail-spiked Louisville Slugger bat.",
+      "docketTag": "TACTICAL DEFENSE"
     },
     {
-      id: "ch5-q5",
-      chapterId: 5,
-      itemNumber: 5,
-      subHeader: "DEMO Q5 · ITEM 05: D&D ANALOG BEAST",
-      question: "In Mike Wheeler's Dungeons & Dragons campaign, which two-headed monster piece was knocked over by Will's failed fireball roll?",
-      options: [
-        { id: "A", text: "The Demogorgon (Prince of Demons)" },
-        { id: "B", text: "The Thessalhydra with Eight Maw Heads" },
-        { id: "C", text: "The Beholder with Eye Rays" },
-        { id: "D", text: "The Mind Flayer Illithid" },
+      "id": "ch5-q5",
+      "chapterId": 5,
+      "itemNumber": 5,
+      "subHeader": "DEMO Q5 · ITEM 05: D&D ANALOG BEAST",
+      "question": "In Mike Wheeler's Dungeons & Dragons campaign, which two-headed monster piece was knocked over by Will's failed fireball roll?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The Demogorgon (Prince of Demons)"
+        },
+        {
+          "id": "B",
+          "text": "The Thessalhydra with Eight Maw Heads"
+        },
+        {
+          "id": "C",
+          "text": "The Beholder with Eye Rays"
+        },
+        {
+          "id": "D",
+          "text": "The Mind Flayer Illithid"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Will rolled a 7 on his twenty-sided die, failing to cast fireball.",
-      docketTag: "LORE ANALOG",
+      "correctAnswerId": "A",
+      "hint": "Will rolled a 7 on his twenty-sided die, failing to cast fireball.",
+      "docketTag": "LORE ANALOG"
     },
     {
-      id: "ch5-q6",
-      chapterId: 5,
-      itemNumber: 6,
-      subHeader: "DEMO Q6 · ITEM 06: MIRKWOOD INTERSECTION ROAD SIGN",
-      question: "What two rural roads cross at the infamous Mirkwood intersection near the lab fence line?",
-      options: [
-        { id: "A", text: "Cornwallis Road & Kerley Lane" },
-        { id: "B", text: "Maple Street & Elm Avenue" },
-        { id: "C", text: "Cherry Lane & Sattler Way" },
-        { id: "D", text: "Lover's Lake Road & Highway 27" },
+      "id": "ch5-q6",
+      "chapterId": 5,
+      "itemNumber": 6,
+      "subHeader": "DEMO Q6 · ITEM 06: MIRKWOOD INTERSECTION ROAD SIGN",
+      "question": "What two rural roads cross at the infamous Mirkwood intersection near the lab fence line?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Cornwallis Road & Kerley Lane"
+        },
+        {
+          "id": "B",
+          "text": "Maple Street & Elm Avenue"
+        },
+        {
+          "id": "C",
+          "text": "Cherry Lane & Sattler Way"
+        },
+        {
+          "id": "D",
+          "text": "Lover's Lake Road & Highway 27"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The boys nicknamed the desolate dark corner 'Mirkwood' from Tolkien's books.",
-      docketTag: "GEOGRAPHY",
+      "correctAnswerId": "A",
+      "hint": "The boys nicknamed the desolate dark corner 'Mirkwood' from Tolkien's books.",
+      "docketTag": "GEOGRAPHY"
     },
     {
-      id: "ch5-q7",
-      chapterId: 5,
-      itemNumber: 7,
-      subHeader: "DEMO Q7 · ITEM 07: FLASHLIGHT AMBER SPORE EFFECT",
-      question: "What floating phenomenon was visible in flashlight beams near the forest portal site?",
-      options: [
-        { id: "A", text: "Bioluminescent Amber Spores Drifting Slowly in Mid-Air" },
-        { id: "B", text: "Black Ash Flakes Emitting Electrostatic Shocks" },
-        { id: "C", text: "Green Iridescent Insects Swarming in Circles" },
-        { id: "D", text: "Tiny Freezing Ice Needles Suspended Against Gravity" },
+      "id": "ch5-q7",
+      "chapterId": 5,
+      "itemNumber": 7,
+      "subHeader": "DEMO Q7 · ITEM 07: FLASHLIGHT AMBER SPORE EFFECT",
+      "question": "What floating phenomenon was visible in flashlight beams near the forest portal site?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Bioluminescent Amber Spores Drifting Slowly in Mid-Air"
+        },
+        {
+          "id": "B",
+          "text": "Black Ash Flakes Emitting Electrostatic Shocks"
+        },
+        {
+          "id": "C",
+          "text": "Green Iridescent Insects Swarming in Circles"
+        },
+        {
+          "id": "D",
+          "text": "Tiny Freezing Ice Needles Suspended Against Gravity"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Particles suspended like underwater snow drifted outward through the portal opening.",
-      docketTag: "AIR MONITORING",
+      "correctAnswerId": "A",
+      "hint": "Particles suspended like underwater snow drifted outward through the portal opening.",
+      "docketTag": "AIR MONITORING"
     },
     {
-      id: "ch5-q8",
-      chapterId: 5,
-      itemNumber: 8,
-      subHeader: "DEMO Q8 · ITEM 08: STEVE'S MODIFIED WEAPON",
-      question: "What weapon modification did Jonathan construct on the Louisville Slugger baseball bat?",
-      options: [
-        { id: "A", text: "Hammered Rows of 2-Inch Steel Carpenter Nails" },
-        { id: "B", text: "Wrapped Barbed Razor Wire Around the Barrel" },
-        { id: "C", text: "Bolted Serrated Lawnmower Blades Along the Tip" },
-        { id: "D", text: "Soaked Heavy Burlap in Gasoline for a Torch Bat" },
+      "id": "ch5-q8",
+      "chapterId": 5,
+      "itemNumber": 8,
+      "subHeader": "DEMO Q8 · ITEM 08: STEVE'S MODIFIED WEAPON",
+      "question": "What weapon modification did Jonathan construct on the Louisville Slugger baseball bat?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Hammered Rows of 2-Inch Steel Carpenter Nails"
+        },
+        {
+          "id": "B",
+          "text": "Wrapped Barbed Razor Wire Around the Barrel"
+        },
+        {
+          "id": "C",
+          "text": "Bolted Serrated Lawnmower Blades Along the Tip"
+        },
+        {
+          "id": "D",
+          "text": "Soaked Heavy Burlap in Gasoline for a Torch Bat"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Steve swung the nail-studded bat in the living room to drive back the creature.",
-      docketTag: "IMPROVISED WEAPON",
+      "correctAnswerId": "A",
+      "hint": "Steve swung the nail-studded bat in the living room to drive back the creature.",
+      "docketTag": "IMPROVISED WEAPON"
     },
     {
-      id: "ch5-q9",
-      chapterId: 5,
-      itemNumber: 9,
-      subHeader: "DEMO Q9 · ITEM 09: TRAIL 7 COMPASS ROTATION",
-      question: "How did the boys recognize they were approaching the laboratory's perimeter fence on Trail 7?",
-      options: [
-        { id: "A", text: "All Compass Needles Began Slowly Rotating Counter-Clockwise" },
-        { id: "B", text: "Their Walkie-Talkies Emitted Static Morbid Whispers" },
-        { id: "C", text: "The Pine Trees Lost All Needles and Turned Black" },
-        { id: "D", text: "Ground Temperatures Dropped Below Zero Degrees" },
+      "id": "ch5-q9",
+      "chapterId": 5,
+      "itemNumber": 9,
+      "subHeader": "DEMO Q9 · ITEM 09: TRAIL 7 COMPASS ROTATION",
+      "question": "How did the boys recognize they were approaching the laboratory's perimeter fence on Trail 7?",
+      "options": [
+        {
+          "id": "A",
+          "text": "All Compass Needles Began Slowly Rotating Counter-Clockwise"
+        },
+        {
+          "id": "B",
+          "text": "Their Walkie-Talkies Emitted Static Morbid Whispers"
+        },
+        {
+          "id": "C",
+          "text": "The Pine Trees Lost All Needles and Turned Black"
+        },
+        {
+          "id": "D",
+          "text": "Ground Temperatures Dropped Below Zero Degrees"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Dustin realized they were following a magnetic deviation towards the lab.",
-      docketTag: "ANOMALOUS FLUX",
+      "correctAnswerId": "A",
+      "hint": "Dustin realized they were following a magnetic deviation towards the lab.",
+      "docketTag": "ANOMALOUS FLUX"
     },
     {
-      id: "ch5-q10",
-      chapterId: 5,
-      itemNumber: 10,
-      subHeader: "DEMO Q10 · ITEM 10: WOUNDED DEER TRACKING",
-      question: "What prey animal was dragged into the Sycamore tree portal right before Nancy climbed in?",
-      options: [
-        { id: "A", text: "A Wounded Forest Deer Shot by Local Hunters" },
-        { id: "B", text: "A Stray Red Fox with a Injured Leg" },
-        { id: "C", text: "A Raccoon from Benny's Dumpster" },
-        { id: "D", text: "A Golden Retriever Hunting Dog" },
+      "id": "ch5-q10",
+      "chapterId": 5,
+      "itemNumber": 10,
+      "subHeader": "DEMO Q10 · ITEM 10: WOUNDED DEER TRACKING",
+      "question": "What prey animal was dragged into the Sycamore tree portal right before Nancy climbed in?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A Wounded Forest Deer Shot by Local Hunters"
+        },
+        {
+          "id": "B",
+          "text": "A Stray Red Fox with a Injured Leg"
+        },
+        {
+          "id": "C",
+          "text": "A Raccoon from Benny's Dumpster"
+        },
+        {
+          "id": "D",
+          "text": "A Golden Retriever Hunting Dog"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Nancy and Jonathan tracked blood droplets from a deer until it vanished inside the tree.",
-      docketTag: "PREDATOR TRACKS",
-    },
+      "correctAnswerId": "A",
+      "hint": "Nancy and Jonathan tracked blood droplets from a deer until it vanished inside the tree.",
+      "docketTag": "PREDATOR TRACKS"
+    }
   ],
-  6: [
+  "6": [
     {
-      id: "ch6-q1",
-      chapterId: 6,
-      itemNumber: 1,
-      subHeader: "DEMO Q1 · ITEM 01: CEREBRO ANTENNA ARRAY",
-      question: "What custom radio apparatus did Dustin Henderson construct on Weathertop to broadcast clear signals to Utah?",
-      options: [
-        { id: "A", text: "Cerebro Ham Radio with Directional Antenna Mast" },
-        { id: "B", text: "VHF Military Repeater with Satellite Dish" },
-        { id: "C", text: "Shortwave Tube Transceiver on 50 MHz" },
-        { id: "D", text: "Microwave Dish Link Aimed at Chicago" },
+      "id": "ch6-q1",
+      "chapterId": 6,
+      "itemNumber": 1,
+      "subHeader": "SIGNAL 01 · CAESAR CIPHER BROADCAST",
+      "question": "A high-frequency radio signal pulses encrypted sequence 'UXQ'. Intelligence reports confirm a Caesar cipher with key +3. Decode the carrier message.",
+      "options": [
+        {
+          "id": "A",
+          "text": "\"RUN\" (Decoded: U - 3 = R, X - 3 = U, Q - 3 = N)"
+        },
+        {
+          "id": "B",
+          "text": "\"WAR\" (Decoded offset +2)"
+        },
+        {
+          "id": "C",
+          "text": "\"SOS\" (Decoded frequency)"
+        },
+        {
+          "id": "D",
+          "text": "\"BOY\" (Decoded inverted alphabet)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Dustin hauled the massive battery-powered Cerebro kit up Weathertop hill.",
-      docketTag: "TRANSMITTER SPEC",
+      "correctAnswerId": "A",
+      "hint": "U becomes R, X becomes U, Q becomes N. The decoded signal is 'RUN'.",
+      "docketTag": "RADIO INTERCEPT"
     },
     {
-      id: "ch6-q2",
-      chapterId: 6,
-      itemNumber: 2,
-      subHeader: "DEMO Q2 · ITEM 02: UPSIDE DOWN PROPAGATION LOSS",
-      question: "What environmental element in the Upside Down severely disrupts electromagnetic radio wave propagation?",
-      options: [
-        { id: "A", text: "Toxic Airborne Spores & Localized Electromagnetic Storms" },
-        { id: "B", text: "Total Absence of Atmospheric Nitrogen" },
-        { id: "C", text: "Constant Sub-Zero Temperature Inversions" },
-        { id: "D", text: "Heavy Radioactive Gamma Decay Fields" },
+      "id": "ch6-q2",
+      "chapterId": 6,
+      "itemNumber": 2,
+      "subHeader": "SIGNAL 02 · 8-BIT BINARY TELEMETRY",
+      "question": "Eleven taps a rhythmic electrical transmission into the Supercom microphone: binary code 01010010. Which ASCII character does this encode?",
+      "options": [
+        {
+          "id": "A",
+          "text": "'R' (01010010₂ = 64 + 16 + 2 = 82 = ASCII 'R')"
+        },
+        {
+          "id": "B",
+          "text": "'E' (01000101₂ = 69 = ASCII 'E')"
+        },
+        {
+          "id": "C",
+          "text": "'L' (01001100₂ = 76 = ASCII 'L')"
+        },
+        {
+          "id": "D",
+          "text": "'Z' (01011010₂ = 90 = ASCII 'Z')"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Particles suspended in the air generate continuous electrostatic bursts.",
-      docketTag: "PROPAGATION PHYSICS",
+      "correctAnswerId": "A",
+      "hint": "Binary 01010010 = 2^6 + 2^4 + 2^1 = 64 + 16 + 2 = 82. ASCII 82 is uppercase 'R'.",
+      "docketTag": "BINARY STREAM"
     },
     {
-      id: "ch6-q3",
-      chapterId: 6,
-      itemNumber: 3,
-      subHeader: "DEMO Q3 · ITEM 03: RADIOMETER PIN HARMONICS",
-      question: "How many pins must be aligned on the Hawkins Radiometer to calibrate the subspace resonance circuit?",
-      options: [
-        { id: "A", text: "5 Harmonic Resonance Calibration Pins" },
-        { id: "B", text: "3 Low-Frequency Quartz Crystals" },
-        { id: "C", text: "8 Parity Check Switch Relays" },
-        { id: "D", text: "12 Dual-Tone Multi-Frequency Diodes" },
+      "id": "ch6-q3",
+      "chapterId": 6,
+      "itemNumber": 3,
+      "subHeader": "SIGNAL 03 · RUSSIAN ENCRYPTED BROADCAST",
+      "question": "Dustin intercepts a looping Russian radio transmission beneath Starcourt Mall. What is the verified English translation of the cipher?",
+      "options": [
+        {
+          "id": "A",
+          "text": "\"The week is long. A trip to China sounds nice. If you tread lightly. The silver cat feeds when blue and yellow meet in the West.\""
+        },
+        {
+          "id": "B",
+          "text": "\"The night is cold. The winter in Moscow is harsh. The iron bear roars when fire burns in the North.\""
+        },
+        {
+          "id": "C",
+          "text": "\"Comrades report to the silo. Open the vault at midnight when the red star rises in the East.\""
+        },
+        {
+          "id": "D",
+          "text": "\"Operation Key is underway. Evacuate all personnel before the American police arrive.\""
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Calibrate all 5 pins on the tower radiometer to clear the distortion meter.",
-      docketTag: "INSTRUMENT CALIBRATION",
+      "correctAnswerId": "A",
+      "hint": "The message decoded by Robin, Steve, and Dustin talks about the silver cat and blue and yellow hands.",
+      "docketTag": "RUSSIAN CIPHER"
     },
     {
-      id: "ch6-q4",
-      chapterId: 6,
-      itemNumber: 4,
-      subHeader: "DEMO Q4 · ITEM 04: PLANCK'S CONSTANT RELAY",
-      question: "What mathematical constant was relayed via Cerebro from Utah to unlock the Russian subterranean vault?",
-      options: [
-        { id: "A", text: "Planck's Constant: 6.62607004 (or 6.62607015)" },
-        { id: "B", text: "Euler's Number: 2.71828182" },
-        { id: "C", text: "Fine Structure Constant: 0.00729735" },
-        { id: "D", text: "Speed of Light in Vacuum: 299792458" },
+      "id": "ch6-q4",
+      "chapterId": 6,
+      "itemNumber": 4,
+      "subHeader": "SIGNAL 04 · MORSE CODE DISTRESS BEACON",
+      "question": "A high-frequency buzzer emits rhythmic Morse code pulses: `... --- ...`. What universal distress priority does this broadcast?",
+      "options": [
+        {
+          "id": "A",
+          "text": "\"SOS\" (Universal maritime & telegraphic distress code)"
+        },
+        {
+          "id": "B",
+          "text": "\"HELP\" (Emergency tactical ping)"
+        },
+        {
+          "id": "C",
+          "text": "\"RUN\" (Immediate evacuation warning)"
+        },
+        {
+          "id": "D",
+          "text": "\"DIE\" (Subspace anomalous whisper)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Suzie required Dustin to sing 'The NeverEnding Story' before giving Planck's constant.",
-      docketTag: "CIPHER CODE",
+      "correctAnswerId": "A",
+      "hint": "... is S, --- is O, ... is S. It spells SOS.",
+      "docketTag": "MORSE LOG"
     },
     {
-      id: "ch6-q5",
-      chapterId: 6,
-      itemNumber: 5,
-      subHeader: "DEMO Q5 · ITEM 05: WEATHERTOP TOPOGRAPHY ELEVATION",
-      question: "Why did the party choose Weathertop hill as the broadcast point for their communications array?",
-      options: [
-        { id: "A", text: "It is the Highest Unobstructed Elevation in Roane County" },
-        { id: "B", text: "It Was Located Directly Above a Classified Military Bunker" },
-        { id: "C", text: "It Provided Direct Access to the Municipal Power Grid" },
-        { id: "D", text: "It Was Shielded from Russian Radar Detection" },
+      "id": "ch6-q5",
+      "chapterId": 6,
+      "itemNumber": 5,
+      "subHeader": "SIGNAL 05 · REVERSE AUDIO PHONOGRAM",
+      "question": "Joyce Byers tunes the radio receiver to an analog static channel, capturing a reversed audio whisper. What message is Will communicating?",
+      "options": [
+        {
+          "id": "A",
+          "text": "\"RIGHT HERE\" (Will indicating he is in the Upside Down copy of his house)"
+        },
+        {
+          "id": "B",
+          "text": "\"GET OUT\" (Warning of Demogorgon advance)"
+        },
+        {
+          "id": "C",
+          "text": "\"IT'S COLD\" (Environmental description of the shadow plane)"
+        },
+        {
+          "id": "D",
+          "text": "\"HELP ME\" (General distress plea)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Maximum line-of-sight elevation gave Cerebro transcontinental radio reach.",
-      docketTag: "GEOSPATIAL INTEL",
+      "correctAnswerId": "A",
+      "hint": "Reversing 'EREH THGIR' yields 'RIGHT HERE'.",
+      "docketTag": "AUDIO PHONOGRAM"
     },
     {
-      id: "ch6-q6",
-      chapterId: 6,
-      itemNumber: 6,
-      subHeader: "DEMO Q6 · ITEM 06: DUSTIN'S UTAH RADIO OPERATOR",
-      question: "Who was Dustin attempting to establish contact with across the country over Cerebro's frequency?",
-      options: [
-        { id: "A", text: "Suzie Bingham from Camp Know Where" },
-        { id: "B", text: "His Uncle Jack in Salt Lake City" },
-        { id: "C", text: "An MIT Physics Ham Radio Station" },
-        { id: "D", text: "A National Weather Service Observer" },
+      "id": "ch6-q6",
+      "chapterId": 6,
+      "itemNumber": 6,
+      "subHeader": "SIGNAL 06 · HEATHKIT HAM RADIO TRANSCEIVER",
+      "question": "Which amateur radio frequency did the boys tune their Heathkit transceiver to when communicating with Mr. Clarke?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Heathkit 14.175 MHz (20-Meter Amateur Band)"
+        },
+        {
+          "id": "B",
+          "text": "Commercial Broadcast 104.3 MHz"
+        },
+        {
+          "id": "C",
+          "text": "Aviation Airband 121.5 MHz"
+        },
+        {
+          "id": "D",
+          "text": "Marine VHF Channel 16 (156.8 MHz)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Suzie lived in Salt Lake City and shared Dustin's passion for science and radio.",
-      docketTag: "OPERATOR DOSSIER",
+      "correctAnswerId": "A",
+      "hint": "The Heathkit SB-220 was calibrated to the 14.175 MHz ham radio band.",
+      "docketTag": "HAM RADIO"
     },
     {
-      id: "ch6-q7",
-      chapterId: 6,
-      itemNumber: 7,
-      subHeader: "DEMO Q7 · ITEM 07: RUSSIAN TRANSLATED CIPHER",
-      question: "What riddle was recorded by Dustin's radio scanner while intercepting Russian communications in Hawkins?",
-      options: [
-        { id: "A", text: "'The silver cat feeds when blue and yellow meet in the northeast'" },
-        { id: "B", text: "'The iron bear sleeps under red stars near the river'" },
-        { id: "C", text: "'Cold winter arrives when three clocks strike midnight'" },
-        { id: "D", text: "'The black crow flies past the western grain elevator'" },
+      "id": "ch6-q7",
+      "chapterId": 6,
+      "itemNumber": 6,
+      "subHeader": "SIGNAL 07 · CEREBRO REPEATER TELEMETRY",
+      "question": "What radio communication device did Dustin Henderson assemble on Weathertop to reach his girlfriend Suzie in Utah?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Cerebro (High-powered ham radio tower named after X-Men)"
+        },
+        {
+          "id": "B",
+          "text": "Supercom Walkie-Talkie Mark IV"
+        },
+        {
+          "id": "C",
+          "text": "Motorola Squad Radio Transceiver"
+        },
+        {
+          "id": "D",
+          "text": "Hawkins Lab Sublevel Repeater"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Robin Buckley cracked the code correlating Starcourt deliveries and clock chimes.",
-      docketTag: "INTERCEPTED CIPHER",
+      "correctAnswerId": "A",
+      "hint": "Dustin hauled Cerebro up the highest hill in Hawkins to get long-range radio line-of-sight.",
+      "docketTag": "CEREBRO LOG"
     },
     {
-      id: "ch6-q8",
-      chapterId: 6,
-      itemNumber: 8,
-      subHeader: "DEMO Q8 · ITEM 08: STARCOURT SUB-LEVEL FACILITY",
-      question: "What covert installation was powered beneath Starcourt Mall utilizing intercepted municipal telemetry?",
-      options: [
-        { id: "A", text: "A Soviet Subterranean Laser Complex Drilling Open the Rift" },
-        { id: "B", text: "An Underground Missile Silo Array" },
-        { id: "C", text: "A Chemical Weapons Biological Processing Plant" },
-        { id: "D", text: "An Emergency Government Evacuation Bunker" },
+      "id": "ch6-q8",
+      "chapterId": 6,
+      "itemNumber": 8,
+      "subHeader": "SIGNAL 08 · STARCOURT VAULT ACCESS CIPHER",
+      "question": "Suzie transmits the mathematical constant needed as the cryptographic password for the Russian laser vault. What value does she broadcast?",
+      "options": [
+        {
+          "id": "A",
+          "text": "6.626070 × 10⁻³⁴ J·s"
+        },
+        {
+          "id": "B",
+          "text": "6.626176 × 10⁻³⁴ J·s"
+        },
+        {
+          "id": "C",
+          "text": "3.141592 × 10⁰"
+        },
+        {
+          "id": "D",
+          "text": "2.997924 × 10⁸ m/s"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The massive Key laser was firing high-energy pulses to punch through the Upside Down.",
-      docketTag: "SOVIET BREACH",
+      "correctAnswerId": "A",
+      "hint": "Suzie insisted Dustin sing 'Never Ending Story' before providing the exact Planck's constant: 6.626070 × 10⁻³⁴.",
+      "docketTag": "VAULT CIPHER"
     },
     {
-      id: "ch6-q9",
-      chapterId: 6,
-      itemNumber: 9,
-      subHeader: "DEMO Q9 · ITEM 09: 14.8 MHZ TELEMETRY SPIKE",
-      question: "What event causes the radio tower's signal meter to peg into maximum redline frequency spikes?",
-      options: [
-        { id: "A", text: "Physical Demogorgon Movement across the Dimension Membrane" },
-        { id: "B", text: "Sunspot Solar Flares During Dusk Hours" },
-        { id: "C", text: "Routine Police Dispatch Broadcasting on Channel 3" },
-        { id: "D", text: "Commercial Airlines Flying Overhead" },
+      "id": "ch6-q9",
+      "chapterId": 6,
+      "itemNumber": 9,
+      "subHeader": "SIGNAL 09 · ELECTROMAGNETIC VECTOR ANOMALY",
+      "question": "A compass placed near the radio tower deflects erratically. What physical force causes magnetic needles to stray from true North?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Immense artificial electromagnetic field created by the gate opening"
+        },
+        {
+          "id": "B",
+          "text": "Dead batteries inside the compass housing"
+        },
+        {
+          "id": "C",
+          "text": "Atmospheric solar storm in the upper ionosphere"
+        },
+        {
+          "id": "D",
+          "text": "Underground iron ore deposit beneath Mirkwood"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Subspace breaches emit intense RF noise across the 14.8 MHz frequency band.",
-      docketTag: "FREQUENCY METRICS",
+      "correctAnswerId": "A",
+      "hint": "Dustin explains: 'The compass doesn't point to true North; it points to a stronger local magnetic field.'",
+      "docketTag": "FLUX TELEMETRY"
     },
     {
-      id: "ch6-q10",
-      chapterId: 6,
-      itemNumber: 10,
-      subHeader: "DEMO Q10 · ITEM 10: DECRYPTED MASTER OVERRIDE SEQUENCE",
-      question: "What 5-digit cipher combination unlocks the final radio tower transmitter override circuit?",
-      options: [
-        { id: "A", text: "8 - 3 - 4 - 7 - 9" },
-        { id: "B", text: "1 - 9 - 8 - 4 - 2" },
-        { id: "C", text: "5 - 7 - 3 - 1 - 9" },
-        { id: "D", text: "4 - 8 - 2 - 6 - 0" },
+      "id": "ch6-q10",
+      "chapterId": 6,
+      "itemNumber": 10,
+      "subHeader": "SIGNAL 10 · SUB-BASIN GATE CONVERGENCE",
+      "question": "At the end of Season 4, sub-audible seismic pulses broadcast across municipal radio channels. What catastrophic event do they announce?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Four gates converge simultaneously, opening a massive rift across Hawkins"
+        },
+        {
+          "id": "B",
+          "text": "A localized natural earthquake along the Wabash fault"
+        },
+        {
+          "id": "C",
+          "text": "Starcourt Mall basement explosion"
+        },
+        {
+          "id": "D",
+          "text": "Hawkins National Laboratory self-destruct countdown"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Aligning all 5 radiometer pins outputs the sequence 8-3-4-7-9.",
-      docketTag: "OVERRIDE CIPHER",
-    },
+      "correctAnswerId": "A",
+      "hint": "Vecna's plan was four kills to open four gates that tear open Hawkins in a cross shape.",
+      "docketTag": "SEISMIC SIGNAL"
+    }
   ],
-  7: [
+  "7": [
     {
-      id: "ch7-q1",
-      chapterId: 7,
-      itemNumber: 1,
-      subHeader: "DEMO Q1 · ITEM 01: EXPERIMENT 001 TRUE IDENTITY",
-      question: "What scrubbed identity was decrypted from the 1959 Creel House incident as the true identity of Experiment 001?",
-      options: [
-        { id: "A", text: "Henry Creel (Peter Ballard / Vecna)" },
-        { id: "B", text: "Victor Creel" },
-        { id: "C", text: "Dr. Martin Brenner" },
-        { id: "D", text: "Billy Hargrove" },
+      "id": "ch7-q1",
+      "chapterId": 7,
+      "itemNumber": 1,
+      "subHeader": "LAB TASK 01 · LOGICAL SEQUENCE (EXPERIMENT IDS)",
+      "question": "Hawkins Lab experiment subject IDs run in sequence: 2, 6, 12, 20, 30, ... What is the next experiment ID in this progression?",
+      "options": [
+        {
+          "id": "A",
+          "text": "42 (30 + 12 = 42; formula 6 × 7 = 42)"
+        },
+        {
+          "id": "B",
+          "text": "40 (Linear step +10)"
+        },
+        {
+          "id": "C",
+          "text": "38 (Decaying rate)"
+        },
+        {
+          "id": "D",
+          "text": "48 (Exponential doubling)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Applying ROT13 decryption on 'URAEL PERRY' reveals Henry Creel's name.",
-      docketTag: "SUBJECT 001",
+      "correctAnswerId": "A",
+      "hint": "The intervals between numbers increase by 2 each step (+4, +6, +8, +10, +12). 30 + 12 = 42.",
+      "docketTag": "LAB SEQUENCE"
     },
     {
-      id: "ch7-q2",
-      chapterId: 7,
-      itemNumber: 2,
-      subHeader: "DEMO Q2 · ITEM 02: PSYCHIC TRANCE COUNTERMEASURE",
-      question: "What musical melody successfully broke Vecna's psychic trance curse for Max Mayfield in the Mind Lair?",
-      options: [
-        { id: "A", text: "Kate Bush — 'Running Up That Hill (A Deal with God)'" },
-        { id: "B", text: "The Police — 'Every Breath You Take'" },
-        { id: "C", text: "Cyndi Lauper — 'Time After Time'" },
-        { id: "D", text: "New Order — 'Blue Monday'" },
+      "id": "ch7-q2",
+      "chapterId": 7,
+      "itemNumber": 2,
+      "subHeader": "LAB TASK 02 · BOOLEAN LOGIC CIRCUIT EVALUATION",
+      "question": "The Sublevel 04 security gate opens if `(Power = ON AND Key = INSERTED) OR Override = ON`. Power is ON, Key is NOT inserted, Override is ON. Does the gate open?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Yes (The expression evaluates to TRUE via the active Override switch)"
+        },
+        {
+          "id": "B",
+          "text": "No (The missing key aborts the circuit)"
+        },
+        {
+          "id": "C",
+          "text": "Error (Conflicting inputs short-circuit the gate)"
+        },
+        {
+          "id": "D",
+          "text": "Undefined (Insufficient voltage detected)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Playing Max's favorite cassette track created a red exit portal out of the mindscape.",
-      docketTag: "AUDIO LIFELINE",
+      "correctAnswerId": "A",
+      "hint": "(True AND False) is False. However, False OR True evaluates to True. The gate opens.",
+      "docketTag": "GATE LOGIC"
     },
     {
-      id: "ch7-q3",
-      chapterId: 7,
-      itemNumber: 3,
-      subHeader: "DEMO Q3 · ITEM 03: VECNA'S MINDSCAPE ANCHOR",
-      question: "What architectural relic from Henry Creel's childhood home anchors Vecna's mindscape and chiming curse?",
-      options: [
-        { id: "A", text: "Four-Chime Ornate Rosewood Grandfather Clock" },
-        { id: "B", text: "Stained Glass Attic Rose Window" },
-        { id: "C", text: "Black-Widow Spider Breeding Terrarium" },
-        { id: "D", text: "Basement Iron Furnace Door" },
+      "id": "ch7-q3",
+      "chapterId": 7,
+      "itemNumber": 3,
+      "subHeader": "LAB TASK 03 · SYSTEM OPERATIONS (KILL ROGUE PID)",
+      "question": "A rogue daemon process with PID 1983 is locking the Hawkins Lab security server. Which UNIX terminal command force-terminates it immediately?",
+      "options": [
+        {
+          "id": "A",
+          "text": "kill -9 1983 (Sends SIGKILL signal to forcibly terminate process 1983)"
+        },
+        {
+          "id": "B",
+          "text": "stop process 1983"
+        },
+        {
+          "id": "C",
+          "text": "delete pid 1983"
+        },
+        {
+          "id": "D",
+          "text": "systemctl freeze 1983"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Four heavy chimes herald the victim's psychic trance and gate opening.",
-      docketTag: "CURSE ARTIFACT",
+      "correctAnswerId": "A",
+      "hint": "In UNIX systems, 'kill -9 <PID>' issues the non-catchable SIGKILL signal to immediately stop a rogue process.",
+      "docketTag": "UNIX TERMINAL"
     },
     {
-      id: "ch7-q4",
-      chapterId: 7,
-      itemNumber: 4,
-      subHeader: "DEMO Q4 · ITEM 04: SEVERING THE PSYCHIC HIVE-LINK",
-      question: "What synchronized strategy permanently fractures Vecna's psychic link and seals the dimensional rift?",
-      options: [
-        { id: "A", text: "Physical Attack in the Upside Down + Psychic Anchor Sever in the Void" },
-        { id: "B", text: "High-Voltage Electromagnetic EMP Pulse on Hawkins Substation" },
-        { id: "C", text: "Flooding Hawkins Lab Sublevels with Liquid Nitrogen" },
-        { id: "D", text: "Detonating Underground Gas Pipelines Beneath Mirkwood" },
+      "id": "ch7-q4",
+      "chapterId": 7,
+      "itemNumber": 4,
+      "subHeader": "LAB TASK 04 · SYSTEM OPERATIONS (POWER RESTORATION ORDER)",
+      "question": "Place the Hawkins Lab power recovery protocol steps in correct operational sequence: (a) turn on lab lights, (b) start backup generator, (c) reset control panel, (d) close main breaker.",
+      "options": [
+        {
+          "id": "A",
+          "text": "b → d → c → a (Generator → Main Breaker → Control Panel → Lights)"
+        },
+        {
+          "id": "B",
+          "text": "a → b → c → d (Lights first is impossible without power)"
+        },
+        {
+          "id": "C",
+          "text": "c → a → b → d (Control panel cannot boot without generator)"
+        },
+        {
+          "id": "D",
+          "text": "d → b → a → c (Breaker closed before source risks surge)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "A coordinated multi-realm assault in Hawkins, the Upside Down, and Eleven's psychic void.",
-      docketTag: "FINAL VICTORY PROTOCOL",
+      "correctAnswerId": "A",
+      "hint": "Each step depends on power supplied by the step before it: Generator (b) -> Breaker (d) -> Panel (c) -> Lights (a).",
+      "docketTag": "POWER SEQUENCE"
     },
     {
-      id: "ch7-q5",
-      chapterId: 7,
-      itemNumber: 5,
-      subHeader: "DEMO Q5 · ITEM 05: CREEL HOUSE ATTIC ARTIFACT",
-      question: "What creatures did young Henry Creel observe and revere in the attic of the Creel residence in 1959?",
-      options: [
-        { id: "A", text: "Black Widow Spiders Inside Glass Jars" },
-        { id: "B", text: "Poisonous Cottonmouth Snakes" },
-        { id: "C", text: "Dead Swallows and Songbirds" },
-        { id: "D", text: "Scorpions and Centipedes" },
+      "id": "ch7-q5",
+      "chapterId": 7,
+      "itemNumber": 5,
+      "subHeader": "LAB TASK 05 · FUNCTION RESTORATION (BUGGY SIGHTING COUNTER)",
+      "question": "This telemetry script gives an incorrect count for Demogorgon sightings. Diagnose the bug and select the proper repair.",
+      "options": [
+        {
+          "id": "A",
+          "text": "The loop starts at index 1 and skips element 0. Fix: use range(len(sightings)) or sum(sightings)"
+        },
+        {
+          "id": "B",
+          "text": "The 'total' variable should be initialized to -1"
+        },
+        {
+          "id": "C",
+          "text": "The return statement must be placed inside the for loop"
+        },
+        {
+          "id": "D",
+          "text": "Python requires while loops for array traversal"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Henry identified with black widow spiders as solitary predators imposing order.",
-      docketTag: "CREEL ORIGIN",
+      "correctAnswerId": "A",
+      "hint": "range(1, len(sightings)) starts at index 1, completely ignoring the first sighting at index 0.",
+      "docketTag": "PYTHON DEBUG"
     },
     {
-      id: "ch7-q6",
-      chapterId: 7,
-      itemNumber: 6,
-      subHeader: "DEMO Q6 · ITEM 06: FOUR GATES APOCALYPTIC CONVERGENCE",
-      question: "What disaster was planned to occur once four psychic victims were taken by Vecna in Hawkins?",
-      options: [
-        { id: "A", text: "Four Massive Fault-Line Chasm Rifts Tearing Hawkins into Hell" },
-        { id: "B", text: "Permanent Total Eclipse of the Sun Over North America" },
-        { id: "C", text: "A Freezing Supercell Blinding the Entire State of Indiana" },
-        { id: "D", text: "Immediate Psychic Brainwashing of All Hawkins Inhabitants" },
+      "id": "ch7-q6",
+      "chapterId": 7,
+      "itemNumber": 6,
+      "subHeader": "LAB TASK 06 · FUNCTION RESTORATION (INFINITE RECURSION)",
+      "question": "Why does this recursive function crash the Hawkins Lab simulation console with a RecursionError?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Missing base case! Add 'if n <= 1: return 1' before the recursive return"
+        },
+        {
+          "id": "B",
+          "text": "Python cannot perform multiplication inside a return statement"
+        },
+        {
+          "id": "C",
+          "text": "The function parameter name must be uppercase"
+        },
+        {
+          "id": "D",
+          "text": "The function needs an external global variable"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The four gates ruptured toward the town square, merging Hawkins with the Upside Down.",
-      docketTag: "CONVERGENCE EVENT",
+      "correctAnswerId": "A",
+      "hint": "Without a base condition (like if n <= 1: return 1), fact(n) recurses forever until stack overflow.",
+      "docketTag": "RECURSION BUG"
     },
     {
-      id: "ch7-q7",
-      chapterId: 7,
-      itemNumber: 7,
-      subHeader: "DEMO Q7 · ITEM 07: MIND LAIR FLOATING DEBRIS",
-      question: "What shattered physical structures float within the crimson void of Vecna's Mind Lair?",
-      options: [
-        { id: "A", text: "Broken Red Stained Beams and Shards of the Creel House" },
-        { id: "B", text: "The Desecrated Hawkins Middle School Gymnasium" },
-        { id: "C", text: "The Rusted Water Tower and Power Station Generators" },
-        { id: "D", text: "The Ruins of the Starcourt Food Court" },
+      "id": "ch7-q7",
+      "chapterId": 7,
+      "itemNumber": 7,
+      "subHeader": "LAB TASK 07 · DATA ANALYSIS (LIGHT FLICKER METRICS)",
+      "question": "Substation bulb flickers recorded Monday to Friday: 3, 5, 4, 12, 6. Compute the Mean, Median, and identify the statistical Outlier.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Mean = 6, Median = 5, Outlier = 12 (Thursday surge)"
+        },
+        {
+          "id": "B",
+          "text": "Mean = 5, Median = 6, Outlier = 3"
+        },
+        {
+          "id": "C",
+          "text": "Mean = 7.5, Median = 4, Outlier = 6"
+        },
+        {
+          "id": "D",
+          "text": "Mean = 8, Median = 5.5, Outlier = 4"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "The fragmented wooden staircase and grandfather clock float suspended in the air.",
-      docketTag: "MIND LAIR RECON",
+      "correctAnswerId": "A",
+      "hint": "Sum is 30 / 5 = 6 (mean). In sorted order [3, 4, 5, 6, 12], middle element is 5 (median). 12 is the outlier.",
+      "docketTag": "STATISTICS"
     },
     {
-      id: "ch7-q8",
-      chapterId: 7,
-      itemNumber: 8,
-      subHeader: "DEMO Q8 · ITEM 08: VICTOR CREEL SURVIVAL FACTOR",
-      question: "How did Victor Creel survive the psychic slaughter of his family in 1959 at the Creel House?",
-      options: [
-        { id: "A", text: "Ella Fitzgerald's 'Dream a Little Dream of Me' Played on the Radio" },
-        { id: "B", text: "He Knocked Himself Unconscious on the Fireplace Hearth" },
-        { id: "C", text: "The Local Police Arrived and Fired Flares" },
-        { id: "D", text: "Young Henry Exhausted His Psychic Stamina and Fell Comatose" },
+      "id": "ch7-q8",
+      "chapterId": 7,
+      "itemNumber": 8,
+      "subHeader": "LAB TASK 08 · DATA ANALYSIS (ZONE PERCENTAGE CONCENTRATION)",
+      "question": "Out of 50 total confirmed entity sightings: Forest 20, Lab 15, Mall 10, School 5. Which location has the highest concentration and what percentage?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The Forest at 40% (20 out of 50 total events)"
+        },
+        {
+          "id": "B",
+          "text": "The Lab at 35%"
+        },
+        {
+          "id": "C",
+          "text": "Starcourt Mall at 25%"
+        },
+        {
+          "id": "D",
+          "text": "Hawkins School at 15%"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Music served as an anchor allowing Victor's mind to find the light and escape.",
-      docketTag: "PSYCHIC ANCHOR",
+      "correctAnswerId": "A",
+      "hint": "Forest has 20 out of 50 total sightings. (20 / 50) * 100 = 40%.",
+      "docketTag": "ZONE ANALYSIS"
     },
     {
-      id: "ch7-q9",
-      chapterId: 7,
-      itemNumber: 9,
-      subHeader: "DEMO Q9 · ITEM 09: EDDIE MUNSON ROOFTOP CONCERT",
-      question: "What heavy metal masterpiece did Eddie Munson shred atop his Upside Down trailer to distract the Demobats?",
-      options: [
-        { id: "A", text: "Metallica — 'Master of Puppets'" },
-        { id: "B", text: "Iron Maiden — 'The Trooper'" },
-        { id: "C", text: "Black Sabbath — 'Paranoid'" },
-        { id: "D", text: "Dio — 'Holy Diver'" },
+      "id": "ch7-q9",
+      "chapterId": 7,
+      "itemNumber": 9,
+      "subHeader": "LAB TASK 09 · SIMULATED EXPERIMENT (TEMPERATURE CORRELATION)",
+      "question": "Experimental data records ambient temperature vs. flickers per hour: (20°C: 0), (15°C: 2), (10°C: 5), (5°C: 9). Identify the independent variable, dependent variable, and scientific conclusion.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Independent: Temperature; Dependent: Flicker Count; Conclusion: Negative correlation (colder air increases flickers)"
+        },
+        {
+          "id": "B",
+          "text": "Independent: Flicker Count; Dependent: Temperature; Conclusion: Flickering lights freeze the room"
+        },
+        {
+          "id": "C",
+          "text": "Independent: Time; Dependent: Electricity; Conclusion: Random fluctuations"
+        },
+        {
+          "id": "D",
+          "text": "Independent: Pressure; Dependent: Voltage; Conclusion: Direct positive correlation"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Eddie played his black Warlock guitar with Dustin guarding the perimeter.",
-      docketTag: "TACTICAL DISTRACTION",
+      "correctAnswerId": "A",
+      "hint": "We control Temperature (independent variable), which alters Flicker frequency (dependent variable). As temp drops, flickers rise (negative correlation).",
+      "docketTag": "EXPERIMENT LOG"
     },
     {
-      id: "ch7-q10",
-      chapterId: 7,
-      itemNumber: 10,
-      subHeader: "DEMO Q10 · ITEM 10: SOTERIA INHIBITOR CHIP",
-      question: "What miniature device was surgically implanted inside Henry Creel's neck by Dr. Brenner to suppress his abilities?",
-      options: [
-        { id: "A", text: "The Soteria Subdermal Bio-Inhibitor Capsule" },
-        { id: "B", text: "A Cobalt Radiation Neuro-Suppressor" },
-        { id: "C", text: "A High-Frequency Ultrasonic Micro-Transponder" },
-        { id: "D", text: "A Paralyzing Lithium Micro-Pump" },
+      "id": "ch7-q10",
+      "chapterId": 7,
+      "itemNumber": 10,
+      "subHeader": "LAB TASK 10 · SIMULATED EXPERIMENT (GATE EXPONENTIAL DOUBLING)",
+      "question": "Gate energy starts at 2 units at 1:00 AM and doubles every hour (2, 4, 8, 16, 32, ...). At what time does it first exceed 100 energy units?",
+      "options": [
+        {
+          "id": "A",
+          "text": "7:00 AM (Energy reaches 128 units, surpassing 100)"
+        },
+        {
+          "id": "B",
+          "text": "6:00 AM (Energy is 64 units)"
+        },
+        {
+          "id": "C",
+          "text": "8:00 AM (Energy is 256 units)"
+        },
+        {
+          "id": "D",
+          "text": "5:00 AM (Energy is 32 units)"
+        }
       ],
-      correctAnswerId: "A",
-      hint: "Eleven used her powers to telekinetically extract the Soteria device from Henry's neck.",
-      docketTag: "INHIBITOR SCHEMATIC",
-    },
-  ],
+      "correctAnswerId": "A",
+      "hint": "Sequence: 1:00=2, 2:00=4, 3:00=8, 4:00=16, 5:00=32, 6:00=64, 7:00=128. It first exceeds 100 at 7:00 AM.",
+      "docketTag": "ENERGY GROWTH"
+    }
+  ]
 };
 
 // Interactive mini-game tasks secrets

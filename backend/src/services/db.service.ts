@@ -125,11 +125,8 @@ class DatabaseService {
         if (parsed.teams) {
           Object.values(parsed.teams).forEach((t) => this.teams.set(t.id, t));
         }
-        if (parsed.chapters && parsed.chapters.length > 0) {
-          this.chapters = parsed.chapters;
-        } else {
-          this.chapters = buildDefaultChapters();
-        }
+        // Authoritative security vault questions must always take precedence to ensure accurate answers
+        this.chapters = buildDefaultChapters();
         if (parsed.activeSabotages) {
           Object.entries(parsed.activeSabotages).forEach(([k, v]) =>
             this.activeSabotages.set(k, v)

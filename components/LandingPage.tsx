@@ -266,9 +266,7 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
     <div
       className="screen"
       style={{
-        height: "100vh",
         height: "100dvh",
-        maxHeight: "100vh",
         maxHeight: "100dvh",
         width: "100%",
         display: "flex",

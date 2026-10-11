@@ -161,7 +161,7 @@ export default function EventStandby({ onEventStarted }: EventStandbyProps) {
               AUTHENTICATED SQUAD:
             </div>
             <div style={{ color: "#ffd54f", fontWeight: 900, fontSize: "14px" }}>
-              {s.team.teamName || "OPERATIVE"}
+              {(s.team as any)?.teamName || s.team.name || "OPERATIVE"}
             </div>
           </div>
           <div>

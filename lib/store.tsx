@@ -91,6 +91,7 @@ export interface GameState {
   vecnaCutscene: boolean;
   radiometer: RadiometerState;
   unlockedHints: Record<string, boolean>;
+  taskScores?: Record<string, number>;
 }
 
 const EMPTY_BREAKDOWN: Breakdown = { tech: 0, puzzle: 0, clue: 0, speed: 0, story: 0, teamwork: 0 };
@@ -142,6 +143,7 @@ const INITIAL: GameState = {
   vecnaCutscene: false,
   radiometer: INITIAL_RADIOMETER,
   unlockedHints: {},
+  taskScores: {},
 };
 
 const KEY = CONFIG.STORAGE_KEY;
@@ -281,6 +283,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           breakdown: { ...EMPTY_BREAKDOWN, ...(parsed.breakdown || {}) },
           completedTasks: parsed.completedTasks || [],
           clues: parsed.clues || {},
+          taskScores: parsed.taskScores || {},
           unlocked: { ...INITIAL_UNLOCKED, ...(parsed.unlocked || {}) },
           unlockedHints: parsed.unlockedHints || {},
           lockedChallenges: parsed.lockedChallenges || {},
@@ -759,6 +762,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         unlocked: nextUnlocked,
         storyProgress: newProgress,
         solved: { ...p.solved, [taskId]: true },
+        taskScores: { ...(p.taskScores || {}), [taskId]: points },
         breakdown: {
           ...p.breakdown,
           [category]: p.breakdown[category] + points,

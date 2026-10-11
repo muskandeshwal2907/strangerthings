@@ -49,10 +49,9 @@ export const ValidationService = {
         }
       });
 
-      // 5 points per correct question (10 Qs * 5 = 50 pts)
+      // Strictly 5 points per correct question (10 Qs * 5 = 50 pts max)
       const basePoints = correctCount * 5;
-      const speedBonus = (team && basePoints > 0) ? ScoreService.calculateSpeedBonus(basePoints, team.startedAt) : 0;
-      const totalAwarded = basePoints + speedBonus;
+      const totalAwarded = basePoints;
 
       if (team) {
         const nextSolvedChapters = Array.from(new Set([...team.solvedChapters, chapterId]));
@@ -91,8 +90,6 @@ export const ValidationService = {
           breakdown: {
             ...team.breakdown,
             tech: team.breakdown.tech + basePoints,
-            speed: team.breakdown.speed + speedBonus,
-            story: team.breakdown.story + 10,
           },
         });
       }
@@ -100,7 +97,7 @@ export const ValidationService = {
       return {
         success: true,
         pointsAwarded: totalAwarded,
-        speedBonus,
+        speedBonus: 0,
         correctCount,
         totalCount: questions.length,
         message: `TELEMETRY VERIFIED · ${correctCount}/${questions.length} DOCKET ITEMS ACCURATE`,

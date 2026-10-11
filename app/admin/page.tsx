@@ -758,9 +758,7 @@ export default function AdminPage() {
     return (
       <div
         style={{
-          height: "100vh",
           height: "100dvh",
-          maxHeight: "100vh",
           maxHeight: "100dvh",
           width: "100%",
           overflow: "hidden",
