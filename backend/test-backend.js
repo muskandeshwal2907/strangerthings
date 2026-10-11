@@ -47,6 +47,20 @@ async function runDirectTests() {
       const health = await get(`${BASE}/health`);
       assert("Health check returns TiDB Distributed SQL", health.status === 200 && health.data.database === "TIDB_DISTRIBUTED_SQL");
 
+      // Reset test session state
+      const { SessionService } = require("./dist/services/session.service.js");
+      await SessionService.deleteTeamSession("T01");
+      const { tidb } = require("./dist/config/tidb.js");
+      if (tidb.pool) {
+        try {
+          await tidb.pool.query("DELETE FROM team_active_sessions WHERE team_id = 'T01'");
+          await tidb.pool.query("DELETE FROM question_submissions WHERE team_id = 'T01'");
+          await tidb.pool.query("DELETE FROM team_hint_usages WHERE team_id = 'T01'");
+          await tidb.pool.query("DELETE FROM score_ledger WHERE team_id = 'T01'");
+          await tidb.pool.query("DELETE FROM team_vecna_deliveries WHERE team_id = 'T01'");
+        } catch {}
+      }
+
       // 2. Team Login
       const login1 = await post(`${BASE}/auth/login`, { teamName: "Null Pointers", leaderName: "Aarav Sharma" });
       assert("First participant login succeeds", login1.data.success === true && login1.status === 200, `Team ID: ${login1.data.session?.teamId}`);
@@ -55,53 +69,66 @@ async function runDirectTests() {
       const login2 = await post(`${BASE}/auth/login`, { teamName: "Null Pointers", leaderName: "Aarav Sharma" });
       assert("Second login on another device is blocked (single session rule)", login2.status === 409 && login2.data.error === "ALREADY_LOGGED_IN", login2.data.message);
 
-      // 4. Admin Force Logout
-      const forceLogout = await post(`${BASE}/admin/teams/T01/force-logout`, {});
-      assert("Admin can force logout an active team session", forceLogout.data.success === true);
+      // 4. Admin Auth Guard: Unauthenticated admin action is blocked
+      const unauthLogout = await post(`${BASE}/admin/teams/T01/force-logout`, {});
+      assert("Unauthenticated admin action is rejected (401)", unauthLogout.status === 401 && unauthLogout.data.error === "UNAUTHORIZED");
 
-      // 5. Re-login after Force Logout
+      // 5. Admin Passkey Authentication
+      const adminLogin = await post(`${BASE}/auth/admin-login`, { passkey: "HAWKINS_CHIEF_1983" });
+      assert("Admin passkey authentication succeeds", adminLogin.status === 200 && adminLogin.data.success === true);
+      const adminToken = adminLogin.data.token;
+
+      // 6. Admin Force Logout with Token
+      const forceLogout = await post(`${BASE}/admin/teams/T01/force-logout`, {}, adminToken);
+      assert("Authenticated admin can force logout an active team session", forceLogout.data.success === true);
+
+      // 7. Revoked Session Token Rejection
+      const revokedCheck = await get(`${BASE}/me/rounds`, login1.data.token);
+      assert("Revoked player token is rejected immediately after force-logout (401)", revokedCheck.status === 401 && revokedCheck.data.error === "SESSION_REVOKED");
+
+      // 8. Re-login after Force Logout
       const login3 = await post(`${BASE}/auth/login`, { teamName: "Null Pointers", leaderName: "Aarav Sharma" });
       assert("Team can log in again after admin force-logout", login3.data.success === true && login3.status === 200);
       const playerToken = login3.data.token;
 
-      // 6. Event state inspection (Participant safe)
+      // 9. Event state inspection (Participant safe, public)
       const eventState = await get(`${BASE}/event/state`);
       assert("Event state read endpoint returns active event without secrets", eventState.data.success === true && eventState.data.event?.status === "active");
 
-      // 7. Participant Rounds list
-      const rounds = await get(`${BASE}/me/rounds?teamId=T01`, playerToken);
-      assert("Participant rounds list returned", rounds.data.success === true && rounds.data.rounds?.length >= 1);
+      // 10. Participant Rounds list (requires auth)
+      const rounds = await get(`${BASE}/me/rounds`, playerToken);
+      assert("Participant rounds list returned with valid token", rounds.data.success === true && rounds.data.rounds?.length >= 1);
 
-      // 8. Question access without exposing secrets
-      const qAccessible = await get(`${BASE}/rounds/1/questions/Q_CH1_CORONER?teamId=T01`, playerToken);
+      // 11. Question access without exposing secrets
+      const qAccessible = await get(`${BASE}/rounds/1/questions/Q_CH1_CORONER`, playerToken);
       assert("Question prompt fetched without leaking answer keys", qAccessible.data.success === true && !qAccessible.data.question.correctAnswer);
 
-      // 9. Authoritative HMAC Answer submission (Normalization: " A " -> "a")
-      const subRes = await post(`${BASE}/questions/Q_CH1_CORONER/submit`, { answer: "  A  ", teamId: "T01" });
+      // 12. Authoritative HMAC Answer submission (Normalization: " A " -> "a")
+      const subRes = await post(`${BASE}/questions/Q_CH1_CORONER/submit`, { answer: "  A  " }, playerToken);
       assert("HMAC answer submission evaluated server-side and awarded points", subRes.data.success === true && subRes.data.isCorrect === true && subRes.data.pointsAwarded === 100);
 
-      // 10. Idempotency test (Submitting again returns saved result, no double points)
-      const retrySub = await post(`${BASE}/questions/Q_CH1_CORONER/submit`, { answer: "A", teamId: "T01" });
+      // 13. Idempotency test (Submitting again returns saved result, no double points)
+      const retrySub = await post(`${BASE}/questions/Q_CH1_CORONER/submit`, { answer: "A" }, playerToken);
       assert("Idempotent submission recovery returns saved locked state without duplicate award", retrySub.data.success === true && retrySub.data.isLocked === true);
 
-      // 11. Hint consumption & deduction ledger
-      const hintRes = await post(`${BASE}/questions/Q_CH1_CORONER/hints/1/use`, { teamId: "T01" });
+      // 14. Hint consumption & deduction ledger (tested on unsubmitted Question 2)
+      const hintRes = await post(`${BASE}/questions/Q_CH2_RADIO/hints/2/use`, {}, playerToken);
       assert("Hint endpoint returns hint text and records ledger penalty", hintRes.data.success === true && !!hintRes.data.hintText);
 
-      // 12. Vecna Sender Login
+      // 15. Vecna Sender Login
       const vecnaLogin = await post(`${BASE}/vecna/auth/login`, { username: "vecna", password: "CREEL_HOUSE_001" });
       assert("Authorized Vecna sender logs in with separate credentials", vecnaLogin.data.success === true && vecnaLogin.data.sender?.username === "vecna");
       const vecnaToken = vecnaLogin.data.token;
 
-      // 13. Vecna Recipients safe list
+      // 16. Vecna Recipients safe list
       const recipients = await get(`${BASE}/vecna/recipients`, vecnaToken);
       assert("Vecna sender can retrieve non-sensitive Hawkins team labels", recipients.data.success === true && recipients.data.recipients?.length > 0);
 
-      // 14. Vecna Templates list (<= 150 chars)
+      // 17. Vecna Templates list (<= 150 chars)
       const templates = await get(`${BASE}/vecna/templates`, vecnaToken);
       assert("Vecna sender can retrieve active prepared templates", templates.data.success === true && templates.data.templates?.length > 0);
 
-      // 15. Body length validation: >150 characters is rejected
+      // 18. Body length validation: >150 characters is rejected
       const longBody = "A".repeat(151);
       const longRes = await post(`${BASE}/vecna/messages`, {
         sourceType: "custom",
@@ -110,7 +137,7 @@ async function runDirectTests() {
       }, vecnaToken);
       assert("Message body > 150 characters is rejected server-side", longRes.status === 400 && longRes.data.success === false);
 
-      // 16. Valid Vecna Message submission -> creates 'pending_approval' (NOT delivered yet)
+      // 19. Valid Vecna Message submission -> creates 'pending_approval' (NOT delivered yet)
       const msgSubmit = await post(`${BASE}/vecna/messages`, {
         sourceType: "custom",
         bodyText: "Tick tock, Hawkins. The clock strikes four.",
@@ -119,33 +146,33 @@ async function runDirectTests() {
       assert("Vecna message submitted in 'pending_approval' status", msgSubmit.data.success === true && msgSubmit.data.message?.approvalStatus === "pending_approval");
       const submittedMessageId = msgSubmit.data.message?.messageId;
 
-      // 17. Hawkins Team Inbox BEFORE approval: must be EMPTY!
-      const inboxBefore = await get(`${BASE}/me/vecna-messages?teamId=T01`);
+      // 20. Hawkins Team Inbox BEFORE approval: must be EMPTY!
+      const inboxBefore = await get(`${BASE}/me/vecna-messages`, playerToken);
       assert("Hawkins team inbox is empty before admin approval (unapproved message withheld)", inboxBefore.data.messages?.length === 0);
 
-      // 18. Admin inspects pending review queue
-      const pendingQueue = await get(`${BASE}/admin/vecna/messages/pending`);
+      // 21. Admin inspects pending review queue
+      const pendingQueue = await get(`${BASE}/admin/vecna/messages/pending`, adminToken);
       assert("Admin can inspect pending Vecna review queue", pendingQueue.data.success === true && pendingQueue.data.messages?.some((m) => m.messageId === submittedMessageId));
 
-      // 19. Admin explicitly approves the message
-      const approveRes = await post(`${BASE}/admin/vecna/messages/${submittedMessageId}/approve`, {});
+      // 22. Admin explicitly approves the message
+      const approveRes = await post(`${BASE}/admin/vecna/messages/${submittedMessageId}/approve`, {}, adminToken);
       assert("Admin approves message and creates recipient deliveries", approveRes.data.success === true && approveRes.data.deliveredCount > 0);
 
-      // 20. Hawkins Team Inbox AFTER approval: message delivered!
-      const inboxAfter = await get(`${BASE}/me/vecna-messages?teamId=T01`);
+      // 23. Hawkins Team Inbox AFTER approval: message delivered!
+      const inboxAfter = await get(`${BASE}/me/vecna-messages`, playerToken);
       assert("Hawkins team inbox now contains approved message", inboxAfter.data.messages?.length > 0 && inboxAfter.data.messages[0].bodyText.includes("Tick tock"));
 
-      // 21. Event lifecycle controls (pause and resume)
-      const pauseRes = await post(`${BASE}/admin/event/pause`, {});
+      // 24. Event lifecycle controls (pause and resume)
+      const pauseRes = await post(`${BASE}/admin/event/pause`, {}, adminToken);
       assert("Admin can pause the event", pauseRes.data.success === true && pauseRes.data.event?.isPaused === true);
-      const resumeRes = await post(`${BASE}/admin/event/resume`, {});
+      const resumeRes = await post(`${BASE}/admin/event/resume`, {}, adminToken);
       assert("Admin can resume the event", resumeRes.data.success === true && resumeRes.data.event?.isPaused === false);
 
-      // 22. Results and overall standings
-      const results = await get(`${BASE}/admin/results/overall`);
+      // 25. Results and overall standings
+      const results = await get(`${BASE}/admin/results/overall`, adminToken);
       assert("Admin can retrieve overall tournament results", results.data.success === true && Array.isArray(results.data.results));
 
-      // 23. Backward compatibility: legacy chapter validation & radiometer
+      // 26. Backward compatibility: legacy chapter validation & radiometer
       const chVal = await post(`${BASE}/chapters/validate`, {
         chapterId: 1,
         taskId: "ch1-quiz",

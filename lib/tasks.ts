@@ -195,11 +195,11 @@ export const STORY_TASKS: Record<string, StoryTask> = {
       ],
       options: [
         { id: "opt1", label: "Car tracks ending at Lake Jordan" },
-        { id: "opt2", label: "Massive electromagnetic spike causing Christmas lights to illuminate without power", isCorrect: true },
+        { id: "opt2", label: "Massive electromagnetic spike causing Christmas lights to illuminate without power" },
         { id: "opt3", label: "Report of stray dogs near the quarry" },
         { id: "opt4", label: "A broken telephone line in town center" },
       ],
-      correctAnswerId: "opt2",
+      correctAnswerId: "",
     },
   },
 
@@ -496,12 +496,11 @@ export const STORY_TASKS: Record<string, StoryTask> = {
       caseNumber: "CLASSIFIED · SUBJECT 001",
       options: [
         { id: "o1", label: "Martin Brenner" },
-        { id: "o2", label: "Henry Creel", isCorrect: true },
+        { id: "o2", label: "Henry Creel" },
         { id: "o3", label: "Edward Munson" },
         { id: "o4", label: "Robert Newby" },
       ],
-      correctAnswerId: "o2",
-      textAnswer: /^henry\s+creel$/i,
+      correctAnswerId: "",
     },
   },
 

@@ -34,12 +34,12 @@ function StrangerThingsLogo({ flashLevel = 0 }: { flashLevel?: number }) {
         alignItems: "center",
         justifyContent: "center",
         userSelect: "none",
-        width: "min(96vw, 1100px)",
-        margin: "0 auto 36px auto",
+        width: "min(96vw, 1360px)",
+        margin: "0 auto clamp(14px, 2.2vh, 28px) auto",
         filter:
           flashLevel > 0
-            ? "drop-shadow(0 0 10px rgba(230, 26, 40, 0.75)) drop-shadow(0 6px 22px rgba(0, 0, 0, 0.98))"
-            : "drop-shadow(0 0 5px rgba(230, 26, 40, 0.5)) drop-shadow(0 4px 18px rgba(0, 0, 0, 0.95))",
+            ? "drop-shadow(0 0 16px rgba(230, 26, 40, 0.9)) drop-shadow(0 8px 30px rgba(0, 0, 0, 0.98))"
+            : "drop-shadow(0 0 8px rgba(230, 26, 40, 0.6)) drop-shadow(0 6px 24px rgba(0, 0, 0, 0.95))",
         transition: "filter 0.08s ease-out",
       }}
     >
@@ -61,7 +61,7 @@ function StrangerThingsLogo({ flashLevel = 0 }: { flashLevel?: number }) {
             top: 0,
             left: "14%",
             right: "14%",
-            height: "8px",
+            height: "clamp(7px, 0.85vw, 11px)",
             background: "#e61a28",
             boxShadow: barShadow,
             borderRadius: "1px",
@@ -73,10 +73,10 @@ function StrangerThingsLogo({ flashLevel = 0 }: { flashLevel?: number }) {
         <span
           style={{
             fontFamily: fontStack,
-            fontSize: "clamp(5.8rem, 14.5vw, 14rem)",
+            fontSize: "clamp(6.8rem, min(16vw, 22vh), 15.5rem)",
             fontWeight: 900,
             color: "#e61a28",
-            WebkitTextStroke: "5.5px #ff2a3a",
+            WebkitTextStroke: "clamp(5px, 0.6vw, 7.5px) #ff2a3a",
             paintOrder: "stroke fill",
             letterSpacing: "-0.02em",
             transform: "translateY(12%)",
@@ -90,13 +90,13 @@ function StrangerThingsLogo({ flashLevel = 0 }: { flashLevel?: number }) {
         <span
           style={{
             fontFamily: fontStack,
-            fontSize: "clamp(4.4rem, 11vw, 10.6rem)",
+            fontSize: "clamp(5.2rem, min(12.2vw, 17vh), 11.8rem)",
             fontWeight: 900,
             color: "#e61a28",
-            WebkitTextStroke: "5.5px #ff2a3a",
+            WebkitTextStroke: "clamp(5px, 0.6vw, 7.5px) #ff2a3a",
             paintOrder: "stroke fill",
             letterSpacing: "0.01em",
-            paddingTop: "14px",
+            paddingTop: "clamp(12px, 1.8vh, 22px)",
             zIndex: 1,
           }}
         >
@@ -107,10 +107,10 @@ function StrangerThingsLogo({ flashLevel = 0 }: { flashLevel?: number }) {
         <span
           style={{
             fontFamily: fontStack,
-            fontSize: "clamp(5.8rem, 14.5vw, 14rem)",
+            fontSize: "clamp(6.8rem, min(16vw, 22vh), 15.5rem)",
             fontWeight: 900,
             color: "#e61a28",
-            WebkitTextStroke: "5.5px #ff2a3a",
+            WebkitTextStroke: "clamp(5px, 0.6vw, 7.5px) #ff2a3a",
             paintOrder: "stroke fill",
             letterSpacing: "-0.02em",
             transform: "translateY(12%)",
@@ -128,15 +128,15 @@ function StrangerThingsLogo({ flashLevel = 0 }: { flashLevel?: number }) {
           alignItems: "center",
           justifyContent: "center",
           width: "100%",
-          marginTop: "8px",
-          gap: "clamp(10px, 2.5vw, 24px)",
+          marginTop: "clamp(8px, 1.2vh, 16px)",
+          gap: "clamp(12px, 2.8vw, 32px)",
         }}
       >
         {/* Left Flanking Bar */}
         <div
           style={{
             flex: 1,
-            height: "8px",
+            height: "clamp(7px, 0.85vw, 11px)",
             background: "#e61a28",
             boxShadow: barShadow,
             borderRadius: "1px",
@@ -148,11 +148,11 @@ function StrangerThingsLogo({ flashLevel = 0 }: { flashLevel?: number }) {
         <span
           style={{
             fontFamily: fontStack,
-            fontSize: "clamp(4.4rem, 11vw, 10.6rem)",
+            fontSize: "clamp(5.2rem, min(12.2vw, 17vh), 11.8rem)",
             fontWeight: 900,
             lineHeight: 0.9,
             color: "#e61a28",
-            WebkitTextStroke: "5.5px #ff2a3a",
+            WebkitTextStroke: "clamp(5px, 0.6vw, 7.5px) #ff2a3a",
             paintOrder: "stroke fill",
             letterSpacing: "0.02em",
             whiteSpace: "nowrap",
@@ -165,7 +165,7 @@ function StrangerThingsLogo({ flashLevel = 0 }: { flashLevel?: number }) {
         <div
           style={{
             flex: 1,
-            height: "8px",
+            height: "clamp(7px, 0.85vw, 11px)",
             background: "#e61a28",
             boxShadow: barShadow,
             borderRadius: "1px",
@@ -190,8 +190,8 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   type Phase = "storm" | "title" | "ready";
-  const [phase, setPhase] = useState<Phase>("storm");
-  const titleIn = phase === "title" || phase === "ready";
+  const [phase, setPhase] = useState<Phase>("ready");
+  const titleIn = true;
 
   // Seamless audio unlock on first user click or keypress
   useEffect(() => {
@@ -206,21 +206,6 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
       window.removeEventListener("keydown", handleGesture);
     };
   }, [setSoundOn]);
-
-  // Robust safety fallback: ensure storm transitions to title even if tab was backgrounded or delayed
-  useEffect(() => {
-    if (phase !== "storm") return;
-    const fallback = setTimeout(() => {
-      setPhase("title");
-    }, 1200);
-    return () => clearTimeout(fallback);
-  }, [phase]);
-
-  useEffect(() => {
-    if (phase !== "title") return;
-    const t = setTimeout(() => setPhase("ready"), 1200);
-    return () => clearTimeout(t);
-  }, [phase]);
 
   const handleOpenAuth = () => {
     sfx("click");
@@ -260,6 +245,7 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
             id: authResult.session.teamId || "T01",
             teamName: authResult.session.teamName,
             leaderName: authResult.session.leaderName,
+            token: authResult.token,
           });
         }
       } else {
@@ -279,15 +265,19 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
   return (
     <div
       className="screen"
-      onClick={phase === "storm" ? () => setPhase("title") : undefined}
       style={{
-        minHeight: "100vh",
+        height: "100vh",
+        height: "100dvh",
+        maxHeight: "100vh",
+        maxHeight: "100dvh",
+        width: "100%",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
         position: "relative",
         overflow: "hidden",
+        backgroundColor: "#000000",
         background: "#000000",
       }}
     >
@@ -306,8 +296,7 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
         style={{
           zIndex: 3,
           pointerEvents: "none",
-          opacity: titleIn ? 1 : 0,
-          transition: "opacity 1.5s ease",
+          opacity: 1,
           background:
             "radial-gradient(circle at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.62) 100%), linear-gradient(180deg, rgba(0,0,0,0.25) 0%, transparent 45%, rgba(0,0,0,0.68) 100%)",
         }}
@@ -323,34 +312,17 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
           alignItems: "center",
           justifyContent: "center",
           textAlign: "center",
-          padding: "20px",
-          margin: "auto 0",
+          padding: "clamp(10px, 2vh, 20px) 16px",
+          width: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
         }}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.05 }}
-          animate={
-            titleIn
-              ? {
-                  opacity: [0, 1, 1, 1, 1, 1, 1],
-                  scale: [0.05, 1.25, 0.92, 1.06, 0.97, 1.02, 1],
-                  filter: [
-                    "blur(14px)",
-                    "blur(0px)",
-                    "blur(0px)",
-                    "blur(0px)",
-                    "blur(0px)",
-                    "blur(0px)",
-                    "blur(0px)",
-                  ],
-                  x: [0, -12, 9, -5, 3, -1, 0],
-                  y: [0, 7, -5, 3, -2, 1, 0],
-                }
-              : { opacity: 0, scale: 0.05 }
-          }
+          initial={{ opacity: 0.85, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{
-            duration: 1.3,
-            times: [0, 0.28, 0.48, 0.65, 0.8, 0.92, 1],
+            duration: 0.5,
             ease: "easeOut",
           }}
         >
@@ -360,9 +332,9 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
         {/* SINGLE MINIMAL ENTER BUTTON (Matches Uploaded Image, No Arrow) */}
         <motion.button
           id="enter-btn"
-          initial={{ opacity: 0, y: 15 }}
-          animate={phase === "ready" ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
-          transition={{ duration: 0.6 }}
+          initial={{ opacity: 0.9, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
           whileHover={{
             scale: 1.05,
             backgroundColor: "#7a0a12",
@@ -375,8 +347,8 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            marginTop: "36px",
-            padding: "16px 58px",
+            marginTop: "clamp(32px, 5.2vh, 56px)",
+            padding: "clamp(14px, 1.9vh, 18px) clamp(46px, 5.5vw, 68px)",
             background: "#ff2230",
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
@@ -385,11 +357,11 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
             color: "#ffffff",
             fontFamily:
               '"ITC Benguiat Std", "Benguiat", "Benguiat Bold Condensed", "Libre Caslon Display", "Playfair Display", Georgia, serif',
-            fontSize: "clamp(17px, 1.9vw, 22px)",
+            fontSize: "clamp(16px, 1.8vw, 22px)",
             fontWeight: 900,
             letterSpacing: "0.25em",
             cursor: "pointer",
-            pointerEvents: phase === "ready" ? "auto" : "none",
+            pointerEvents: "auto",
             boxShadow:
               "0 0 28px rgba(255, 34, 48, 0.65), inset 0 0 14px rgba(255, 255, 255, 0.25)",
             transition: "all 0.3s ease",

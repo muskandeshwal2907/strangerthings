@@ -203,7 +203,7 @@ export interface TelemetryPayload {
 // SPEC-ALIGNED TYPES (STRANGER_THINGS_TIDB_SOCKETIO_BACKEND_SPEC)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type EventStatus = "draft" | "active" | "paused" | "ended";
+export type EventStatus = "draft" | "not_started" | "active" | "paused" | "ended";
 
 export interface EventRecord {
   eventId: number;

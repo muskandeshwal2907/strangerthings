@@ -13,23 +13,23 @@ import {
   AdminLeaderboardItem,
 } from "@/lib/api";
 import {
-  getSupabaseLeaderboard,
-  getSupabaseChapters,
-  updateSupabaseChapter,
-  deleteSupabaseChapter,
-  subscribeToSupabaseLeaderboard,
+  getTiDBLeaderboard,
+  getTiDBChapters,
+  updateTiDBChapter,
+  deleteTiDBChapter,
+  subscribeToTiDBLeaderboard,
   subscribeToLiveScoreChanges,
   broadcastLiveScoreChange,
   LiveScorePayload,
-  registerTeamInSupabase,
-  updateTeamScoreInSupabase,
-  getSupabaseLogs,
+  registerTeamInTiDB,
+  updateTeamScoreInTiDB,
+  getTiDBLogs,
   broadcastComponentConnection,
   subscribeToTelemetry,
   getConnectionStatus,
   AdminLogItem,
   ConnectionStatus,
-} from "@/lib/supabaseService";
+} from "@/lib/tidbService";
 import { sfx } from "@/lib/audio";
 
 export default function AdminPage() {
@@ -50,7 +50,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [dataSource, setDataSource] = useState<"supabase" | "backend" | "syncing">("syncing");
+  const [dataSource, setDataSource] = useState<"tidb" | "backend" | "syncing">("syncing");
 
   // Team detail & points edit modal state
   const [detailTeam, setDetailTeam] = useState<AdminLeaderboardItem | null>(null);
@@ -77,8 +77,10 @@ export default function AdminPage() {
   });
   const [isUpdatingEvent, setIsUpdatingEvent] = useState(false);
 
-  // 45-second auto-refresh timer state
-  const [autoRefreshSec, setAutoRefreshSec] = useState<number>(45);
+  // Auto-refresh timer state (user configurable: ON/OFF and 5s/10s/30s)
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(true);
+  const [autoRefreshInterval, setAutoRefreshInterval] = useState<number>(10);
+  const [autoRefreshSec, setAutoRefreshSec] = useState<number>(10);
 
   // Bulk Import Modal State
   const [showImportModal, setShowImportModal] = useState(false);
@@ -95,8 +97,13 @@ export default function AdminPage() {
   const [editLoreText, setEditLoreText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // 1. UNLOCK GLOBAL BODY SCROLLING FOR ADMIN PAGE
+  // 1. UNLOCK GLOBAL BODY SCROLLING FOR ADMIN PAGE (Only when authenticated)
   useEffect(() => {
+    if (!token) {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      return;
+    }
     const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevBodyOverflow = document.body.style.overflow;
     const prevBodyHeight = document.body.style.height;
@@ -113,7 +120,7 @@ export default function AdminPage() {
       document.body.style.height = prevBodyHeight;
       document.body.style.maxHeight = prevBodyMaxHeight;
     };
-  }, []);
+  }, [token]);
 
   // 2. LOG OUT ON EVERY RELOAD — REQUIRE PASSKEY EVERY TIME
   useEffect(() => {
@@ -124,12 +131,27 @@ export default function AdminPage() {
     } catch {}
   }, []);
 
-  // 3. LOAD DATA (Supabase + Backend Disk Store + Persistent Local Cache)
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    let loadedFromSupabase = false;
+  // 3. LOAD DATA (TiDB Distributed SQL + Backend Service)
+  // Priority 1: Score DESC. Priority 2 (Tie-breaker): Time ASC (earlier last solved timestamp wins)
+  const sortByScoreThenTime = (a: any, b: any) => {
+    const scoreA = typeof a.score === "number" ? a.score : (typeof (a as any).totalScore === "number" ? (a as any).totalScore : 0);
+    const scoreB = typeof b.score === "number" ? b.score : (typeof (b as any).totalScore === "number" ? (b as any).totalScore : 0);
+    if (scoreB !== scoreA) {
+      return scoreB - scoreA;
+    }
+    const timeA = a.lastSolvedAt ? new Date(a.lastSolvedAt).getTime() : (a.lastSubmissionTime && a.lastSubmissionTime !== "OFFLINE" ? new Date(a.lastSubmissionTime).getTime() : Infinity);
+    const timeB = b.lastSolvedAt ? new Date(b.lastSolvedAt).getTime() : (b.lastSubmissionTime && b.lastSubmissionTime !== "OFFLINE" ? new Date(b.lastSubmissionTime).getTime() : Infinity);
+    if (timeA !== timeB) {
+      return timeA - timeB;
+    }
+    return (a.teamName || "").localeCompare(b.teamName || "");
+  };
 
-    // Read local persistent storage immediately so admin edits survive reloads
+  const loadData = useCallback(async (isManualRefresh = false) => {
+    setLoading(true);
+    let loadedFromTiDB = false;
+
+    // Read local persistent storage for emergency offline fallback
     let cachedLb: AdminLeaderboardItem[] = [];
     let cachedCh: AdminChapterData[] = [];
     if (typeof window !== "undefined") {
@@ -141,32 +163,7 @@ export default function AdminPage() {
       } catch {}
     }
 
-    // Try Supabase first
-    let sbLeaderboard: AdminLeaderboardItem[] = [];
-    let sbChapterList: AdminChapterData[] = [];
-    try {
-      const [sbLb, sbCh, sbLogs] = await Promise.all([
-        getSupabaseLeaderboard(),
-        getSupabaseChapters(),
-        getSupabaseLogs(leaderboard.length),
-      ]);
-
-      if (sbLb.success && sbLb.leaderboard && sbLb.leaderboard.length > 0) {
-        sbLeaderboard = sbLb.leaderboard;
-        loadedFromSupabase = true;
-      }
-      if (sbCh.success && sbCh.chapters && sbCh.chapters.length > 0) {
-        sbChapterList = sbCh.chapters;
-        loadedFromSupabase = true;
-      }
-      if (sbLogs && sbLogs.length > 0) {
-        setLogs(sbLogs);
-      }
-    } catch (e) {
-      console.warn("[ADMIN] Supabase initial query fallback:", e);
-    }
-
-    // Query backend service (reads disk persistent file)
+    // Query live authoritative backend service (connected to TiDB)
     const activeToken = token || "HAWKINS_CHIEF_1983";
     let beLeaderboard: AdminLeaderboardItem[] = [];
     let beChapterList: AdminChapterData[] = [];
@@ -176,44 +173,43 @@ export default function AdminPage() {
         fetchAdminChapters(activeToken),
       ]);
 
-      if (beLb.success && beLb.leaderboard && beLb.leaderboard.length > 0) {
+      if (beLb.success && Array.isArray(beLb.leaderboard) && beLb.leaderboard.length > 0) {
         beLeaderboard = beLb.leaderboard;
+        loadedFromTiDB = true;
       }
-      if (beCh.success && beCh.chapters && beCh.chapters.length > 0) {
+      if (beCh.success && Array.isArray(beCh.chapters) && beCh.chapters.length > 0) {
         beChapterList = beCh.chapters;
       }
-      setDataSource(loadedFromSupabase ? "supabase" : "backend");
+      setDataSource("tidb");
     } catch (e) {
-      console.warn("[ADMIN] Backend fetch failed:", e);
-      if (loadedFromSupabase) setDataSource("supabase");
+      console.warn("[ADMIN] Backend live fetch failed:", e);
     }
 
-    // UNIFIED PERSISTENT MERGE:
-    // Prioritize server admin endpoint which contains full credentials & presence
-    const baseLb = beLeaderboard.length > 0 ? beLeaderboard : sbLeaderboard;
-    const finalLbMap = new Map<string, AdminLeaderboardItem>();
-    baseLb.forEach((t) => finalLbMap.set(t.teamId, t));
+    // TiDB direct check if proxy returned empty
+    let tidbLeaderboard: AdminLeaderboardItem[] = [];
+    if (beLeaderboard.length === 0) {
+      try {
+        const tdLb = await getTiDBLeaderboard(activeToken);
+        if (tdLb.success && tdLb.leaderboard && tdLb.leaderboard.length > 0) {
+          tidbLeaderboard = tdLb.leaderboard;
+          loadedFromTiDB = true;
+        }
+      } catch {}
+    }
 
-    // Overlay cached edits (admin changes made in this console)
-    cachedLb.forEach((cachedTeam) => {
-      const existing = finalLbMap.get(cachedTeam.teamId);
-      if (existing) {
-        finalLbMap.set(cachedTeam.teamId, {
-          ...existing,
-          score: cachedTeam.score,
-          solvedCount: Math.max(existing.solvedCount, cachedTeam.solvedCount || 0),
-          completedTasks: Array.from(new Set([...existing.completedTasks, ...(cachedTeam.completedTasks || [])])),
-        });
-      } else {
-        finalLbMap.set(cachedTeam.teamId, cachedTeam);
-      }
-    });
+    // Authoritative Server Data (Always updates all teams who joined with live presence)
+    const liveServerTeams = beLeaderboard.length > 0 ? beLeaderboard : tidbLeaderboard;
 
-    const finalLb = Array.from(finalLbMap.values())
-      .sort((a, b) => b.score - a.score)
-      .map((t, idx) => ({ ...t, rank: idx + 1 }));
+    if (liveServerTeams.length > 0) {
+      const finalLb = liveServerTeams
+        .map((t) => ({
+          ...t,
+          score: typeof t.score === "number" && !isNaN(t.score) ? t.score : (typeof (t as any).totalScore === "number" ? (t as any).totalScore : 0),
+          isOnline: Boolean(t.isOnline),
+        }))
+        .sort(sortByScoreThenTime)
+        .map((t, idx) => ({ ...t, rank: idx + 1 }));
 
-    if (finalLb.length > 0) {
       setLeaderboard(finalLb);
       setConnStatus(getConnectionStatus(finalLb.length));
       if (typeof window !== "undefined") {
@@ -221,37 +217,44 @@ export default function AdminPage() {
           localStorage.setItem("hawkins_persisted_leaderboard", JSON.stringify(finalLb));
         } catch {}
       }
+
+      if (isManualRefresh) {
+        const onlineCount = finalLb.filter((t) => t.isOnline).length;
+        setStatusMessage(`✓ STANDINGS REFRESHED: ${finalLb.length} Squads Synchronized (${onlineCount} Online)`);
+      }
+    } else if (cachedLb.length > 0) {
+      // Offline fallback only when server unreachable
+      setLeaderboard(cachedLb);
     }
 
-    // Same persistent merge for chapters
-    const baseCh = sbChapterList.length > 0 ? sbChapterList : beChapterList;
-    const finalChMap = new Map<number, AdminChapterData>();
-    baseCh.forEach((c) => finalChMap.set(c.id, c));
-    cachedCh.forEach((c) => {
-      finalChMap.set(c.id, { ...(finalChMap.get(c.id) || {}), ...c });
-    });
-    const finalCh = Array.from(finalChMap.values()).sort((a, b) => a.id - b.id);
-    if (finalCh.length > 0) {
-      setChapters(finalCh);
+    // Chapters
+    const liveChapters = beChapterList.length > 0 ? beChapterList : cachedCh;
+    if (liveChapters.length > 0) {
+      setChapters(liveChapters);
       if (typeof window !== "undefined") {
         try {
-          localStorage.setItem("hawkins_persisted_chapters", JSON.stringify(finalCh));
+          localStorage.setItem("hawkins_persisted_chapters", JSON.stringify(liveChapters));
         } catch {}
       }
     }
 
-    // Fetch Event Lifecycle State
+    // Fetch Event Lifecycle State & Logs
     try {
-      const evRes = await fetch("/api/admin/event/state");
-      const evData = await evRes.json();
-      if (evData.success && evData.eventState) {
-        setEventState(evData.eventState);
+      const [evRes, tdLogs] = await Promise.all([
+        fetch("/api/admin/event/state?_t=" + Date.now()).then((r) => r.json()).catch(() => ({})),
+        getTiDBLogs(liveServerTeams.length || 8).catch(() => []),
+      ]);
+      if (evRes.success && evRes.eventState) {
+        setEventState(evRes.eventState);
+      }
+      if (tdLogs && tdLogs.length > 0) {
+        setLogs(tdLogs);
       }
     } catch {}
 
     setLoading(false);
-    setAutoRefreshSec(45);
-  }, [token, leaderboard.length]);
+    setAutoRefreshSec(autoRefreshInterval);
+  }, [token, autoRefreshInterval]);
 
   // Initial fetch, Telemetry Bus, and Realtime Subscription
   useEffect(() => {
@@ -260,7 +263,7 @@ export default function AdminPage() {
     // Broadcast admin & leaderboard readiness on system bus
     broadcastComponentConnection(
       "ADMIN",
-      "Admin command bridge synchronized with Supabase DB & Backend port 5000",
+      "Admin command bridge synchronized with TiDB Distributed SQL & Backend port 5000",
       "CONNECTED"
     );
     broadcastComponentConnection(
@@ -275,7 +278,7 @@ export default function AdminPage() {
       setConnStatus(getConnectionStatus(leaderboard.length));
     });
 
-    // 1. Instant Live Score Updates across Tabs, Supabase Realtime, and Devices
+    // 1. Instant Live Score Updates across Tabs, TiDB, and Devices
     const unsubLiveScores = subscribeToLiveScoreChanges((payload: LiveScorePayload) => {
       console.log("[ADMIN] Real-time score update received:", payload);
 
@@ -324,9 +327,9 @@ export default function AdminPage() {
           });
         }
 
-        // Re-rank standings by score DESC
+        // Re-rank standings by score DESC, then time ASC
         return updated
-          .sort((a, b) => b.score - a.score)
+          .sort(sortByScoreThenTime)
           .map((t, idx) => ({ ...t, rank: idx + 1 }));
       });
 
@@ -388,18 +391,19 @@ export default function AdminPage() {
       sfx("ok");
     });
 
-    // 2. Subscribe to Supabase Postgres changes on teams
-    const unsubscribeLb = subscribeToSupabaseLeaderboard(() => {
-      console.log("[ADMIN] Real-time Supabase update received!");
+    // 2. Subscribe to TiDB changes on teams
+    const unsubscribeLb = subscribeToTiDBLeaderboard(() => {
+      console.log("[ADMIN] Real-time TiDB update received!");
       loadData();
     });
 
-    // 3. Automated 45-second background refresh cycle
+    // 3. Automated background refresh cycle (controllable interval & pause/resume)
     const autoRefreshTimer = setInterval(() => {
       setAutoRefreshSec((prev) => {
+        if (!autoRefreshEnabled) return prev;
         if (prev <= 1) {
           loadData();
-          return 45;
+          return autoRefreshInterval;
         }
         return prev - 1;
       });
@@ -411,7 +415,7 @@ export default function AdminPage() {
       unsubLiveScores();
       unsubscribeLb();
     };
-  }, [loadData, leaderboard.length]);
+  }, [loadData, autoRefreshEnabled, autoRefreshInterval]);
 
   // Ping and verify all 3 connections
   const handlePingAllConnections = () => {
@@ -428,7 +432,7 @@ export default function AdminPage() {
     );
     const l3 = broadcastComponentConnection(
       "ADMIN",
-      "Admin command bridge verified OK with Supabase PostgreSQL",
+      "Admin command bridge verified OK with TiDB Distributed SQL",
       "CONNECTED"
     );
     const l4 = broadcastComponentConnection(
@@ -497,12 +501,12 @@ export default function AdminPage() {
     } catch {}
   };
 
-  // Register squad in Supabase
+  // Register squad in TiDB
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTeamName.trim() || !newLeaderName.trim()) return;
     setIsCreatingTeam(true);
-    const res = await registerTeamInSupabase(newTeamName.trim(), newLeaderName.trim(), Number(newTeamScore));
+    const res = await registerTeamInTiDB(newTeamName.trim(), newLeaderName.trim(), Number(newTeamScore));
     setIsCreatingTeam(false);
 
     if (res.success) {
@@ -511,11 +515,11 @@ export default function AdminPage() {
       setNewTeamName("");
       setNewLeaderName("");
       setNewTeamScore(0);
-      setStatusMessage(`Squad "${newTeamName}" registered in Supabase. They can now log in immediately!`);
+      setStatusMessage(`Squad "${newTeamName}" registered in TiDB. They can now log in immediately!`);
       loadData();
     } else {
       sfx("err");
-      alert(res.error || "Failed to register squad in Supabase.");
+      alert(res.error || "Failed to register squad in TiDB.");
     }
   };
 
@@ -594,7 +598,7 @@ export default function AdminPage() {
     setEditTeamPoints(team.score);
   };
 
-  // Save team points edit to Supabase, Backend disk file, and persistent local storage
+  // Save team points edit to TiDB, Backend disk file, and persistent local storage
   const handleSaveTeamPoints = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!detailTeam) return;
@@ -603,8 +607,8 @@ export default function AdminPage() {
     const newScore = Number(editTeamPoints);
     const diff = newScore - detailTeam.score;
 
-    // 1. Sync Supabase & live real-time broadcast
-    const res = await updateTeamScoreInSupabase(detailTeam.teamId, newScore, {
+    // 1. Sync TiDB & live real-time broadcast
+    const res = await updateTeamScoreInTiDB(detailTeam.teamId, newScore, {
       teamName: detailTeam.teamName,
       delta: diff,
       source: "ADMIN",
@@ -624,7 +628,7 @@ export default function AdminPage() {
     // 3. Immediately update UI state & local persistent cache
     const updatedLeaderboard = leaderboard
       .map((t) => (t.teamId === detailTeam.teamId ? { ...t, score: newScore } : t))
-      .sort((a, b) => b.score - a.score)
+      .sort(sortByScoreThenTime)
       .map((t, idx) => ({ ...t, rank: idx + 1 }));
 
     setLeaderboard(updatedLeaderboard);
@@ -659,7 +663,7 @@ export default function AdminPage() {
     setEditLoreText(ch.archiveLines ? ch.archiveLines.join("\n") : "");
   };
 
-  // Save chapter edit to BOTH Supabase and backend
+  // Save chapter edit to BOTH TiDB and backend
   const handleSaveChapter = async () => {
     if (!editingChapter) return;
     setIsSaving(true);
@@ -672,8 +676,8 @@ export default function AdminPage() {
       archiveLines: editLoreText.split("\n").filter((l) => l.trim().length > 0),
     };
 
-    // 1. Update Supabase
-    await updateSupabaseChapter(editingChapter.id, payload);
+    // 1. Update TiDB
+    await updateTiDBChapter(editingChapter.id, payload);
 
     // 2. Update Backend
     const activeToken = token || "HAWKINS_CHIEF_1983";
@@ -704,7 +708,7 @@ export default function AdminPage() {
     });
 
     setEditingChapter(null);
-    setStatusMessage(`Chapter ${editingChapter.id} successfully updated across Supabase & backend vault.`);
+    setStatusMessage(`Chapter ${editingChapter.id} successfully updated across TiDB & backend vault.`);
     setTimeout(() => setStatusMessage(null), 4000);
   };
 
@@ -712,7 +716,7 @@ export default function AdminPage() {
   const handleDeleteChapter = async (id: number) => {
     if (!confirm(`Are you sure you want to purge Chapter ${id} from active tournament challenges?`)) return;
 
-    await deleteSupabaseChapter(id);
+    await deleteTiDBChapter(id);
     const activeToken = token || "HAWKINS_CHIEF_1983";
     await deleteAdminChapter(id, activeToken);
 
@@ -754,12 +758,18 @@ export default function AdminPage() {
     return (
       <div
         style={{
-          minHeight: "100vh",
+          height: "100vh",
+          height: "100dvh",
+          maxHeight: "100vh",
+          maxHeight: "100dvh",
+          width: "100%",
+          overflow: "hidden",
           backgroundColor: "#07070a",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           padding: "24px",
+          boxSizing: "border-box",
           color: "#e0e0e0",
           fontFamily: "var(--font-mono), monospace",
         }}
@@ -810,7 +820,7 @@ export default function AdminPage() {
               margin: "0 0 24px 0",
             }}
           >
-            Connected to Supabase PostgreSQL & Hawkins Security Mainframe. Enter master passkey to access tournament controls.
+            Connected to TiDB Serverless & Hawkins Security Mainframe. Enter master passkey to access tournament controls.
           </p>
 
           <form onSubmit={handleLogin}>
@@ -1010,41 +1020,123 @@ export default function AdminPage() {
           </button>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          {/* 1. REFRESH NOW BUTTON */}
           <button
             type="button"
+            id="admin-refresh-now-btn"
             onClick={() => {
-              setAutoRefreshSec(45);
-              loadData();
+              sfx("blip");
+              loadData(true);
             }}
             disabled={loading}
             style={{
-              padding: "7px 16px",
+              padding: "7px 18px",
               fontSize: 12,
-              letterSpacing: ".06em",
-              backgroundColor: "rgba(54, 224, 196, 0.12)",
-              border: "1px solid rgba(54, 224, 196, 0.35)",
-              color: "#36e0c4",
+              letterSpacing: ".08em",
+              backgroundColor: loading ? "rgba(255, 45, 58, 0.25)" : "rgba(255, 45, 58, 0.15)",
+              border: "1px solid #ff2d3a",
+              color: "#ff4d58",
               borderRadius: 4,
-              cursor: "pointer",
-              fontWeight: 600,
+              cursor: loading ? "not-allowed" : "pointer",
+              fontWeight: 800,
               display: "flex",
               alignItems: "center",
               gap: 8,
               transition: "all 0.15s ease",
+              boxShadow: "0 0 12px rgba(255, 45, 58, 0.25)",
             }}
-            title="Auto-refreshes every 45s. Click to force instant refresh."
+            title="Force instant live update of all squads, scores, and presence from TiDB"
           >
             <span
               style={{
                 display: "inline-block",
-                animation: loading ? "spin 1s linear infinite" : "none",
+                transform: loading ? "rotate(360deg)" : "none",
+                transition: loading ? "transform 0.8s linear infinite" : "none",
+                fontSize: 13,
               }}
             >
               ⟳
             </span>
-            <span>{loading ? "SYNCING..." : `AUTO-SYNC (${autoRefreshSec}s)`}</span>
+            <span>{loading ? "SYNCING..." : "REFRESH NOW"}</span>
           </button>
+
+          {/* 2. AUTO-REFRESH TOGGLE & INTERVAL SELECTION */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              backgroundColor: "rgba(13, 13, 20, 0.95)",
+              border: autoRefreshEnabled ? "1px solid rgba(54, 224, 196, 0.45)" : "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: 4,
+              padding: "2px 6px",
+              gap: 4,
+            }}
+          >
+            <button
+              type="button"
+              id="admin-auto-refresh-toggle"
+              onClick={() => {
+                sfx("click");
+                setAutoRefreshEnabled((prev) => !prev);
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: autoRefreshEnabled ? "#36e0c4" : "#777788",
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: ".06em",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "5px 8px",
+              }}
+              title={autoRefreshEnabled ? "Auto-refresh is ON. Click to pause." : "Auto-refresh is PAUSED. Click to resume."}
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  backgroundColor: autoRefreshEnabled ? "#36e0c4" : "#555566",
+                  boxShadow: autoRefreshEnabled ? "0 0 8px #36e0c4" : "none",
+                  display: "inline-block",
+                }}
+              />
+              <span>AUTO: {autoRefreshEnabled ? `ON (${autoRefreshSec}s)` : "PAUSED"}</span>
+            </button>
+
+            {/* Quick interval presets: 5s, 10s, 30s */}
+            <div style={{ display: "flex", gap: 2, borderLeft: "1px solid rgba(255, 255, 255, 0.12)", paddingLeft: 4 }}>
+              {[5, 10, 30].map((sec) => (
+                <button
+                  key={sec}
+                  type="button"
+                  onClick={() => {
+                    sfx("click");
+                    setAutoRefreshInterval(sec);
+                    setAutoRefreshSec(sec);
+                    setAutoRefreshEnabled(true);
+                  }}
+                  style={{
+                    background: autoRefreshInterval === sec && autoRefreshEnabled ? "rgba(54, 224, 196, 0.25)" : "transparent",
+                    border: "none",
+                    borderRadius: 2,
+                    color: autoRefreshInterval === sec && autoRefreshEnabled ? "#36e0c4" : "#666677",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    padding: "2px 5px",
+                    cursor: "pointer",
+                  }}
+                  title={`Auto-refresh every ${sec} seconds`}
+                >
+                  {sec}s
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </header>
 
@@ -1159,18 +1251,43 @@ export default function AdminPage() {
                   </span>
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: "#666677" }}>
-                  Global event directives broadcast live across all competitor terminals via Supabase Realtime telemetry.
+                  Global event directives broadcast live across all competitor terminals via TiDB &amp; Socket.IO telemetry.
                 </p>
               </div>
 
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                {eventState.status !== "active" ? (
+                {eventState.status === "not_started" ? (
                   <button
                     type="button"
                     disabled={isUpdatingEvent}
                     onClick={() => updateEventStateAction({ status: "active", submissionsOpen: true, loginOpen: true })}
                     style={{
-                      padding: "7px 14px",
+                      padding: "8px 22px",
+                      fontSize: 12,
+                      fontWeight: 900,
+                      letterSpacing: ".1em",
+                      backgroundColor: "#ff2d3a",
+                      border: "2px solid #ff5964",
+                      color: "#ffffff",
+                      borderRadius: 4,
+                      cursor: "pointer",
+                      boxShadow: "0 0 20px rgba(255, 45, 58, 0.7), inset 0 0 10px rgba(0,0,0,0.4)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                    title="Initiate Hawkins Tournament: players can begin answering challenges"
+                  >
+                    <span>▶</span>
+                    <span>START EVENT</span>
+                  </button>
+                ) : eventState.status === "paused" ? (
+                  <button
+                    type="button"
+                    disabled={isUpdatingEvent}
+                    onClick={() => updateEventStateAction({ status: "active", submissionsOpen: true, loginOpen: true })}
+                    style={{
+                      padding: "7px 16px",
                       fontSize: 11,
                       fontWeight: "bold",
                       letterSpacing: ".06em",
@@ -1181,7 +1298,7 @@ export default function AdminPage() {
                       cursor: "pointer",
                     }}
                   >
-                    ▶ RESUME / START EVENT
+                    ▶ RESUME EVENT
                   </button>
                 ) : (
                   <button
@@ -1189,7 +1306,7 @@ export default function AdminPage() {
                     disabled={isUpdatingEvent}
                     onClick={() => updateEventStateAction({ status: "paused" })}
                     style={{
-                      padding: "7px 14px",
+                      padding: "7px 16px",
                       fontSize: 11,
                       fontWeight: "bold",
                       letterSpacing: ".06em",
@@ -1203,6 +1320,42 @@ export default function AdminPage() {
                     ⏸ PAUSE EVENT
                   </button>
                 )}
+
+                {/* Reset all scores utility button */}
+                <button
+                  type="button"
+                  disabled={isUpdatingEvent}
+                  onClick={async () => {
+                    if (!confirm("WARNING: Are you sure you want to reset all squads' scores, solved stages, and submissions to 0 PTS?")) return;
+                    try {
+                      const res = await fetch("/api/admin/teams/reset-all-scores", { method: "POST" });
+                      const d = await res.json();
+                      if (d.success) {
+                        sfx("ok");
+                        setStatusMessage("All squad scores successfully reset to 0 PTS.");
+                        loadData(true);
+                      } else {
+                        alert("Reset failed: " + (d.message || d.error));
+                      }
+                    } catch (e: any) {
+                      alert("Reset error: " + e.message);
+                    }
+                  }}
+                  style={{
+                    padding: "7px 14px",
+                    fontSize: 11,
+                    fontWeight: "bold",
+                    letterSpacing: ".06em",
+                    backgroundColor: "rgba(255, 45, 58, 0.12)",
+                    border: "1px solid rgba(255, 45, 58, 0.4)",
+                    color: "#ff8088",
+                    borderRadius: 4,
+                    cursor: "pointer",
+                  }}
+                  title="Reset all team scores and progress to 0 PTS in TiDB"
+                >
+                  ↺ RESET ALL SCORES TO 0
+                </button>
 
                 <button
                   type="button"
@@ -1309,13 +1462,13 @@ export default function AdminPage() {
                       fontSize: 11,
                       padding: "2px 8px",
                       borderRadius: 3,
-                      backgroundColor: "rgba(54, 224, 196, 0.1)",
-                      border: "1px solid rgba(54, 224, 196, 0.25)",
-                      color: "#36e0c4",
+                      backgroundColor: autoRefreshEnabled ? "rgba(54, 224, 196, 0.1)" : "rgba(255, 255, 255, 0.05)",
+                      border: autoRefreshEnabled ? "1px solid rgba(54, 224, 196, 0.25)" : "1px solid rgba(255, 255, 255, 0.1)",
+                      color: autoRefreshEnabled ? "#36e0c4" : "#888899",
                       fontWeight: "bold",
                     }}
                   >
-                    ⏱ AUTO-REFRESH: {autoRefreshSec}s
+                    ⏱ AUTO-REFRESH: {autoRefreshEnabled ? `${autoRefreshSec}s` : "PAUSED"}
                   </span>
                   <span style={{ color: "#555566", fontSize: 11 }}>
                     (Total squads: {leaderboard.length})
@@ -1324,6 +1477,35 @@ export default function AdminPage() {
               </div>
 
               <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  id="admin-standings-refresh-btn"
+                  onClick={() => {
+                    sfx("blip");
+                    loadData(true);
+                  }}
+                  disabled={loading}
+                  style={{
+                    padding: "8px 14px",
+                    fontSize: 12,
+                    letterSpacing: ".08em",
+                    backgroundColor: "rgba(255, 45, 58, 0.15)",
+                    border: "1px solid #ff2d3a",
+                    color: "#ff4d58",
+                    borderRadius: 4,
+                    cursor: loading ? "not-allowed" : "pointer",
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    boxShadow: "0 0 10px rgba(255, 45, 58, 0.2)",
+                  }}
+                  title="Force instant sync of squad standings and online status from TiDB"
+                >
+                  <span style={{ display: "inline-block", transform: loading ? "rotate(360deg)" : "none", transition: loading ? "transform 0.8s linear infinite" : "none" }}>⟳</span>
+                  <span>{loading ? "SYNCING..." : "REFRESH STANDINGS"}</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => setShowImportModal(true)}
@@ -1512,49 +1694,44 @@ export default function AdminPage() {
                             <span
                               style={{
                                 fontSize: 11,
-                                padding: "3px 8px",
-                                borderRadius: 3,
+                                padding: "4px 10px",
+                                borderRadius: 4,
                                 fontWeight: "bold",
                                 backgroundColor: "rgba(54, 224, 196, 0.15)",
                                 color: "#36e0c4",
-                                border: "1px solid rgba(54, 224, 196, 0.3)",
+                                border: "1px solid rgba(54, 224, 196, 0.4)",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
                               }}
                             >
-                              ● ONLINE
-                            </span>
-                          ) : item.hasSession ? (
-                            <span
-                              style={{
-                                fontSize: 11,
-                                padding: "3px 8px",
-                                borderRadius: 3,
-                                fontWeight: "bold",
-                                backgroundColor: "rgba(255, 180, 84, 0.15)",
-                                color: "#ffb454",
-                                border: "1px solid rgba(255, 180, 84, 0.3)",
-                              }}
-                              title={`Active session in DB. Heartbeat: ${item.lastHeartbeatMinutesAgo ?? "?"}m ago`}
-                            >
-                              ⏳ LOCKED ({item.lastHeartbeatMinutesAgo ?? 0}m)
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#36e0c4", boxShadow: "0 0 6px #36e0c4" }} />
+                              ONLINE
                             </span>
                           ) : (
                             <span
                               style={{
                                 fontSize: 11,
-                                padding: "3px 8px",
-                                borderRadius: 3,
+                                padding: "4px 10px",
+                                borderRadius: 4,
                                 fontWeight: "bold",
-                                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                                color: "#777788",
-                                border: "1px solid rgba(255, 255, 255, 0.1)",
+                                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                                color: "#666677",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
                               }}
                             >
-                              ○ AVAILABLE
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "#555566" }} />
+                              OFFLINE
                             </span>
                           )}
                         </td>
                         <td style={{ padding: "14px 16px", textAlign: "right" }}>
-                          <span style={{ fontSize: 16, fontWeight: "bold", color: "#ffb454" }}>{item.score} PTS</span>
+                          <span style={{ fontSize: 16, fontWeight: "bold", color: "#ffb454" }}>
+                            {typeof item.score === "number" && !isNaN(item.score) ? item.score : 0} PTS
+                          </span>
                         </td>
                         <td style={{ padding: "14px 16px", textAlign: "center" }}>
                           <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
@@ -1989,7 +2166,7 @@ export default function AdminPage() {
                   System &amp; Connection Telemetry
                 </h2>
                 <div style={{ fontSize: 12, color: "#777788" }}>
-                  Live status tracking: Main Page ↔ Admin Console ↔ Supabase Realtime Leaderboard.
+                  Live status tracking: Main Page ↔ Admin Console ↔ TiDB Serverless &amp; Socket.IO Leaderboard.
                 </div>
               </div>
 
@@ -2141,7 +2318,7 @@ export default function AdminPage() {
                   </span>
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: "#ffffff" }}>
-                  Supabase PostgreSQL &amp; Port {connStatus.adminBridge.backendPort}
+                  TiDB Serverless Distributed SQL &amp; Port {connStatus.adminBridge.backendPort}
                 </div>
                 <div style={{ fontSize: 12, color: "#8888aa" }}>
                   Master clearance authenticated (Full R/W)
@@ -2349,7 +2526,7 @@ export default function AdminPage() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <div>
                 <span style={{ fontSize: 11, letterSpacing: ".15em", color: "#ff2d3a", fontWeight: "bold" }}>
-                  VAULT CONFIGURATION · SUPABASE SYNC
+                  VAULT CONFIGURATION · TIDB DISTRIBUTED SQL SYNC
                 </span>
                 <h3 style={{ fontSize: 19, color: "#ffffff", margin: "4px 0 0 0" }}>
                   Edit Chapter {editingChapter.id} : {editingChapter.archiveTitle}
@@ -2547,7 +2724,7 @@ export default function AdminPage() {
                   cursor: "pointer",
                 }}
               >
-                {isSaving ? "SAVING TO SUPABASE..." : "SAVE CHANGES"}
+                {isSaving ? "SAVING TO TIDB..." : "SAVE CHANGES"}
               </button>
             </div>
           </div>
@@ -2592,7 +2769,7 @@ export default function AdminPage() {
                   BULK SQUAD IMPORT (CSV / EXCEL)
                 </h3>
                 <span style={{ fontSize: 12, color: "#888899" }}>
-                  Paste raw roster or upload a .csv file to seed team accounts and passwords into Supabase.
+                  Paste raw roster or upload a .csv file to seed team accounts and passwords into TiDB.
                 </span>
               </div>
               <button
@@ -2719,7 +2896,7 @@ export default function AdminPage() {
       )}
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 4. REGISTER SQUAD MODAL (SUPABASE) */}
+      {/* 4. REGISTER SQUAD MODAL (TIDB) */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {showAddTeamModal && (
         <div
@@ -2752,7 +2929,7 @@ export default function AdminPage() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <div>
                 <span style={{ fontSize: 11, letterSpacing: ".15em", color: "#36e0c4", fontWeight: "bold" }}>
-                  SUPABASE POSTGRESQL · SQUAD ROSTER
+                  TIDB DISTRIBUTED SQL · SQUAD ROSTER
                 </span>
                 <h3 style={{ fontSize: 19, color: "#ffffff", margin: "4px 0 0 0" }}>
                   Register New Tournament Squad
@@ -2878,7 +3055,7 @@ export default function AdminPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {isCreatingTeam ? "SAVING TO SUPABASE..." : "REGISTER TO DATABASE"}
+                  {isCreatingTeam ? "SAVING TO TIDB..." : "REGISTER TO DATABASE"}
                 </button>
               </div>
             </form>
@@ -2887,7 +3064,7 @@ export default function AdminPage() {
       )}
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 5. TEAM DETAILS & POINTS EDITOR MODAL (SUPABASE) */}
+      {/* 5. TEAM DETAILS & POINTS EDITOR MODAL (TIDB) */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       {detailTeam && (
         <div
@@ -2923,7 +3100,7 @@ export default function AdminPage() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
               <div>
                 <div style={{ fontSize: 11, letterSpacing: ".15em", color: "#36e0c4", fontWeight: "bold" }}>
-                  SQUAD DOSSIER · SUPABASE POSTGRESQL
+                  SQUAD DOSSIER · TIDB DISTRIBUTED SQL
                 </div>
                 <h3 style={{ fontSize: 22, color: "#ffffff", margin: "4px 0 0 0", fontWeight: 700 }}>
                   {detailTeam.teamName}
@@ -2996,7 +3173,7 @@ export default function AdminPage() {
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".12em", color: "#ffb454", fontWeight: "bold" }}>
-                  ADMIN SCORE OVERRIDE · SUPABASE
+                  ADMIN SCORE OVERRIDE · TIDB
                 </div>
                 <span style={{ fontSize: 11, color: "#888899" }}>Direct live database update</span>
               </div>

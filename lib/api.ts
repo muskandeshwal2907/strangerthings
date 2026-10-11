@@ -219,6 +219,22 @@ export interface AdminLeaderboardItem {
 
 export async function adminLogin(passkey: string): Promise<{ success: boolean; token?: string; error?: string; message?: string }> {
   try {
+    const res = await fetch(`${API_BASE}/admin/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passkey }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.token) {
+        return data;
+      }
+    }
+  } catch (err) {
+    // Fallback to Next.js route if standalone backend offline
+  }
+
+  try {
     const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -293,27 +309,27 @@ export async function resetAdminChapters(token: string): Promise<{ success: bool
 
 export async function fetchAdminLeaderboard(_token?: string): Promise<{ success: boolean; leaderboard?: AdminLeaderboardItem[]; error?: string }> {
   try {
-    const res = await fetch("/api/admin/teams");
+    const res = await fetch(`/api/admin/teams?_t=${Date.now()}`, { cache: "no-store" });
     const data = await res.json();
     if (data.success && Array.isArray(data.teams)) {
-      const items: AdminLeaderboardItem[] = data.teams.map((t: any) => ({
-        rank: t.rank,
-        teamId: t.teamId,
-        username: t.username,
-        password: t.password,
-        teamName: t.teamName,
-        leaderName: t.leaderName,
-        score: t.score,
-        currentStage: t.currentStage,
+      const items: AdminLeaderboardItem[] = data.teams.map((t: any, idx: number) => ({
+        rank: t.rank || idx + 1,
+        teamId: t.teamId || t.id || `T${String(idx + 1).padStart(2, "0")}`,
+        username: t.username || t.teamId || t.id || `TEAM${String(idx + 1).padStart(2, "0")}`,
+        password: t.password || `hawkins83_${String(idx + 1).padStart(2, "0")}`,
+        teamName: t.teamName || "Squad",
+        leaderName: t.leaderName || "Leader",
+        score: typeof t.score === "number" ? t.score : (typeof t.totalScore === "number" ? t.totalScore : 0),
+        currentStage: t.currentStage || 1,
         stageTimes: t.stageTimes,
-        isOnline: t.isOnline,
-        hasSession: t.hasSession,
-        isIdle: t.isIdle,
-        lastHeartbeatMinutesAgo: t.lastHeartbeatMinutesAgo,
-        solvedCount: t.submissionsCount || 0,
-        completedTasks: [],
-        lastSubmissionTime: t.lastHeartbeat ? new Date(t.lastHeartbeat).toLocaleTimeString() : "OFFLINE",
-        status: t.isOnline ? "ACTIVE" : (t.hasSession ? "IDLE" : "OFFLINE"),
+        isOnline: Boolean(t.isOnline),
+        hasSession: Boolean(t.hasSession || t.isOnline),
+        isIdle: false,
+        lastHeartbeatMinutesAgo: t.lastHeartbeatMinutesAgo || 0,
+        solvedCount: t.solvedCount || t.submissionsCount || 0,
+        completedTasks: t.completedTasks || [],
+        lastSubmissionTime: t.lastSubmissionTime || (t.lastHeartbeat ? new Date(t.lastHeartbeat).toLocaleTimeString() : "OFFLINE"),
+        status: t.isOnline ? "ACTIVE" : "OFFLINE",
       }));
       return { success: true, leaderboard: items };
     }

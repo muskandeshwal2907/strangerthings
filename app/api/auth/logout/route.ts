@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/server/supabaseAdmin";
+import { getApiBase } from "@/lib/api";
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.cookies.get("hawkins_session_token")?.value;
+    const token =
+      req.cookies.get("hawkins_session_token")?.value ||
+      req.headers.get("authorization")?.replace("Bearer ", "");
+
     if (token) {
-      await supabaseAdmin.from("active_sessions").delete().eq("session_token", token);
+      const base = getApiBase();
+      await fetch(`${base}/auth/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }).catch(() => {});
     }
 
     const response = NextResponse.json({ success: true, message: "Logged out successfully." });

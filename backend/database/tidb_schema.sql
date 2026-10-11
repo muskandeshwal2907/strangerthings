@@ -400,7 +400,7 @@ CREATE TABLE IF NOT EXISTS chapters (
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS chapter_questions (
   question_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -412,7 +412,7 @@ CREATE TABLE IF NOT EXISTS chapter_questions (
   created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   CONSTRAINT fk_cq_chapter FOREIGN KEY (chapter_id) REFERENCES chapters(chapter_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS question_options (
   option_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -423,7 +423,7 @@ CREATE TABLE IF NOT EXISTS question_options (
   created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
   CONSTRAINT uq_chapter_option UNIQUE (chapter_id, option_key),
   CONSTRAINT fk_qo_chapter FOREIGN KEY (chapter_id) REFERENCES chapters(chapter_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS chapter_solves (
   solve_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -435,7 +435,7 @@ CREATE TABLE IF NOT EXISTS chapter_solves (
   CONSTRAINT uq_team_chapter_solve UNIQUE (team_id, chapter_id),
   CONSTRAINT fk_cs_team FOREIGN KEY (team_id) REFERENCES teams(team_id) ON DELETE CASCADE,
   CONSTRAINT fk_cs_chapter FOREIGN KEY (chapter_id) REFERENCES chapters(chapter_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 CREATE TABLE IF NOT EXISTS active_sabotages (
   sabotage_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -447,7 +447,7 @@ CREATE TABLE IF NOT EXISTS active_sabotages (
   duration_ms INT NOT NULL DEFAULT 45000,
   expires_at BIGINT NOT NULL,
   created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 -- ==============================================================================
 -- 3. CANONICAL SEED DATA
@@ -531,13 +531,13 @@ ON DUPLICATE KEY UPDATE penalty_points = VALUES(penalty_points);
 -- Q7: "a"
 INSERT INTO question_answer_keys (answer_key_id, question_id, accepted_answer_hmac, answer_variant_number, is_active)
 VALUES
-(1, 1, '3b7ce2b836d5fe0a623a6774e50eb19ad9aa1ff1b5d1b79040c5f2b801a2d164', 1, 1),
-(2, 2, '3b7ce2b836d5fe0a623a6774e50eb19ad9aa1ff1b5d1b79040c5f2b801a2d164', 1, 1),
-(3, 3, '5e1f0e4284d7237cecf027fa1e57c8d9df73ec41e2a5f7e6f6a735071de6eb06', 1, 1),
-(4, 4, '3b7ce2b836d5fe0a623a6774e50eb19ad9aa1ff1b5d1b79040c5f2b801a2d164', 1, 1),
-(5, 5, '3b7ce2b836d5fe0a623a6774e50eb19ad9aa1ff1b5d1b79040c5f2b801a2d164', 1, 1),
-(6, 6, '3b7ce2b836d5fe0a623a6774e50eb19ad9aa1ff1b5d1b79040c5f2b801a2d164', 1, 1),
-(7, 7, '3b7ce2b836d5fe0a623a6774e50eb19ad9aa1ff1b5d1b79040c5f2b801a2d164', 1, 1)
+(1, 1, '44bee7a923df58eeb33d03cdd65317fbf2888351b2c223f78e066be9b57d6995', 1, 1),
+(2, 2, '44bee7a923df58eeb33d03cdd65317fbf2888351b2c223f78e066be9b57d6995', 1, 1),
+(3, 3, '41cc31078af5a87145fa7050585b630414780cdf7fc34f271d4cab8c3147d428', 1, 1),
+(4, 4, '44bee7a923df58eeb33d03cdd65317fbf2888351b2c223f78e066be9b57d6995', 1, 1),
+(5, 5, '44bee7a923df58eeb33d03cdd65317fbf2888351b2c223f78e066be9b57d6995', 1, 1),
+(6, 6, '44bee7a923df58eeb33d03cdd65317fbf2888351b2c223f78e066be9b57d6995', 1, 1),
+(7, 7, '44bee7a923df58eeb33d03cdd65317fbf2888351b2c223f78e066be9b57d6995', 1, 1)
 ON DUPLICATE KEY UPDATE is_active = VALUES(is_active);
 
 -- 3.9 Hawkins Teams

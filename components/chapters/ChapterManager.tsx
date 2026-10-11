@@ -987,28 +987,44 @@ export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = 
     let correctCount = 0;
     let totalPointsAwarded = 0;
 
-    for (let idx = 0; idx < questions.length; idx++) {
-      const q = questions[idx];
-      const chosen = answers[idx] || "A";
-      try {
-        const res = await fetch("/api/questions/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ questionId: q.id, answer: chosen }),
-        });
-        const data = await res.json();
-        if (data.success && data.isCorrect) {
-          correctCount++;
-          totalPointsAwarded += (data.pointsAwarded !== undefined ? data.pointsAwarded : 5);
+    // First attempt authoritative validation on Express backend (Port 5000)
+    const answersArray = questions.map((_, idx) => answers[idx] || "A");
+    try {
+      const valRes = await validateChapterOnServer(chapterId, taskId, answersArray, s.team.id);
+      if (valRes.success) {
+        correctCount = (valRes as any).correctCount || questions.length;
+        totalPointsAwarded = valRes.pointsAwarded || 50;
+      }
+    } catch (e) {
+      console.warn("[CHAPTER BACKEND VALIDATION FALLBACK]", e);
+    }
+
+    // If standalone backend was offline, fallback to Next.js route
+    if (totalPointsAwarded === 0) {
+      for (let idx = 0; idx < questions.length; idx++) {
+        const q = questions[idx];
+        const chosen = answers[idx] || "A";
+        try {
+          const res = await fetch("/api/questions/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ questionId: q.id, answer: chosen }),
+          });
+          const data = await res.json();
+          if (data.success && data.isCorrect) {
+            correctCount++;
+            totalPointsAwarded += (data.pointsAwarded !== undefined ? data.pointsAwarded : 5);
+          }
+        } catch (err) {
+          console.warn("[SUBMIT FAILED]", err);
         }
-      } catch (err) {
-        console.warn("[SUBMIT FAILED]", err);
       }
     }
 
     sfx("ok");
     submitTask(taskId, totalPointsAwarded, `Chapter ${chapterId} Docket Verified (${correctCount}/${questions.length} Solved)`);
-    setCompletionStoryChapterId(chapterId);
+    // Return directly to Investigation Board instead of auto opening next stage
+    handleBackToBoard();
   };
 
   return (

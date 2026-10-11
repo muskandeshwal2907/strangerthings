@@ -13,6 +13,7 @@ import {
   subscribe,
   RealtimeMessage,
 } from "@/lib/realtime";
+import { API_BASE } from "@/lib/api";
 import CinematicBackground from "@/components/CinematicBackground";
 import { sfx } from "@/lib/audio";
 import { motion, AnimatePresence } from "framer-motion";
@@ -208,12 +209,9 @@ export default function VecnaPage() {
 
     let chosen = selectedAnswers[`${currentTrial.id}-${activeQuestionIdx}`];
     if (!chosen) {
-      // In demo mode: auto-select correct answer if user clicks verify without clicking option
-      chosen = currentQuestion.correctAnswerId;
-      setSelectedAnswers((prev) => ({
-        ...prev,
-        [`${currentTrial.id}-${activeQuestionIdx}`]: currentQuestion.correctAnswerId,
-      }));
+      setErrorMessage("SELECT AN OPTION BEFORE VERIFYING.");
+      setTimeout(() => setErrorMessage(null), 2500);
+      return;
     }
 
     if (chosen === currentQuestion.correctAnswerId) {
@@ -251,9 +249,7 @@ export default function VecnaPage() {
       }
     } else {
       sfx("err");
-      setErrorMessage(
-        `[ANOMALY] INCORRECT VECTOR. DEMO CORRECT ANSWER: OPTION ${currentQuestion.correctAnswerId}`
-      );
+      setErrorMessage("[ANOMALY] INCORRECT VECTOR. ACCESS DENIED.");
       setTimeout(() => setErrorMessage(null), 2500);
     }
   };
@@ -285,11 +281,30 @@ export default function VecnaPage() {
       message,
       ts: Date.now(),
     });
-    // Persist in database
+    // Persist to Express backend Vecna approval queue (Port 5000)
+    try {
+      const stored = getStoredSession();
+      const token = stored && (stored as any).token ? (stored as any).token : "";
+      fetch(`${API_BASE}/vecna/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          sourceType: "custom",
+          recipientScope: target === "all" ? "all_teams" : "selected_teams",
+          selectedTeamIds: target === "all" ? undefined : [target],
+          bodyText: message.slice(0, 150),
+        }),
+      }).catch(() => {});
+    } catch {}
+
+    // Fallback to Next.js route
     fetch("/api/vecna/sabotage", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target, kind: "MESSAGE", message, duration: 45 }),
+      body: JSON.stringify({ target, kind: "MESSAGE", message: message.slice(0, 150), duration: 45 }),
     }).catch(() => {});
     setIsMessageOpen(false);
   };

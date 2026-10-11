@@ -9,6 +9,7 @@ interface QuestionTypeRendererProps {
   selectedAnswer: string | undefined;
   onSelectOption: (optionId: string) => void;
   isVecnaMode?: boolean;
+  disabled?: boolean;
 }
 
 export default function QuestionTypeRenderer({
@@ -16,6 +17,7 @@ export default function QuestionTypeRenderer({
   selectedAnswer,
   onSelectOption,
   isVecnaMode = false,
+  disabled = false,
 }: QuestionTypeRendererProps) {
   const stageType: StageQuestionType = question.stageType || "quiz";
 
@@ -31,8 +33,16 @@ export default function QuestionTypeRenderer({
     setActiveConnections({});
   }, [question.id]);
 
-  // Handle quick demo solve for any stage
+  // Development-only demo mode guard (strictly disabled in production participant experience)
+  const isDevMode =
+    process.env.NODE_ENV === "development" &&
+    typeof window !== "undefined" &&
+    window.location.hostname === "localhost" &&
+    window.location.search.includes("demo_tools=1");
+
+  // Handle quick demo solve for development only
   const handleDemoSolve = () => {
+    if (!isDevMode) return;
     sfx("click");
     onSelectOption(question.correctAnswerId);
     if (question.rearrangeData) {
@@ -154,25 +164,27 @@ export default function QuestionTypeRenderer({
               <span>STAGE 02 · CONNECTION MATRIX // MATCH THE CORRELATIONS</span>
             </div>
 
-            <button
-              type="button"
-              onClick={handleDemoSolve}
-              style={{
-                padding: "4px 12px",
-                background: "#241810",
-                color: "#ffc107",
-                border: "1px solid #c49646",
-                borderRadius: "3px",
-                fontSize: "10.5px",
-                fontFamily: "'Courier New', monospace",
-                fontWeight: 900,
-                letterSpacing: ".12em",
-                cursor: "pointer",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-              }}
-            >
-              ⚡ DEMO AUTO-CONNECT
-            </button>
+            {isDevMode && (
+              <button
+                type="button"
+                onClick={handleDemoSolve}
+                style={{
+                  padding: "4px 12px",
+                  background: "#241810",
+                  color: "#ffc107",
+                  border: "1px solid #c49646",
+                  borderRadius: "3px",
+                  fontSize: "10.5px",
+                  fontFamily: "'Courier New', monospace",
+                  fontWeight: 900,
+                  letterSpacing: ".12em",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                }}
+              >
+                ⚡ DEMO AUTO-CONNECT
+              </button>
+            )}
           </div>
 
           <div
@@ -327,25 +339,27 @@ export default function QuestionTypeRenderer({
               <span>STAGE 03 · REARRANGE ARTIFACTS // REORDER SEQUENCE</span>
             </div>
 
-            <button
-              type="button"
-              onClick={handleDemoSolve}
-              style={{
-                padding: "4px 12px",
-                background: "#241810",
-                color: "#ffc107",
-                border: "1px solid #c49646",
-                borderRadius: "3px",
-                fontSize: "10.5px",
-                fontFamily: "'Courier New', monospace",
-                fontWeight: 900,
-                letterSpacing: ".12em",
-                cursor: "pointer",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-              }}
-            >
-              ⚡ DEMO AUTO-ORDER
-            </button>
+            {isDevMode && (
+              <button
+                type="button"
+                onClick={handleDemoSolve}
+                style={{
+                  padding: "4px 12px",
+                  background: "#241810",
+                  color: "#ffc107",
+                  border: "1px solid #c49646",
+                  borderRadius: "3px",
+                  fontSize: "10.5px",
+                  fontFamily: "'Courier New', monospace",
+                  fontWeight: 900,
+                  letterSpacing: ".12em",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                }}
+              >
+                ⚡ DEMO AUTO-ORDER
+              </button>
+            )}
           </div>
 
           <div
@@ -958,7 +972,9 @@ export default function QuestionTypeRenderer({
               <button
                 key={opt.id}
                 type="button"
+                disabled={disabled}
                 onClick={() => {
+                  if (disabled) return;
                   sfx("click");
                   onSelectOption(opt.id);
                 }}
@@ -976,7 +992,8 @@ export default function QuestionTypeRenderer({
                     ? `2px solid ${paperAccent}`
                     : "1.5px solid #d4c4a8",
                   borderRadius: "3px",
-                  cursor: "pointer",
+                  cursor: disabled ? "not-allowed" : "pointer",
+                  opacity: disabled ? 0.8 : 1,
                   textAlign: "left",
                   width: "100%",
                   boxSizing: "border-box",

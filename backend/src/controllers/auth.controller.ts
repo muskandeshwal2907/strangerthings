@@ -24,8 +24,9 @@ export const AuthController = {
   },
 
   async logout(req: Request, res: Response) {
-    if (req.user?.teamId) {
-      await AuthService.logout(req.user.teamId);
+    const teamId = req.user?.teamId || req.body?.teamId;
+    if (teamId) {
+      await AuthService.logout(teamId);
     }
     return res.json({ success: true, message: "Logged out successfully." });
   },

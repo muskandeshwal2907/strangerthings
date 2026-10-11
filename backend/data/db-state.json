@@ -6,59 +6,53 @@
       "leaderName": "Aarav Sharma",
       "role": "PLAYER",
       "status": "ACTIVE",
-      "totalScore": 338,
+      "totalScore": 0,
       "breakdown": {
-        "tech": 450,
-        "puzzle": 925,
-        "speed": 60,
+        "tech": 0,
+        "puzzle": 0,
+        "speed": 0,
         "clue": 0,
-        "story": 90,
+        "story": 0,
         "teamwork": 0
       },
       "penalty": 0,
-      "startedAt": "2026-10-09T06:18:43.592Z",
+      "startedAt": "2026-10-11T09:30:06.728Z",
       "finishedAt": null,
-      "lastSolvedAt": "2026-10-10T07:06:50.661Z",
+      "lastSolvedAt": null,
       "location": "town",
       "stage": "hawkins",
-      "storyProgress": 29,
-      "completedTasks": [
-        "ch1-quiz",
-        "ch2-police"
-      ],
-      "solvedChapters": [
-        1,
-        2
-      ],
+      "storyProgress": 5,
+      "completedTasks": [],
+      "solvedChapters": [],
       "unlockedLocations": {
         "town": true,
         "policeStation": true,
         "byersHouse": true,
         "radioTower": true,
-        "lab": true,
+        "lab": false,
         "forest": false,
-        "gate": true,
+        "gate": false,
         "upsidedown": false,
         "mind": false
       },
       "radiometerPins": [
-        "8",
+        null,
         null,
         null,
         null,
         null
       ],
       "radiometerSolved": [
-        true,
+        false,
         false,
         false,
         false,
         false
       ],
-      "radiometerCodeSolved": true,
+      "radiometerCodeSolved": false,
       "unlockedHints": {},
-      "createdAt": "2026-10-09T06:18:39.428Z",
-      "updatedAt": "2026-10-10T07:06:50.661Z"
+      "createdAt": "2026-10-10T22:48:58.653Z",
+      "updatedAt": "2026-10-11T09:30:06.728Z"
     },
     "T02": {
       "id": "T02",
@@ -111,8 +105,8 @@
       ],
       "radiometerCodeSolved": false,
       "unlockedHints": {},
-      "createdAt": "2026-10-09T06:18:39.428Z",
-      "updatedAt": "2026-10-09T06:18:39.428Z"
+      "createdAt": "2026-10-10T22:48:58.653Z",
+      "updatedAt": "2026-10-11T03:14:39.006Z"
     },
     "T03": {
       "id": "T03",
@@ -165,8 +159,8 @@
       ],
       "radiometerCodeSolved": false,
       "unlockedHints": {},
-      "createdAt": "2026-10-09T06:18:39.428Z",
-      "updatedAt": "2026-10-09T06:18:39.428Z"
+      "createdAt": "2026-10-10T22:48:58.653Z",
+      "updatedAt": "2026-10-11T03:14:39.006Z"
     },
     "T04": {
       "id": "T04",
@@ -219,8 +213,8 @@
       ],
       "radiometerCodeSolved": false,
       "unlockedHints": {},
-      "createdAt": "2026-10-09T06:18:39.428Z",
-      "updatedAt": "2026-10-09T06:18:39.428Z"
+      "createdAt": "2026-10-10T22:48:58.653Z",
+      "updatedAt": "2026-10-11T03:14:39.006Z"
     },
     "T05": {
       "id": "T05",
@@ -273,8 +267,8 @@
       ],
       "radiometerCodeSolved": false,
       "unlockedHints": {},
-      "createdAt": "2026-10-09T06:18:39.428Z",
-      "updatedAt": "2026-10-09T06:18:39.428Z"
+      "createdAt": "2026-10-10T22:48:58.653Z",
+      "updatedAt": "2026-10-11T03:14:39.006Z"
     },
     "T06": {
       "id": "T06",
@@ -292,7 +286,7 @@
         "teamwork": 0
       },
       "penalty": 0,
-      "startedAt": null,
+      "startedAt": "2026-10-11T09:29:44.293Z",
       "finishedAt": null,
       "lastSolvedAt": null,
       "location": "town",
@@ -327,8 +321,8 @@
       ],
       "radiometerCodeSolved": false,
       "unlockedHints": {},
-      "createdAt": "2026-10-09T06:18:39.429Z",
-      "updatedAt": "2026-10-09T06:18:39.429Z"
+      "createdAt": "2026-10-10T22:48:58.653Z",
+      "updatedAt": "2026-10-11T09:29:44.293Z"
     },
     "T07": {
       "id": "T07",
@@ -381,8 +375,8 @@
       ],
       "radiometerCodeSolved": false,
       "unlockedHints": {},
-      "createdAt": "2026-10-09T06:18:39.429Z",
-      "updatedAt": "2026-10-09T06:18:39.429Z"
+      "createdAt": "2026-10-10T22:48:58.653Z",
+      "updatedAt": "2026-10-10T22:48:58.653Z"
     },
     "T08": {
       "id": "T08",
@@ -435,8 +429,8 @@
       ],
       "radiometerCodeSolved": false,
       "unlockedHints": {},
-      "createdAt": "2026-10-09T06:18:39.429Z",
-      "updatedAt": "2026-10-09T06:18:39.429Z"
+      "createdAt": "2026-10-10T22:48:58.653Z",
+      "updatedAt": "2026-10-10T22:48:58.653Z"
     },
     "VECNA-001": {
       "id": "VECNA-001",
@@ -459,7 +453,7 @@
       "lastSolvedAt": null,
       "location": "mind",
       "stage": "mind",
-      "storyProgress": 100,
+      "storyProgress": 0,
       "completedTasks": [],
       "solvedChapters": [],
       "unlockedLocations": {

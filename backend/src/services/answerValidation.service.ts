@@ -75,8 +75,6 @@ export class AnswerValidationService {
       return this.safeCompare(expectedHmac, candidateHmac);
     }
 
-    // Default canonical acceptance for option "A" or option "B"
-    const normalized = this.normalizeAnswer(submittedAnswer);
-    return normalized === "a" || normalized === "option a" || normalized === "r_u_n" || normalized === "run";
+    return false;
   }
 }

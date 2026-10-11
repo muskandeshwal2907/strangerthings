@@ -4,6 +4,7 @@ import { socketService } from "../services/socket.service";
 import { SessionService } from "../services/session.service";
 import { EventControlService } from "../services/eventControl.service";
 import { VecnaService } from "../services/vecna.service";
+import { tidb } from "../config/tidb";
 
 export const AdminController = {
   /**
@@ -208,6 +209,7 @@ export const AdminController = {
     const adminId = (req.user as any)?.adminId || 1;
 
     const success = await SessionService.forceLogoutTeam(teamId, adminId);
+    socketService.setTeamOffline(teamId);
     return res.json({
       success,
       message: `Team ${teamId} has been forcibly logged out.`,
@@ -215,10 +217,147 @@ export const AdminController = {
   },
 
   /**
+   * POST /api/admin/teams/reset-all-sessions — Force resets all participant sessions
+   */
+  async resetAllSessions(req: Request, res: Response) {
+    const adminId = (req.user as any)?.adminId || 1;
+    await SessionService.resetAllSessions(adminId);
+    socketService.clearAllOnlineTeams();
+    return res.json({
+      success: true,
+      message: "All active team sessions have been terminated. All squads are unlocked.",
+    });
+  },
+
+  /**
+   * POST /api/admin/teams/import — Bulk imports teams from CSV or JSON list into TiDB
+   */
+  async importTeams(req: Request, res: Response) {
+    const { teams, csv } = req.body;
+    let teamsList: Array<{ username: string; password?: string; teamName?: string; leaderName?: string; teamId?: string }> = [];
+
+    if (Array.isArray(teams)) {
+      teamsList = teams;
+    } else if (typeof csv === "string") {
+      const lines = csv.split(/\r?\n/).filter((l: string) => l.trim().length > 0);
+      for (const line of lines) {
+        if (/^(username|team|squad|rank)/i.test(line.trim())) continue;
+        let parts: string[] = [];
+        if (line.includes("\t")) parts = line.split("\t").map((p: string) => p.trim());
+        else if (line.includes(",")) parts = line.split(",").map((p: string) => p.trim());
+        else if (line.includes(":")) parts = line.split(":").map((p: string) => p.trim());
+        else if (line.includes(";")) parts = line.split(";").map((p: string) => p.trim());
+
+        if (parts.length >= 2) {
+          teamsList.push({
+            username: parts[0],
+            password: parts[1],
+            teamName: parts[2] || parts[0],
+            leaderName: parts[3] || "Squad Leader",
+          });
+        }
+      }
+    }
+
+    if (teamsList.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "EMPTY_IMPORT",
+        message: "No teams found in import payload. Supported formats: CSV (comma), TSV (tab), or Colon (TEAM01 : password).",
+      });
+    }
+
+    const pool = tidb.pool;
+    let insertedCount = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < teamsList.length; i++) {
+      const item = teamsList[i];
+      const rawUser = String(item.username || "").trim();
+      if (!rawUser) continue;
+      const username = rawUser.toUpperCase();
+      const password = (item.password || `hawkins83_${i + 1}`).trim();
+      const teamName = (item.teamName || rawUser).trim();
+      const leaderName = (item.leaderName || "Squad Leader").trim();
+      const teamId = item.teamId || `T${String(i + 1).padStart(2, "0")}`;
+
+      if (pool) {
+        try {
+          await pool.query(
+            `INSERT INTO teams (team_id, team_name, leader_name, username, password_hash, role)
+             VALUES (?, ?, ?, ?, ?, 'PLAYER')
+             ON DUPLICATE KEY UPDATE team_name = VALUES(team_name), leader_name = VALUES(leader_name)`,
+            [teamId, teamName, leaderName, username, password]
+          );
+        } catch (err: any) {
+          errors.push(`${username}: ${err.message}`);
+          continue;
+        }
+      }
+
+      db.createTeam(teamName, leaderName, teamId, 0);
+      insertedCount++;
+    }
+
+    socketService.broadcastLeaderboard();
+    return res.json({
+      success: true,
+      message: `Successfully processed ${insertedCount} squads into TiDB mainframe.`,
+      importedCount: insertedCount,
+      errors: errors.length > 0 ? errors : undefined,
+    });
+  },
+
+  /**
    * GET /api/admin/teams — Search/filter/sort teams with active session status
    */
   async getTeams(req: Request, res: Response) {
-    const teams = db.getAllTeams().filter((t) => t.role === "PLAYER");
+    const rawTeams = db.getAllTeams().filter((t) => t.role === "PLAYER");
+
+    // Sort descending by totalScore, then ascending by earliest lastSolvedAt (tie-breaker)
+    rawTeams.sort((a, b) => {
+      const scoreDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
+      if (scoreDiff !== 0) return scoreDiff;
+      if (a.lastSolvedAt && b.lastSolvedAt) {
+        return new Date(a.lastSolvedAt).getTime() - new Date(b.lastSolvedAt).getTime();
+      }
+      if (a.lastSolvedAt) return -1;
+      if (b.lastSolvedAt) return 1;
+      return a.teamName.localeCompare(b.teamName);
+    });
+
+    // 2. Fetch active sessions from TiDB
+    const activeSessionTeamIds = new Set<string>();
+    if (tidb.pool) {
+      try {
+        const [activeRows] = await tidb.pool.query<any[]>("SELECT team_id FROM team_active_sessions");
+        if (Array.isArray(activeRows)) {
+          activeRows.forEach((r) => activeSessionTeamIds.add(r.team_id));
+        }
+      } catch {}
+    }
+
+    const teams = rawTeams.map((t, idx) => {
+      const isSocketOnline = socketService.isTeamOnline(t.id);
+      const hasActiveSession = activeSessionTeamIds.has(t.id) || SessionService.hasActiveSessionSync(t.id);
+      // Truly online only if socket is live AND valid active session exists
+      const isOnline = isSocketOnline && hasActiveSession;
+      const numPart = t.id.replace(/\D/g, "") || String(idx + 1);
+      return {
+        ...t,
+        rank: idx + 1,
+        teamId: t.id,
+        score: typeof t.totalScore === "number" ? t.totalScore : 0,
+        totalScore: typeof t.totalScore === "number" ? t.totalScore : 0,
+        username: (t as any).username || `TEAM${numPart.padStart(2, "0")}`,
+        password: (t as any).password || `hawkins83_${numPart.padStart(2, "0")}`,
+        isOnline,
+        hasSession: hasActiveSession,
+        solvedCount: (t.solvedChapters?.length || 0) + (t.completedTasks?.length || 0),
+        currentStage: 1,
+      };
+    });
+
     return res.json({
       success: true,
       teams,
@@ -323,6 +462,12 @@ export const AdminController = {
       return res.status(400).json(result);
     }
     return res.json(result);
+  },
+
+  async resetAllScores(_req: Request, res: Response) {
+    await db.resetAllTeamScores();
+    socketService.broadcastLeaderboard();
+    return res.json({ success: true, message: "All team scores and submissions reset to 0 PTS." });
   },
 };
 

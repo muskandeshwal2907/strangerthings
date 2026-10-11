@@ -2,11 +2,15 @@ import { Router } from "express";
 import { AdminController } from "../controllers/admin.controller";
 import { AuthController } from "../controllers/auth.controller";
 import { updateAdminTeamScore } from "../controllers/admin.controller";
+import { requireAuth } from "../middleware/auth.middleware";
 
 const router = Router();
 
-// Admin Login
+// Admin Login (Public endpoint verified with passkey)
 router.post("/login", AuthController.adminLogin);
+
+// All subsequent admin routes strictly require verified ADMIN role
+router.use(requireAuth(["ADMIN"]));
 
 // Question Vault CRUD
 router.get("/chapters", AdminController.getChapters);
@@ -21,6 +25,9 @@ router.get("/teams", AdminController.getTeams);
 router.post("/teams", AdminController.createTeam);
 router.put("/teams/:id/score", AdminController.updateTeamScore);
 router.post("/teams/:teamId/force-logout", AdminController.forceLogoutTeam);
+router.post("/teams/reset-all-sessions", AdminController.resetAllSessions);
+router.post("/teams/reset-all-scores", AdminController.resetAllScores);
+router.post("/teams/import", AdminController.importTeams);
 
 // Event Lifecycle Controls
 router.post("/event/start", AdminController.startEvent);

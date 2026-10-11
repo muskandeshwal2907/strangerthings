@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AuthService } from "../services/auth.service";
+import { SessionService } from "../services/session.service";
 import { Role } from "../types";
 
 declare global {
@@ -16,7 +17,7 @@ declare global {
 }
 
 export function requireAuth(allowedRoles?: Role[]) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
@@ -45,7 +46,33 @@ export function requireAuth(allowedRoles?: Role[]) {
       });
     }
 
+    // Stateful check: verify player session is still active (not revoked by admin force-logout)
+    if (session.role === "PLAYER") {
+      const active = await SessionService.hasActiveSession(session.teamId);
+      if (!active) {
+        return res.status(401).json({
+          success: false,
+          error: "SESSION_REVOKED",
+          message: "Session has been terminated or logged out by administrator.",
+        });
+      }
+    }
+
     req.user = session;
+    next();
+  };
+}
+
+export function extractAuth() {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      const session = AuthService.verifyToken(token);
+      if (session) {
+        req.user = session;
+      }
+    }
     next();
   };
 }

@@ -59,6 +59,7 @@ export default function CinematicBackground({
           overflow: "hidden",
           zIndex: 1,
           pointerEvents: "none",
+          backgroundColor: "#000000",
         }}
       >
         {videoSrc ? (
@@ -79,6 +80,7 @@ export default function CinematicBackground({
               height: "100%",
               objectFit: "cover",
               objectPosition: "center center",
+              backgroundColor: "#000000",
               filter: `brightness(${overlayOpacity}) contrast(1.15)`,
             }}
           >
@@ -94,6 +96,7 @@ export default function CinematicBackground({
                 height: "100%",
                 objectFit: "cover",
                 objectPosition: "center center",
+                backgroundColor: "#000000",
               }}
             />
           </video>
@@ -107,6 +110,7 @@ export default function CinematicBackground({
               height: "100%",
               objectFit: "cover",
               objectPosition: "center center",
+              backgroundColor: "#000000",
               filter: `brightness(${overlayOpacity}) contrast(1.15)`,
             }}
             initial={{ opacity: 0.2, scale: 1.04 }}

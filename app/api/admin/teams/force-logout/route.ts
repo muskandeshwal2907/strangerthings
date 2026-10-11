@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/server/supabaseAdmin";
+import { getApiBase } from "@/lib/api";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,27 +10,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "MISSING_TEAM_ID" }, { status: 400 });
     }
 
-    // 1. Remove active session from database
-    await supabaseAdmin.from("active_sessions").delete().eq("team_id", teamId);
-
-    // 2. Broadcast force logout to Realtime channel
-    const channel = supabaseAdmin.channel("hawkins-protocol");
-    await channel.send({
-      type: "broadcast",
-      event: "force_logout",
-      payload: {
-        type: "force_logout",
-        target: teamId,
-        ts: Date.now(),
+    const base = getApiBase();
+    const token = req.headers.get("authorization") || "Bearer HAWKINS_CHIEF_1983";
+    const res = await fetch(`${base}/admin/teams/${encodeURIComponent(teamId)}/force-logout`, {
+      method: "POST",
+      headers: {
+        Authorization: token,
+        "Content-Type": "application/json",
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: `Team [${teamId}] session terminated. Device forced to logout.`,
-    });
+    const data = await res.json().catch(() => ({}));
+    return NextResponse.json(data, { status: res.status });
   } catch (err: any) {
     console.error("[FORCE LOGOUT ERROR]", err);
-    return NextResponse.json({ success: false, error: "SERVER_ERROR" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "BACKEND_UNREACHABLE" }, { status: 500 });
   }
 }

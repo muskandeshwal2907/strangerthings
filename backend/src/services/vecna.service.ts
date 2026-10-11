@@ -360,42 +360,58 @@ export class VecnaService {
           };
         }
 
-        // 2. Update status to approved
-        await pool.query(
-          `UPDATE vecna_messages 
-           SET approval_status = 'approved', reviewed_by_admin_id = ?, reviewed_at = NOW(3), sent_at = NOW(3)
-           WHERE message_id = ?`,
-          [adminId, messageId]
-        );
+        // 2. Update status to approved and record deliveries atomically
+        const conn = await pool.getConnection();
+        let deliveredCount = 0;
+        const deliveryList: { teamId: string; deliveryId: number }[] = [];
+        try {
+          await conn.beginTransaction();
 
-        // 3. Resolve target teams
-        let targetTeamIds: string[] = [];
-        if (msg.recipient_scope === "all_teams") {
-          const [teamRows] = await pool.query<any[]>(
-            "SELECT team_id FROM teams WHERE role = 'PLAYER' AND is_enabled = 1"
+          await conn.query(
+            `UPDATE vecna_messages 
+             SET approval_status = 'approved', reviewed_by_admin_id = ?, reviewed_at = NOW(3), sent_at = NOW(3)
+             WHERE message_id = ?`,
+            [adminId, messageId]
           );
-          targetTeamIds = teamRows.map((t) => t.team_id);
-        } else {
-          const [targetRows] = await pool.query<any[]>(
-            "SELECT team_id FROM vecna_message_targets WHERE message_id = ?",
-            [messageId]
-          );
-          targetTeamIds = targetRows.map((t) => t.team_id);
+
+          // 3. Resolve target teams
+          let targetTeamIds: string[] = [];
+          if (msg.recipient_scope === "all_teams") {
+            const [teamRows] = await conn.query<any[]>(
+              "SELECT team_id FROM teams WHERE role = 'PLAYER' AND is_enabled = 1"
+            );
+            targetTeamIds = teamRows.map((t) => t.team_id);
+          } else {
+            const [targetRows] = await conn.query<any[]>(
+              "SELECT team_id FROM vecna_message_targets WHERE message_id = ?",
+              [messageId]
+            );
+            targetTeamIds = targetRows.map((t) => t.team_id);
+          }
+
+          // 4. Create durable team_vecna_deliveries
+          for (const teamId of targetTeamIds) {
+            const [deliveryRes]: any = await conn.query(
+              "INSERT IGNORE INTO team_vecna_deliveries (message_id, team_id, delivered_at) VALUES (?, ?, NOW(3))",
+              [messageId, teamId]
+            );
+            const deliveryId = deliveryRes.insertId || Date.now();
+            deliveredCount++;
+            deliveryList.push({ teamId, deliveryId });
+          }
+
+          await conn.commit();
+        } catch (txErr) {
+          await conn.rollback();
+          throw txErr;
+        } finally {
+          conn.release();
         }
 
-        // 4. Create durable team_vecna_deliveries
-        let deliveredCount = 0;
-        for (const teamId of targetTeamIds) {
-          const [deliveryRes]: any = await pool.query(
-            "INSERT IGNORE INTO team_vecna_deliveries (message_id, team_id, delivered_at) VALUES (?, ?, NOW(3))",
-            [messageId, teamId]
-          );
-          const deliveryId = deliveryRes.insertId || Date.now();
-          deliveredCount++;
-
-          // 5. Emit real-time delivery to authorized team room
-          socketService.emitToTeam(teamId, "vecna:message", {
-            deliveryId,
+        // 5. Emit real-time delivery to authorized team rooms
+        for (const item of deliveryList) {
+          socketService.emitToTeam(item.teamId, "vecna:message", {
+            deliveryId: item.deliveryId,
             messageId,
             body: msg.body_text,
             deliveredAt: now,

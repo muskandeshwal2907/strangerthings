@@ -39,8 +39,8 @@ export const TasksController = {
       return res.status(400).json({ success: false, error: "MISSING_HINT_KEY" });
     }
 
-    const targetTeamId = teamId || req.user?.teamId;
-    const penaltyCost = cost !== undefined ? Number(cost) : 10;
+    const targetTeamId = req.user?.teamId || teamId;
+    const penaltyCost = 10;
 
     if (targetTeamId) {
       const team = db.getTeamById(targetTeamId);

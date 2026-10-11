@@ -114,7 +114,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "7 or higher"
           }
         ],
-        "correctAnswerId": "B",
+        "correctAnswerId": "",
         "hint": "Will rolled a 7 and said, 'Did the rest of you see that? It got me.' He needed a 13 or higher.",
         "docketTag": "D&D LOG"
       },
@@ -142,7 +142,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Richard M. Clarke"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Mr. Clarke is known for his enthusiastic support and Heathkit ham radio demonstrations.",
         "docketTag": "FACULTY DOSSIER"
       },
@@ -170,7 +170,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1,000 lb"
           }
         ],
-        "correctAnswerId": "B",
+        "correctAnswerId": "",
         "hint": "Dustin called Mr. Clarke late at night while he was watching 'The Thing from Another World'.",
         "docketTag": "PHYSICS CALC"
       },
@@ -198,7 +198,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "\"Elegia\""
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Will later sings this song to stay grounded while trapped in the Upside Down.",
         "docketTag": "AUDIO EVIDENCE"
       },
@@ -226,7 +226,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Benny Baker"
           }
         ],
-        "correctAnswerId": "C",
+        "correctAnswerId": "",
         "hint": "He owned Benny's Burgers and gave her fresh burgers before DOE agents arrived.",
         "docketTag": "WITNESS LOG"
       },
@@ -254,7 +254,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Polyfill Synthetic Stuffing"
           }
         ],
-        "correctAnswerId": "D",
+        "correctAnswerId": "",
         "hint": "Hopper cut open the torso seam with a pocket knife, confirming the state troopers planted a dummy.",
         "docketTag": "CORONER REPORT"
       },
@@ -282,7 +282,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "900,100"
           }
         ],
-        "correctAnswerId": "B",
+        "correctAnswerId": "",
         "hint": "Dustin was shocked to find his previous top score dethroned by MADMAX.",
         "docketTag": "ARCADE TELEMETRY"
       },
@@ -310,7 +310,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Butterfinger"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Dustin gave Dart the chocolate bar in his bedroom terrarium, calling it 'nougat'.",
         "docketTag": "SPECIMEN LOG"
       },
@@ -338,7 +338,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "C++"
           }
         ],
-        "correctAnswerId": "C",
+        "correctAnswerId": "",
         "hint": "Bob founded the Hawkins Middle AV Club and remarked that he learned BASIC for computer engineering.",
         "docketTag": "SYSTEM LOG"
       },
@@ -366,7 +366,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Promethium"
           }
         ],
-        "correctAnswerId": "B",
+        "correctAnswerId": "",
         "hint": "Eleven used her telekinesis to rip the Soteria chip out of Henry's neck in 1979.",
         "docketTag": "LAB DOSSIER"
       }
@@ -433,7 +433,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1\u2013d, 2\u2013b, 3\u2013a, 4\u2013c (Binary inverted offset)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "11 in binary is 8+2+1 = 1011\u2082. 9 in binary is 8+1 = 1001\u2082. 1983 in hex is 7BF\u2081\u2086.",
         "docketTag": "NUMERIC MATRIX"
       },
@@ -489,7 +489,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1\u2013XOR, 2\u2013NOT, 3\u2013AND, 4\u2013OR"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Exclusive choice is XOR; inversion is NOT; simultaneous required conditions is AND.",
         "docketTag": "BOOLEAN LOGIC"
       },
@@ -545,7 +545,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1\u2013Array, 2\u2013Linked List, 3\u2013Binary Tree, 4\u2013Heap"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Last-in First-out is Stack; First-in First-out is Queue; Networks of arbitrary connections are Graphs.",
         "docketTag": "STRUCTURE MAP"
       },
@@ -601,7 +601,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1\u2013Man-in-the-Middle, 2\u2013Zero Day, 3\u2013Rootkit, 4\u2013Worm"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "A puppet army is a Botnet; resource starvation via swarms is DDoS; deceptive camouflage is a Trojan.",
         "docketTag": "SECURITY THREAT"
       },
@@ -657,7 +657,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1\u2013git init, 2\u2013git remote, 3\u2013git fetch, 4\u2013git diff"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Divergent timeline is a branch; combining is merge; recording snapshot is commit; safe undo is revert.",
         "docketTag": "GIT TOPOLOGY"
       },
@@ -713,7 +713,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1\u2013Quick Select, 2\u2013Merge Search, 3\u2013Jump Search, 4\u2013Interpolation Search"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Step-by-step is Linear; halving sorted items is Binary; going deep is DFS; expanding ripples is BFS.",
         "docketTag": "ALGORITHM MAP"
       },
@@ -769,7 +769,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1\u2013O(1), 2\u2013O(log n), 3\u2013O(n), 4\u2013O(2\u207f)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Instant top-stack access is O(1); scanning list is O(n); divide-and-conquer sort is O(n log n); pairwise pairs is O(n\u00b2).",
         "docketTag": "ASYMPTOTICS"
       },
@@ -825,7 +825,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1\u2013Coupling, 2\u2013Cohesion, 3\u2013Overloading, 4\u2013Aggregation"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Extending a parent is Inheritance; one method with different forms is Polymorphism; hiding internals is Abstraction.",
         "docketTag": "OOP MATRIX"
       },
@@ -881,7 +881,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1\u2013Context Switch, 2\u2013Virtual Memory, 3\u2013Interrupt, 4\u2013Daemon"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Time slice rotation is Round Robin; circular mutual blocking is Deadlock; single access lock is Mutex.",
         "docketTag": "OS PRINCIPLES"
       },
@@ -937,7 +937,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "1\u2013Virtual Memory, 2\u2013Flash, 3\u2013EEPROM, 4\u2013Optical Disc"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Fastest in-hand is Register; fast buffer is Cache; active temporary is RAM; bulk persistent is Hard Disk.",
         "docketTag": "STORAGE TIERS"
       }
@@ -972,17 +972,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "M",
             "A"
           ],
-          "correctOrder": [
-            "A",
-            "L",
-            "G",
-            "O",
-            "R",
-            "I",
-            "T",
-            "H",
-            "M"
-          ]
+          "correctOrder": []
         },
         "options": [
           {
@@ -1002,7 +992,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "T \u2192 E \u2192 L \u2192 E \u2192 G \u2192 R \u2192 A \u2192 M \u2192 S (TELEGRAMS)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Unscramble TLHIGROMA: It begins with A and defines every automated program.",
         "docketTag": "CIPHER WORD"
       },
@@ -1026,17 +1016,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "R",
             "U"
           ],
-          "correctOrder": [
-            "R",
-            "E",
-            "C",
-            "U",
-            "R",
-            "S",
-            "I",
-            "O",
-            "N"
-          ]
+          "correctOrder": []
         },
         "options": [
           {
@@ -1056,7 +1036,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "R \u2192 E \u2192 S \u2192 O \u2192 U \u2192 R \u2192 C \u2192 I \u2192 N (RESOURCING)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Unscramble ECROSNIRU: Like two mirrors facing each other in the Upside Down.",
         "docketTag": "CIPHER WORD"
       },
@@ -1079,16 +1059,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "i",
             "in"
           ],
-          "correctOrder": [
-            "for",
-            "i",
-            "in",
-            "range",
-            "(",
-            "5",
-            ")",
-            ":"
-          ]
+          "correctOrder": []
         },
         "options": [
           {
@@ -1108,7 +1079,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": ": \u2192 for \u2192 i \u2192 in \u2192 range \u2192 5 \u2192 ( \u2192 )"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Standard Python loop syntax: 'for <variable> in range(<count>):'",
         "docketTag": "TOKEN SYNTAX"
       },
@@ -1127,12 +1098,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "WHERE power > 5",
             "SELECT name"
           ],
-          "correctOrder": [
-            "SELECT name",
-            "FROM characters",
-            "WHERE power > 5",
-            "ORDER BY name;"
-          ]
+          "correctOrder": []
         },
         "options": [
           {
@@ -1152,7 +1118,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "ORDER BY name; \u2192 SELECT name \u2192 FROM characters \u2192 WHERE power > 5"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Standard SQL clause order: SELECT ... FROM ... WHERE ... ORDER BY ...",
         "docketTag": "DATABASE QUERY"
       },
@@ -1171,12 +1137,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "C.     if n == 0:",
             "D.         return 1"
           ],
-          "correctOrder": [
-            "B. def factorial(n):",
-            "C.     if n == 0:",
-            "D.         return 1",
-            "A. return n * factorial(n - 1)"
-          ]
+          "correctOrder": []
         },
         "options": [
           {
@@ -1196,7 +1157,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "B \u2192 A \u2192 C \u2192 D (Infinite Recursion)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Function definition first (B), then base case condition (C) and base return (D), followed by recursive step (A).",
         "docketTag": "PYTHON CODE"
       },
@@ -1216,13 +1177,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "D.         result = ''",
             "E.         result = ch + result"
           ],
-          "correctOrder": [
-            "B. def reverse(s):",
-            "D.     result = ''",
-            "C.     for ch in s:",
-            "E.         result = ch + result",
-            "A.     return result"
-          ]
+          "correctOrder": []
         },
         "options": [
           {
@@ -1242,7 +1197,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "E \u2192 D \u2192 C \u2192 B \u2192 A (SyntaxError)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Initialize empty string accumulator before loop: B, then D, loop C, prepend E, return A.",
         "docketTag": "PYTHON CODE"
       },
@@ -1262,13 +1217,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "D.             total += i",
             "E. for i in range(1, 11):"
           ],
-          "correctOrder": [
-            "B. total = 0",
-            "E. for i in range(1, 11):",
-            "A.         if i % 2 == 0:",
-            "D.             total += i",
-            "C. print(total)"
-          ]
+          "correctOrder": []
         },
         "options": [
           {
@@ -1288,7 +1237,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "C \u2192 B \u2192 E \u2192 A \u2192 D (Output: 0)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Initialize accumulator B, iterate range E, check modulo A, accumulate D, print total C. 2+4+6+8+10 = 30.",
         "docketTag": "PYTHON CODE"
       },
@@ -1308,13 +1257,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "D. </body>",
             "E. <h1>Hawkins Lab</h1>"
           ],
-          "correctOrder": [
-            "C. <html>",
-            "B. <body>",
-            "E. <h1>Hawkins Lab</h1>",
-            "D. </body>",
-            "A. </html>"
-          ]
+          "correctOrder": []
         },
         "options": [
           {
@@ -1334,7 +1277,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "C \u2192 E \u2192 B \u2192 D \u2192 A (Heading outside body)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Document root <html> opens first, then <body>, content inside, then </body> and </html> close.",
         "docketTag": "HTML MARKUP"
       },
@@ -1354,13 +1297,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "D. git commit -m 'Fix flickering lights'",
             "E. git checkout -b fix-lights"
           ],
-          "correctOrder": [
-            "C. git clone <repository-url>",
-            "E. git checkout -b fix-lights",
-            "B. git add .",
-            "D. git commit -m 'Fix flickering lights'",
-            "A. git push origin fix-lights"
-          ]
+          "correctOrder": []
         },
         "options": [
           {
@@ -1380,7 +1317,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "B \u2192 D \u2192 A \u2192 C \u2192 E (Push uninitialized repo)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "First clone repo (C), make branch (E), stage modifications (B), commit message (D), push upstream (A).",
         "docketTag": "DEV WORKFLOW"
       },
@@ -1400,13 +1337,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "D. Browser transmits credentials securely over HTTPS to endpoint",
             "E. Client stores token and transitions user to authenticated dashboard"
           ],
-          "correctOrder": [
-            "B. User submits username and password into form",
-            "D. Browser transmits credentials securely over HTTPS to endpoint",
-            "C. Server hashes provided password and verifies against database salt",
-            "A. Server generates JWT session token and returns it to client",
-            "E. Client stores token and transitions user to authenticated dashboard"
-          ]
+          "correctOrder": []
         },
         "options": [
           {
@@ -1426,7 +1357,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "A \u2192 B \u2192 D \u2192 C \u2192 E (Token generation before authentication)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "User inputs (B), browser posts (D), backend hashes and checks (C), server issues token (A), client navigates (E).",
         "docketTag": "SECURITY PROTOCOL"
       }
@@ -1475,7 +1406,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Ransomware Cryptographic Drive Encryption"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Mass distributed connection flooding that exhausts service resources without attempting authentication is a classic DDoS attack.",
         "docketTag": "INCIDENT REPORT"
       },
@@ -1513,7 +1444,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Null Pointer Dereference Exception"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "A PRIMARY KEY column strictly enforces uniqueness; inserting an existing key (101) triggers a uniqueness violation.",
         "docketTag": "DATABASE AUDIT"
       },
@@ -1551,7 +1482,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "\"GATE\" (Sublevel 04 coordinate)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Shift each letter backward by 3 in the alphabet: U->R, X->U, Q->N. The lights spell 'RUN'.",
         "docketTag": "SIGNAL CIPHER"
       },
@@ -1589,7 +1520,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Byzantine General Consensus Failure"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "A system where a single component's failure brings down the entire network suffers from a Single Point of Failure (SPOF).",
         "docketTag": "SYSTEM ARCHITECTURE"
       },
@@ -1627,7 +1558,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Lowering room temperature to freezing levels"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Mike realized: 'He's a spy! He can see where they are!' and yelled for everyone to close Will's eyes.",
         "docketTag": "MEDICAL TELEMETRY"
       },
@@ -1665,7 +1596,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Reflecting visual laser beams into the pupils"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Favorite music acts as a lifeline, reconnecting the victim's emotional memory to physical reality.",
         "docketTag": "PSYCHIC PHENOMENON"
       },
@@ -1704,7 +1635,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Door is DESTROYED (Thermal overload triggered)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "In boolean logic, (True AND False) is False, but False OR True evaluates to True. The door unlocks.",
         "docketTag": "CIRCUIT LOGIC"
       },
@@ -1742,7 +1673,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "A fleet of covert municipal sewage vacuum tankers"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "The Scoops Ahoy crew got trapped inside the secret freight elevator as it plummeted deep beneath the mall.",
         "docketTag": "LOGISTICS INQUIRY"
       },
@@ -1782,7 +1713,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Hawkins High School at 10%"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "20 out of 50 total sightings is exactly 40%, placing Mirkwood Forest as the heaviest concentration.",
         "docketTag": "STATISTICAL AUDIT"
       },
@@ -1820,7 +1751,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Synthetic adrenal hormone infusions"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Project Nina was named after the opera: re-experiencing buried memories in the sensory tank re-ignited her neural circuits.",
         "docketTag": "MEDICAL REPORT"
       }
@@ -1859,7 +1790,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Overgrown Weeping Willow near Sattler Quarry"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Nancy crawled through the pulsating fleshy opening inside the sycamore base.",
         "docketTag": "PORTAL COORD"
       },
@@ -1887,7 +1818,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Paralyzed by High-Frequency Radio Waves"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "A single drop of blood cuts through the dimensional barrier like a beacon.",
         "docketTag": "BEHAVIORAL BIO"
       },
@@ -1915,7 +1846,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Vector 8 - 3 - 4 (Radial Offset Quadrant)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Extract the glowing red pine runes left-to-right to find vector 4-1-7.",
         "docketTag": "RUNIC VECTOR"
       },
@@ -1943,7 +1874,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Magnesium Flares and Fireworks Battery"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Steve Harrington joined with the nail-spiked Louisville Slugger bat.",
         "docketTag": "TACTICAL DEFENSE"
       },
@@ -1971,7 +1902,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "The Mind Flayer Illithid"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Will rolled a 7 on his twenty-sided die, failing to cast fireball.",
         "docketTag": "LORE ANALOG"
       },
@@ -1999,7 +1930,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Lover's Lake Road & Highway 27"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "The boys nicknamed the desolate dark corner 'Mirkwood' from Tolkien's books.",
         "docketTag": "GEOGRAPHY"
       },
@@ -2027,7 +1958,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Tiny Freezing Ice Needles Suspended Against Gravity"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Particles suspended like underwater snow drifted outward through the portal opening.",
         "docketTag": "AIR MONITORING"
       },
@@ -2055,7 +1986,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Soaked Heavy Burlap in Gasoline for a Torch Bat"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Steve swung the nail-studded bat in the living room to drive back the creature.",
         "docketTag": "IMPROVISED WEAPON"
       },
@@ -2083,7 +2014,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Ground Temperatures Dropped Below Zero Degrees"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Dustin realized they were following a magnetic deviation towards the lab.",
         "docketTag": "ANOMALOUS FLUX"
       },
@@ -2111,7 +2042,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "A Golden Retriever Hunting Dog"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Nancy and Jonathan tracked blood droplets from a deer until it vanished inside the tree.",
         "docketTag": "PREDATOR TRACKS"
       }
@@ -2157,7 +2088,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "\"BOY\" (Decoded inverted alphabet)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "U becomes R, X becomes U, Q becomes N. The decoded signal is 'RUN'.",
         "docketTag": "RADIO INTERCEPT"
       },
@@ -2192,7 +2123,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "'Z' (01011010\u2082 = 90 = ASCII 'Z')"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Binary 01010010 = 2^6 + 2^4 + 2^1 = 64 + 16 + 2 = 82. ASCII 82 is uppercase 'R'.",
         "docketTag": "BINARY STREAM"
       },
@@ -2227,7 +2158,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "\"Operation Key is underway. Evacuate all personnel before the American police arrive.\""
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "The message decoded by Robin, Steve, and Dustin talks about the silver cat and blue and yellow hands.",
         "docketTag": "RUSSIAN CIPHER"
       },
@@ -2262,7 +2193,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "\"DIE\" (Subspace anomalous whisper)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "... is S, --- is O, ... is S. It spells SOS.",
         "docketTag": "MORSE LOG"
       },
@@ -2297,7 +2228,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "\"HELP ME\" (General distress plea)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Reversing 'EREH THGIR' yields 'RIGHT HERE'.",
         "docketTag": "AUDIO PHONOGRAM"
       },
@@ -2332,7 +2263,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Marine VHF Channel 16 (156.8 MHz)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "The Heathkit SB-220 was calibrated to the 14.175 MHz ham radio band.",
         "docketTag": "HAM RADIO"
       },
@@ -2367,7 +2298,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Hawkins Lab Sublevel Repeater"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Dustin hauled Cerebro up the highest hill in Hawkins to get long-range radio line-of-sight.",
         "docketTag": "CEREBRO LOG"
       },
@@ -2402,7 +2333,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "2.997924 \u00d7 10\u2078 m/s"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Suzie insisted Dustin sing 'Never Ending Story' before providing the exact Planck's constant: 6.626070 \u00d7 10\u207b\u00b3\u2074.",
         "docketTag": "VAULT CIPHER"
       },
@@ -2437,7 +2368,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Underground iron ore deposit beneath Mirkwood"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Dustin explains: 'The compass doesn't point to true North; it points to a stronger local magnetic field.'",
         "docketTag": "FLUX TELEMETRY"
       },
@@ -2472,7 +2403,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Hawkins National Laboratory self-destruct countdown"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Vecna's plan was four kills to open four gates that tear open Hawkins in a cross shape.",
         "docketTag": "SEISMIC SIGNAL"
       }
@@ -2516,7 +2447,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "48 (Exponential doubling)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "The intervals between numbers increase by 2 each step (+4, +6, +8, +10, +12). 30 + 12 = 42.",
         "docketTag": "LAB SEQUENCE"
       },
@@ -2549,7 +2480,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Undefined (Insufficient voltage detected)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "(True AND False) is False. However, False OR True evaluates to True. The gate opens.",
         "docketTag": "GATE LOGIC"
       },
@@ -2582,7 +2513,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "systemctl freeze 1983"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "In UNIX systems, 'kill -9 <PID>' issues the non-catchable SIGKILL signal to immediately stop a rogue process.",
         "docketTag": "UNIX TERMINAL"
       },
@@ -2615,7 +2546,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "d \u2192 b \u2192 a \u2192 c (Breaker closed before source risks surge)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Each step depends on power supplied by the step before it: Generator (b) -> Breaker (d) -> Panel (c) -> Lights (a).",
         "docketTag": "POWER SEQUENCE"
       },
@@ -2648,7 +2579,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Python requires while loops for array traversal"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "range(1, len(sightings)) starts at index 1, completely ignoring the first sighting at index 0.",
         "docketTag": "PYTHON DEBUG"
       },
@@ -2681,7 +2612,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "The function needs an external global variable"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Without a base condition (like if n <= 1: return 1), fact(n) recurses forever until stack overflow.",
         "docketTag": "RECURSION BUG"
       },
@@ -2714,7 +2645,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Mean = 8, Median = 5.5, Outlier = 4"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Sum is 30 / 5 = 6 (mean). In sorted order [3, 4, 5, 6, 12], middle element is 5 (median). 12 is the outlier.",
         "docketTag": "STATISTICS"
       },
@@ -2747,7 +2678,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Hawkins School at 15%"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Forest has 20 out of 50 total sightings. (20 / 50) * 100 = 40%.",
         "docketTag": "ZONE ANALYSIS"
       },
@@ -2780,7 +2711,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "Independent: Pressure; Dependent: Voltage; Conclusion: Direct positive correlation"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "We control Temperature (independent variable), which alters Flicker frequency (dependent variable). As temp drops, flickers rise (negative correlation).",
         "docketTag": "EXPERIMENT LOG"
       },
@@ -2813,7 +2744,7 @@ export const STAGE_QUIZ_CONFIGS: Record<number, StageQuizConfig> = {
             "text": "5:00 AM (Energy is 32 units)"
           }
         ],
-        "correctAnswerId": "A",
+        "correctAnswerId": "",
         "hint": "Sequence: 1:00=2, 2:00=4, 3:00=8, 4:00=16, 5:00=32, 6:00=64, 7:00=128. It first exceeds 100 at 7:00 AM.",
         "docketTag": "ENERGY GROWTH"
       }

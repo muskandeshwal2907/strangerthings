@@ -5,6 +5,13 @@ import { VecnaService } from "../services/vecna.service";
 import { db } from "../services/db.service";
 import { tidb } from "../config/tidb";
 
+function resolveTeamId(req: Request): string {
+  if (req.user?.role === "ADMIN" && (req.query.teamId || req.body.teamId)) {
+    return String(req.query.teamId || req.body.teamId);
+  }
+  return req.user?.teamId || "T01";
+}
+
 export const SpecGameController = {
   /**
    * GET /api/event/state — Read event status relevant to participants
@@ -29,7 +36,7 @@ export const SpecGameController = {
    * GET /api/me/progress — Restore team progress after refresh or relogin
    */
   async getMyProgress(req: Request, res: Response) {
-    const teamId = req.user?.teamId || (req.query.teamId as string) || "T01";
+    const teamId = resolveTeamId(req);
     const team = db.getTeamById(teamId);
     const pool = tidb.pool;
 
@@ -73,7 +80,7 @@ export const SpecGameController = {
    * GET /api/me/rounds — List rounds accessible to this team
    */
   async getMyRounds(req: Request, res: Response) {
-    const teamId = req.user?.teamId || (req.query.teamId as string) || "T01";
+    const teamId = resolveTeamId(req);
     const pool = tidb.pool;
 
     if (pool) {
@@ -109,7 +116,7 @@ export const SpecGameController = {
   async getQuestion(req: Request, res: Response) {
     const roundId = parseInt(req.params.roundId, 10);
     const { questionCode } = req.params;
-    const teamId = req.user?.teamId || (req.query.teamId as string) || "T01";
+    const teamId = resolveTeamId(req);
 
     const question = await QuestionService.getAccessibleQuestion(teamId, roundId, questionCode);
     if (question.error) {
@@ -125,7 +132,7 @@ export const SpecGameController = {
   async submitAnswer(req: Request, res: Response) {
     const { questionCode } = req.params;
     const { answer } = req.body;
-    const teamId = req.user?.teamId || req.body.teamId || "T01";
+    const teamId = resolveTeamId(req);
 
     if (!answer || typeof answer !== "string") {
       return res.status(400).json({
@@ -144,7 +151,7 @@ export const SpecGameController = {
    */
   async useHint(req: Request, res: Response) {
     const { questionCode, hintId } = req.params;
-    const teamId = req.user?.teamId || req.body.teamId || "T01";
+    const teamId = resolveTeamId(req);
 
     const result = await QuestionService.useHint(teamId, questionCode, parseInt(hintId, 10));
     if (!result.success) {
@@ -157,7 +164,7 @@ export const SpecGameController = {
    * GET /api/me/submissions — Restore own submission status
    */
   async getMySubmissions(req: Request, res: Response) {
-    const teamId = req.user?.teamId || (req.query.teamId as string) || "T01";
+    const teamId = resolveTeamId(req);
     const pool = tidb.pool;
 
     if (pool) {
@@ -181,7 +188,7 @@ export const SpecGameController = {
    * GET /api/me/vecna-messages — Fetch approved messages in team inbox
    */
   async getMyVecnaMessages(req: Request, res: Response) {
-    const teamId = req.user?.teamId || (req.query.teamId as string) || "T01";
+    const teamId = resolveTeamId(req);
     const inbox = await VecnaService.getTeamInbox(teamId);
     return res.json({
       success: true,
@@ -195,7 +202,7 @@ export const SpecGameController = {
    */
   async markVecnaMessageRead(req: Request, res: Response) {
     const deliveryId = parseInt(req.params.deliveryId, 10);
-    const teamId = req.user?.teamId || (req.query.teamId as string) || "T01";
+    const teamId = resolveTeamId(req);
 
     const ok = await VecnaService.markMessageRead(teamId, deliveryId);
     return res.json({ success: ok });

@@ -7,11 +7,11 @@ export class EventControlService {
     eventId: 1,
     eventCode: "HAWKINS_1983",
     eventName: "Stranger Things Hawkins Invitational 1983",
-    status: "active",
+    status: "not_started",
     loginOpen: true,
-    submissionsOpen: true,
+    submissionsOpen: false,
     isPaused: false,
-    startedAt: new Date().toISOString(),
+    startedAt: null,
     endedAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -169,17 +169,32 @@ export class EventControlService {
              t.team_id,
              t.team_name,
              t.squad_leader,
-             COALESCE(SUM(l.points_delta), t.total_score) AS overall_score,
-             COUNT(DISTINCT s.question_id) AS questions_submitted,
-             COUNT(DISTINCT CASE WHEN s.is_correct = 1 THEN s.question_id END) AS questions_correct,
-             COUNT(DISTINCT h.hint_id) AS hints_used,
-             MAX(s.submitted_at) AS last_submission_at
+             COALESCE(l.ledger_sum, t.total_score) AS overall_score,
+             COALESCE(s.questions_submitted, 0) AS questions_submitted,
+             COALESCE(s.questions_correct, 0) AS questions_correct,
+             COALESCE(h.hints_used, 0) AS hints_used,
+             s.last_submission_at
            FROM teams t
-           LEFT JOIN score_ledger l ON t.team_id = l.team_id
-           LEFT JOIN question_submissions s ON t.team_id = s.team_id
-           LEFT JOIN team_hint_usages h ON t.team_id = h.team_id
+           LEFT JOIN (
+             SELECT team_id, SUM(points_delta) AS ledger_sum
+             FROM score_ledger
+             GROUP BY team_id
+           ) l ON t.team_id = l.team_id
+           LEFT JOIN (
+             SELECT 
+               team_id,
+               COUNT(question_id) AS questions_submitted,
+               SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS questions_correct,
+               MAX(submitted_at) AS last_submission_at
+             FROM question_submissions
+             GROUP BY team_id
+           ) s ON t.team_id = s.team_id
+           LEFT JOIN (
+             SELECT team_id, COUNT(hint_id) AS hints_used
+             FROM team_hint_usages
+             GROUP BY team_id
+           ) h ON t.team_id = h.team_id
            WHERE t.role = 'PLAYER'
-           GROUP BY t.team_id, t.team_name, t.squad_leader, t.total_score
            ORDER BY overall_score DESC, last_submission_at ASC`
         );
         return rows;

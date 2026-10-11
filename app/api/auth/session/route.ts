@@ -1,69 +1,105 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthenticatedTeam } from "@/lib/server/session";
-import { supabaseAdmin } from "@/lib/server/supabaseAdmin";
+import { getApiBase } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    const team = await getAuthenticatedTeam(req);
-    console.log("[SESSION API] Authenticated team:", team?.team_id || "NONE (401)");
-    if (!team) {
+    const token =
+      req.cookies.get("hawkins_session_token")?.value ||
+      req.headers.get("authorization")?.replace("Bearer ", "");
+
+    if (!token) {
       return NextResponse.json(
         { authenticated: false },
         {
-          status: 401,
+          status: 200,
           headers: {
             "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
+            Pragma: "no-cache",
+            Expires: "0",
           },
         }
       );
     }
 
-    // Fetch team completed questions & hints
-    const { data: submissions } = await supabaseAdmin
-      .from("team_submissions")
-      .select("question_id, is_correct, points_awarded, submitted_at")
-      .eq("team_id", team.team_id);
+    const base = getApiBase();
+    const meRes = await fetch(`${base}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    }).catch(() => null);
 
-    const { data: hintsUsed } = await supabaseAdmin
-      .from("team_hint_usage")
-      .select("hint_id, question_id, deduction")
-      .eq("team_id", team.team_id);
+    if (!meRes || !meRes.ok) {
+      return NextResponse.json(
+        { authenticated: false, forceLoggedOut: meRes?.status === 401 },
+        {
+          status: meRes?.status === 401 ? 401 : 200,
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }
+      );
+    }
 
-    const { data: eventState } = await supabaseAdmin
-      .from("event_state")
-      .select("status, submissions_open")
-      .eq("id", 1)
-      .single();
+    const meData = await meRes.json().catch(() => ({}));
+    if (!meData.success || !meData.session) {
+      return NextResponse.json(
+        { authenticated: false, forceLoggedOut: true },
+        {
+          status: 401,
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }
+      );
+    }
+
+    // Query submissions and event state in parallel
+    const [subsRes, eventRes] = await Promise.all([
+      fetch(`${base}/me/submissions`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      }).catch(() => null),
+      fetch(`${base}/event/state`, {
+        cache: "no-store",
+      }).catch(() => null),
+    ]);
+
+    const subsData = subsRes && subsRes.ok ? await subsRes.json().catch(() => ({})) : {};
+    const eventData = eventRes && eventRes.ok ? await eventRes.json().catch(() => ({})) : {};
+
+    const team = meData.team || {};
+    const session = meData.session || {};
 
     return NextResponse.json(
       {
         authenticated: true,
         team: {
-          id: team.team_id,
-          username: team.username,
-          teamName: team.team_name,
-          squadLeader: team.squad_leader,
-          totalScore: team.total_score,
-          currentStage: team.current_stage,
-          isFrozen: team.is_frozen,
-          freezeRemainingSeconds: team.freeze_remaining_seconds,
+          id: team.id || session.teamId || "T01",
+          username: team.teamName || session.teamName || "",
+          teamName: team.teamName || session.teamName || "",
+          squadLeader: team.leaderName || session.leaderName || "",
+          totalScore: team.score || 0,
+          currentStage: 1,
+          isFrozen: false,
+          freezeRemainingSeconds: 0,
         },
-        submissions: submissions || [],
-        hintsUsed: hintsUsed || [],
+        submissions: subsData.submissions || [],
+        hintsUsed: [],
         event: {
-          status: eventState?.status || "active",
-          submissionsOpen: eventState?.submissions_open ?? true,
+          status: eventData.event?.status || "active",
+          submissionsOpen: eventData.event?.submissionsOpen ?? true,
         },
       },
       {
         headers: {
           "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          "Pragma": "no-cache",
-          "Expires": "0",
+          Pragma: "no-cache",
+          Expires: "0",
         },
       }
     );

@@ -115,6 +115,15 @@ export default function IntroCutscene({ onComplete }: IntroCutsceneProps) {
     onComplete();
   };
 
+  // Smoothly auto-enter Hawkins after typewriter lore completes if user doesn't click
+  useEffect(() => {
+    if (!isFinished) return;
+    const autoEnterTimer = setTimeout(() => {
+      handleEnter();
+    }, 7000);
+    return () => clearTimeout(autoEnterTimer);
+  }, [isFinished]);
+
   return (
     <div
       onClick={handleFastForward}

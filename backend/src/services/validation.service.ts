@@ -34,11 +34,16 @@ export const ValidationService = {
     const team = teamId ? db.getTeamById(teamId) : undefined;
     const questions = rawChapter.questions || [];
 
-    // Case A: Batch docket submission (Map of index -> choice: { 0: "A", 1: "B", ... })
-    if (typeof answer === "object" && !Array.isArray(answer)) {
+    // Case A: Batch docket submission (Array or Object map of answers)
+    if (Array.isArray(answer) || (typeof answer === "object" && answer !== null)) {
       let correctCount = 0;
       questions.forEach((q, idx) => {
-        const chosen = (answer as Record<number, string>)[idx] || (answer as any)[q.id];
+        let chosen = "";
+        if (Array.isArray(answer)) {
+          chosen = String(answer[idx] || "");
+        } else {
+          chosen = String((answer as Record<number, string>)[idx] || (answer as any)[q.id] || "");
+        }
         if (chosen && chosen.trim().toUpperCase() === q.correctAnswerId.trim().toUpperCase()) {
           correctCount++;
         }
@@ -46,7 +51,7 @@ export const ValidationService = {
 
       // 5 points per correct question (10 Qs * 5 = 50 pts)
       const basePoints = correctCount * 5;
-      const speedBonus = team ? ScoreService.calculateSpeedBonus(basePoints, team.startedAt) : 0;
+      const speedBonus = (team && basePoints > 0) ? ScoreService.calculateSpeedBonus(basePoints, team.startedAt) : 0;
       const totalAwarded = basePoints + speedBonus;
 
       if (team) {

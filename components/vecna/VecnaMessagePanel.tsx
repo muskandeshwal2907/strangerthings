@@ -110,7 +110,7 @@ export default function VecnaMessagePanel({
         <div style={{ position: "relative", flex: 1 }}>
           <textarea
             value={message}
-            onChange={(e) => setMessage(e.target.value.slice(0, 200))}
+            onChange={(e) => setMessage(e.target.value.slice(0, 150))}
             placeholder="TYPE TRANSMISSION MESSAGE..."
             rows={3}
             style={{
@@ -139,7 +139,7 @@ export default function VecnaMessagePanel({
               color: "rgba(255, 255, 255, 0.4)",
             }}
           >
-            {message.length}/200
+            {message.length}/150
           </div>
         </div>
 

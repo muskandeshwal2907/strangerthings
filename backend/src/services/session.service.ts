@@ -41,23 +41,35 @@ export class SessionService {
     if (pool) {
       try {
         const [existing] = await pool.query<any[]>(
-          "SELECT session_id, last_seen_at FROM team_active_sessions WHERE team_id = ?",
+          "SELECT session_id, last_seen_at, TIMESTAMPDIFF(SECOND, last_seen_at, NOW(3)) AS seconds_ago FROM team_active_sessions WHERE team_id = ?",
           [teamId]
         );
         if (Array.isArray(existing) && existing.length > 0) {
-          // Record blocked login audit
-          await pool.query(
-            "INSERT INTO team_session_audit (team_id, action_type, reason) VALUES (?, 'login_blocked_already_active', 'Active session already exists')",
-            [teamId]
-          ).catch(() => {});
+          const row = existing[0];
+          const isOnline = socketService.isTeamOnline(teamId);
+          const isStale = row.seconds_ago === null || row.seconds_ago > 300;
 
-          return {
-            success: false,
-            code: "ALREADY_LOGGED_IN",
-            alreadyLoggedIn: true,
-            message:
-              "This team is already logged in on another device. Only one active session is allowed per team.",
-          };
+          // If the team is completely disconnected from sockets or inactive for > 5 mins,
+          // allow session rotation / reconnection
+          if (!isOnline || isStale) {
+            console.log(`[SESSION SERVICE] Team ${teamId} reconnecting: replacing orphaned/offline session`);
+            await pool.query("DELETE FROM team_active_sessions WHERE team_id = ?", [teamId]);
+            this.localTeamSessions.delete(teamId);
+          } else {
+            // Record blocked login audit for truly concurrent live session
+            await pool.query(
+              "INSERT INTO team_session_audit (team_id, action_type, reason) VALUES (?, 'login_blocked_already_active', 'Active session already exists')",
+              [teamId]
+            ).catch(() => {});
+
+            return {
+              success: false,
+              code: "ALREADY_LOGGED_IN",
+              alreadyLoggedIn: true,
+              message:
+                "This squad is currently active on another device. Only one active session is allowed per team.",
+            };
+          }
         }
       } catch (err) {
         console.warn("[SESSION SERVICE] TiDB active session lookup fallback:", err);
@@ -66,13 +78,17 @@ export class SessionService {
 
     // Check local fallback cache
     if (this.localTeamSessions.has(teamId)) {
-      return {
-        success: false,
-        code: "ALREADY_LOGGED_IN",
-        alreadyLoggedIn: true,
-        message:
-          "This team is already logged in on another device. Only one active session is allowed per team.",
-      };
+      if (socketService.isTeamOnline(teamId)) {
+        return {
+          success: false,
+          code: "ALREADY_LOGGED_IN",
+          alreadyLoggedIn: true,
+          message:
+            "This squad is currently active on another device. Only one active session is allowed per team.",
+        };
+      } else {
+        this.localTeamSessions.delete(teamId);
+      }
     }
 
     // 2. Generate random opaque session token and session ID
@@ -81,11 +97,11 @@ export class SessionService {
     const tokenHash = this.hashToken(rawToken);
     const now = new Date().toISOString();
 
-    // 3. Insert into TiDB team_active_sessions
+    // 3. Insert into TiDB team_active_sessions (REPLACE INTO ensures clean session rotation)
     if (pool) {
       try {
         await pool.query(
-          "INSERT INTO team_active_sessions (team_id, session_id, session_token_hash, created_at, last_seen_at) VALUES (?, ?, ?, NOW(3), NOW(3))",
+          "REPLACE INTO team_active_sessions (team_id, session_id, session_token_hash, created_at, last_seen_at) VALUES (?, ?, ?, NOW(3), NOW(3))",
           [teamId, sessionId, tokenHash]
         );
 
@@ -94,16 +110,6 @@ export class SessionService {
           [teamId, sessionId]
         ).catch(() => {});
       } catch (err: any) {
-        // If primary key collision occurred concurrently
-        if (err.code === "ER_DUP_ENTRY") {
-          return {
-            success: false,
-            code: "ALREADY_LOGGED_IN",
-            alreadyLoggedIn: true,
-            message:
-              "This team is already logged in on another device. Only one active session is allowed per team.",
-          };
-        }
         console.warn("[SESSION SERVICE] TiDB session insert fallback:", err.message);
       }
     }
@@ -155,6 +161,32 @@ export class SessionService {
   }
 
   /**
+   * Checks if an active session exists for a team (useful for immediate revocation check)
+   */
+  public static async hasActiveSession(teamId: string): Promise<boolean> {
+    const pool = tidb.pool;
+    if (pool) {
+      try {
+        const [rows] = await pool.query<any[]>(
+          "SELECT session_id FROM team_active_sessions WHERE team_id = ?",
+          [teamId]
+        );
+        if (Array.isArray(rows) && rows.length > 0) return true;
+      } catch (err) {
+        // Fall back to local map
+      }
+    }
+    return this.localTeamSessions.has(teamId);
+  }
+
+  /**
+   * Fast synchronous check of whether an active session exists in memory
+   */
+  public static hasActiveSessionSync(teamId: string): boolean {
+    return this.localTeamSessions.has(teamId);
+  }
+
+  /**
    * Deletes a team's active session (logout)
    */
   public static async deleteTeamSession(
@@ -192,6 +224,34 @@ export class SessionService {
     socketService.emitToTeam(teamId, "session:revoked", {
       reason: "admin_force_logout",
       message: "An administrator has terminated your active session.",
+      ts: Date.now(),
+    });
+
+    return true;
+  }
+
+  /**
+   * Administrator bulk logout: invalidates ALL active team sessions and notifies all sockets
+   */
+  public static async resetAllSessions(adminId: number = 1): Promise<boolean> {
+    const pool = tidb.pool;
+    if (pool) {
+      try {
+        await pool.query("DELETE FROM team_active_sessions");
+        await pool.query(
+          "INSERT INTO team_session_audit (team_id, action_type, reason, actor_admin_id) VALUES ('ALL', 'admin_reset_all', 'All sessions cleared by admin', ?)",
+          [adminId]
+        ).catch(() => {});
+      } catch (err) {
+        console.warn("[SESSION SERVICE] Reset all TiDB sessions error:", err);
+      }
+    }
+
+    this.localTeamSessions.clear();
+
+    socketService.broadcastEvent("session:revoked", {
+      reason: "admin_reset_all",
+      message: "All active team sessions have been terminated by an administrator.",
       ts: Date.now(),
     });
 

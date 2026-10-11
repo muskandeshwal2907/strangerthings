@@ -3,6 +3,7 @@ import { AnswerValidationService } from "./answerValidation.service";
 import { socketService } from "./socket.service";
 import { EventControlService } from "./eventControl.service";
 import { db } from "./db.service";
+import { RAW_CHAPTER_QUESTIONS } from "../config/vault";
 
 export interface SubmitAnswerResult {
   success: boolean;
@@ -199,51 +200,64 @@ export class QuestionService {
         const isCorrect = await AnswerValidationService.validateAnswer(questionId, submittedAnswer);
         const pointsAwarded = isCorrect ? questionPoints : 0;
 
-        // Insert submission record
-        const [subRes]: any = await pool.query(
-          `INSERT INTO question_submissions (team_id, round_id, question_id, submitted_answer, is_correct, points_awarded, submitted_at)
-           VALUES (?, ?, ?, ?, ?, ?, NOW(3))`,
-          [teamId, roundId, questionId, submittedAnswer, isCorrect ? 1 : 0, pointsAwarded]
-        );
-        const submissionId = subRes.insertId;
+        // Use atomic transaction for submission and ledger
+        const conn = await pool.getConnection();
+        try {
+          await conn.beginTransaction();
 
-        // If correct, insert immutable score ledger entry
-        if (isCorrect) {
-          await pool.query(
-            `INSERT INTO score_ledger (team_id, round_id, question_id, source_type, source_id, points_delta, created_at)
-             VALUES (?, ?, ?, 'correct_answer', ?, ?, NOW(3))`,
-            [teamId, roundId, questionId, String(submissionId), pointsAwarded]
+          // Insert submission record
+          const [subRes]: any = await conn.query(
+            `INSERT INTO question_submissions (team_id, round_id, question_id, submitted_answer, is_correct, points_awarded, submitted_at)
+             VALUES (?, ?, ?, ?, ?, ?, NOW(3))`,
+            [teamId, roundId, questionId, submittedAnswer, isCorrect ? 1 : 0, pointsAwarded]
           );
+          const submissionId = subRes.insertId;
 
-          // Update team total_score cache in teams table
-          await pool.query(
-            "UPDATE teams SET total_score = total_score + ?, last_solved_at = NOW(3) WHERE team_id = ?",
-            [pointsAwarded, teamId]
+          // If correct, insert immutable score ledger entry
+          if (isCorrect) {
+            await conn.query(
+              `INSERT INTO score_ledger (team_id, round_id, question_id, source_type, source_id, points_delta, created_at)
+               VALUES (?, ?, ?, 'correct_answer', ?, ?, NOW(3))`,
+              [teamId, roundId, questionId, String(submissionId), pointsAwarded]
+            );
+
+            // Update team total_score cache in teams table
+            await conn.query(
+              "UPDATE teams SET total_score = total_score + ?, last_solved_at = NOW(3) WHERE team_id = ?",
+              [pointsAwarded, teamId]
+            );
+          }
+
+          // Check if round questions completed -> unlock next round
+          const [qCountRows] = await conn.query<any[]>(
+            "SELECT COUNT(*) AS total FROM questions WHERE round_id = ? AND is_active = 1",
+            [roundId]
           );
-        }
-
-        // Check if round questions completed -> unlock next round
-        const [qCountRows] = await pool.query<any[]>(
-          "SELECT COUNT(*) AS total FROM questions WHERE round_id = ? AND is_active = 1",
-          [roundId]
-        );
-        const [subCountRows] = await pool.query<any[]>(
-          "SELECT COUNT(*) AS total FROM question_submissions WHERE team_id = ? AND round_id = ?",
-          [teamId, roundId]
-        );
-
-        if (subCountRows?.[0]?.total >= qCountRows?.[0]?.total) {
-          await pool.query(
-            "UPDATE team_round_progress SET status = 'completed', completed_at = NOW(3) WHERE team_id = ? AND round_id = ?",
+          const [subCountRows] = await conn.query<any[]>(
+            "SELECT COUNT(*) AS total FROM question_submissions WHERE team_id = ? AND round_id = ?",
             [teamId, roundId]
           );
-          // Unlock next round
-          await pool.query(
-            `INSERT INTO team_round_progress (team_id, round_id, status, unlocked_at)
-             VALUES (?, ? + 1, 'unlocked', NOW(3))
-             ON DUPLICATE KEY UPDATE status = 'unlocked'`,
-            [teamId, roundId]
-          ).catch(() => {});
+
+          if (subCountRows?.[0]?.total >= qCountRows?.[0]?.total) {
+            await conn.query(
+              "UPDATE team_round_progress SET status = 'completed', completed_at = NOW(3) WHERE team_id = ? AND round_id = ?",
+              [teamId, roundId]
+            );
+            // Unlock next round
+            await conn.query(
+              `INSERT INTO team_round_progress (team_id, round_id, status, unlocked_at)
+               VALUES (?, ? + 1, 'unlocked', NOW(3))
+               ON DUPLICATE KEY UPDATE status = 'unlocked'`,
+              [teamId, roundId]
+            ).catch(() => {});
+          }
+
+          await conn.commit();
+        } catch (txErr) {
+          await conn.rollback();
+          throw txErr;
+        } finally {
+          conn.release();
         }
 
         // Calculate fresh overall score
@@ -285,8 +299,20 @@ export class QuestionService {
       }
     }
 
-    // Local fallback for in-process testing
-    const isCorrect = submittedAnswer.toLowerCase().trim() === "a" || submittedAnswer.toLowerCase().trim() === "run";
+    // Local fallback for in-process testing using the secret vault
+    let expectedAnswer = "";
+    for (const chList of Object.values(RAW_CHAPTER_QUESTIONS)) {
+      const found = chList.find(
+        (q) => q.id === questionCode || String(q.itemNumber) === String(questionCode)
+      );
+      if (found) {
+        expectedAnswer = found.correctAnswerId;
+        break;
+      }
+    }
+    const isCorrect = expectedAnswer
+      ? submittedAnswer.trim().toUpperCase() === expectedAnswer.trim().toUpperCase()
+      : submittedAnswer.trim().toUpperCase() === "A";
     const pointsAwarded = isCorrect ? 100 : 0;
     const team = db.getTeamById(teamId);
     if (team && isCorrect) {
@@ -375,24 +401,36 @@ export class QuestionService {
           };
         }
 
-        // Record usage and negative penalty ledger entry
-        const [useRes]: any = await pool.query(
-          "INSERT INTO team_hint_usages (team_id, question_id, hint_id, penalty_points, used_at) VALUES (?, ?, ?, ?, NOW(3))",
-          [teamId, hint.question_id, hintId, penalty]
-        );
-        const usageId = useRes.insertId;
+        // Record usage and negative penalty ledger entry atomically
+        const conn = await pool.getConnection();
+        try {
+          await conn.beginTransaction();
 
-        await pool.query(
-          `INSERT INTO score_ledger (team_id, round_id, question_id, source_type, source_id, points_delta, created_at)
-           VALUES (?, (SELECT round_id FROM questions WHERE question_id = ?), ?, 'hint_penalty', ?, ?, NOW(3))`,
-          [teamId, hint.question_id, hint.question_id, String(usageId), -penalty]
-        );
+          const [useRes]: any = await conn.query(
+            "INSERT INTO team_hint_usages (team_id, question_id, hint_id, penalty_points, used_at) VALUES (?, ?, ?, ?, NOW(3))",
+            [teamId, hint.question_id, hintId, penalty]
+          );
+          const usageId = useRes.insertId;
 
-        // Update team penalty count in teams table
-        await pool.query(
-          "UPDATE teams SET penalty = penalty + ?, total_score = total_score - ? WHERE team_id = ?",
-          [penalty, penalty, teamId]
-        );
+          await conn.query(
+            `INSERT INTO score_ledger (team_id, round_id, question_id, source_type, source_id, points_delta, created_at)
+             VALUES (?, (SELECT round_id FROM questions WHERE question_id = ?), ?, 'hint_penalty', ?, ?, NOW(3))`,
+            [teamId, hint.question_id, hint.question_id, String(usageId), -penalty]
+          );
+
+          // Update team penalty count in teams table
+          await conn.query(
+            "UPDATE teams SET penalty = penalty + ?, total_score = total_score - ? WHERE team_id = ?",
+            [penalty, penalty, teamId]
+          );
+
+          await conn.commit();
+        } catch (txErr) {
+          await conn.rollback();
+          throw txErr;
+        } finally {
+          conn.release();
+        }
 
         const [scoreRows] = await pool.query<any[]>(
           "SELECT COALESCE(SUM(points_delta), 0) AS total FROM score_ledger WHERE team_id = ?",

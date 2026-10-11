@@ -6,9 +6,10 @@ import { STORY_TASKS, LocationId, StoryTask } from "./tasks";
 import { CONFIG, AuthSession, getStoredSession, saveSession, clearSession } from "./config";
 import { usePathname } from "next/navigation";
 import { setDroneTheme, sfx } from "./audio";
-import { subscribe, presence, RealtimeMessage, StoryEventType } from "./realtime";
+import { subscribe, presence, RealtimeMessage, StoryEventType, SabKind, disconnectSocket } from "./realtime";
+import { API_BASE, validateMasterKeypadOnServer, validateRadiometerPinOnServer } from "./api";
 
-export type SabKind = "CORRUPT" | "TIME_FREEZE" | "LOCK" | "DISTORT" | "SIGNAL_JAM" | "WATCH" | "MESSAGE" | "GLITCH";
+export type { SabKind };
 
 export interface Sabotage {
   id: number;
@@ -159,7 +160,7 @@ interface Ctx {
   cutscene: StageId | null;
   endCutscene: () => void;
   start: () => void;
-  loginPlayer: (team: { id: string; teamName: string; leaderName: string }) => void;
+  loginPlayer: (team: { id: string; teamName: string; leaderName: string; token?: string }) => void;
   register: (name: string, members: string[]) => void;
   logout: () => void;
   submit: (challengeId: string, text: string) => boolean;
@@ -189,7 +190,7 @@ interface Ctx {
   triggerVecnaArrival: () => void;
   dismissVecnaCutscene: () => void;
   solveRadiometerPin: (pinIndex: number, points: number) => void;
-  submitRadiometerCode: (code: string) => boolean;
+  submitRadiometerCode: (code: string) => Promise<boolean> | boolean;
   radiometerPinCount: number;
   activeChapterId: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   setActiveChapterId: (id: 1 | 2 | 3 | 4 | 5 | 6 | 7) => void;
@@ -320,8 +321,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     setHydrated(true);
 
-    // Validate live session with server
-    fetch("/api/auth/session")
+    // Validate live session with server if token available
+    const sessionToken = (currentSession as any)?.token;
+    fetch("/api/auth/session", {
+      headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {},
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.authenticated && data.team) {
@@ -330,6 +334,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             teamName: data.team.teamName,
             leaderName: data.team.squadLeader,
             teamId: data.team.id,
+            ...(sessionToken ? { token: sessionToken } : {}),
           };
           saveSession(sData);
           setSession(sData);
@@ -344,10 +349,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               members: [data.team.squadLeader],
             },
           }));
-        } else if (!data.authenticated && currentSession?.role === "PLAYER") {
-          clearSession();
-          setSession(null);
-          setS((prev) => ({ ...prev, phase: "login" }));
         }
       })
       .catch(() => {});
@@ -595,15 +596,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setS((p) => ({ ...p, phase: "login" }));
   }, []);
 
-  const loginPlayer = useCallback((team: { id: string; teamName: string; leaderName: string }) => {
+  const loginPlayer = useCallback((team: { id: string; teamName: string; leaderName: string; token?: string }) => {
     const sessionData: AuthSession = {
       role: "PLAYER",
       teamName: team.teamName,
       leaderName: team.leaderName,
       teamId: team.id,
+      ...(team.token ? { token: team.token } : {}),
     };
     saveSession(sessionData);
     setSession(sessionData);
+
+    if (typeof document !== "undefined" && team.token) {
+      document.cookie = `hawkins_session_token=${team.token}; path=/; max-age=86400; SameSite=Lax`;
+    }
 
     const teamObj: TeamInfo = {
       id: team.id,
@@ -915,6 +921,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const solveRadiometerPin = useCallback((pinIndex: number, points: number) => {
+    // Notify server of pin calibration
+    try {
+      validateRadiometerPinOnServer(pinIndex, RADIOMETER_PINS[pinIndex]?.digit).catch(() => {});
+    } catch {}
+
     setS((p) => {
       if (p.radiometer.pinsSolved[pinIndex] || p.radiometer.solved[pinIndex]) return p;
       const pins = [...(p.radiometer.pins || [null, null, null, null, null])];
@@ -939,19 +950,35 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     sfx("clue");
   }, []);
 
-  const submitRadiometerCode = useCallback((code: string): boolean => {
-    if (code.trim() !== FINAL_CODE) {
-      sfx("err");
-      return false;
+  const submitRadiometerCode = useCallback(async (code: string): Promise<boolean> => {
+    try {
+      const res = await validateMasterKeypadOnServer(code);
+      if (res.success) {
+        setS((p) => ({
+          ...p,
+          radiometer: { ...p.radiometer, codeSolved: true },
+          unlocked: { ...p.unlocked, lab: true },
+          breakdown: { ...p.breakdown, puzzle: p.breakdown.puzzle + (res.pointsAwarded || 200) },
+        }));
+        sfx("power");
+        return true;
+      }
+    } catch {}
+
+    // Fallback if backend is offline
+    if (FINAL_CODE && code.trim() === FINAL_CODE) {
+      setS((p) => ({
+        ...p,
+        radiometer: { ...p.radiometer, codeSolved: true },
+        unlocked: { ...p.unlocked, lab: true },
+        breakdown: { ...p.breakdown, puzzle: p.breakdown.puzzle + 200 },
+      }));
+      sfx("power");
+      return true;
     }
-    setS((p) => ({
-      ...p,
-      radiometer: { ...p.radiometer, codeSolved: true },
-      unlocked: { ...p.unlocked, lab: true },
-      breakdown: { ...p.breakdown, puzzle: p.breakdown.puzzle + 200 },
-    }));
-    sfx("power");
-    return true;
+
+    sfx("err");
+    return false;
   }, []);
 
   const reset = useCallback(() => {
@@ -965,30 +992,58 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      const stored = getStoredSession();
+      const token = stored && (stored as any).token ? (stored as any).token : "";
+      const teamId = (stored as any)?.teamId || s.team?.id;
+      if (token || teamId) {
+        await fetch(`${API_BASE}/auth/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ teamId }),
+        }).catch(() => {});
+      }
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamId }),
+      }).catch(() => {});
     } catch {}
+    disconnectSocket();
+    if (typeof document !== "undefined") {
+      document.cookie = "hawkins_session_token=; path=/; max-age=0";
+    }
     clearSession();
     setSession(null);
     reset();
     setS({ ...INITIAL, phase: "login", introSeen: false });
     sfx("click");
-  }, [reset]);
+  }, [reset, s.team?.id]);
 
   // Periodic session heartbeat & presence refresh
   useEffect(() => {
     if (!session || session.role !== "PLAYER") return;
 
     const interval = setInterval(() => {
-      fetch("/api/auth/session")
+      const token = (session as any)?.token;
+      fetch("/api/auth/session", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
         .then((res) => {
           if (res.status === 401) {
-            say("HAWKINS COMMAND: SESSION TERMINATED BY ADMINISTRATOR");
-            sfx("err");
-            logout();
+            res.json().then((data) => {
+              if (data && data.forceLoggedOut) {
+                say("HAWKINS COMMAND: SESSION TERMINATED BY ADMINISTRATOR");
+                sfx("err");
+                logout();
+              }
+            }).catch(() => {});
           }
         })
         .catch(() => {});
-    }, 25000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [session, logout, say]);

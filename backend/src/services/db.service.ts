@@ -47,7 +47,7 @@ class DatabaseService {
     }
   }
 
-  private async syncWithTiDB() {
+  public async syncWithTiDB() {
     const pool = tidb.pool;
     if (!pool) return;
 
@@ -444,6 +444,29 @@ class DatabaseService {
     this.saveSnapshot();
     this.persistTeamToTiDB(newTeam);
     return newTeam;
+  }
+
+  public async resetAllTeamScores(): Promise<void> {
+    for (const team of this.teams.values()) {
+      if (team.role === "PLAYER") {
+        team.totalScore = 0;
+        team.penalty = 0;
+        team.lastSolvedAt = null;
+        team.solvedChapters = [];
+        team.completedTasks = [];
+        team.breakdown = { tech: 0, puzzle: 0, speed: 0, clue: 0, story: 0, teamwork: 0 };
+      }
+    }
+    this.saveSnapshot();
+    const pool = tidb.pool;
+    if (pool) {
+      try {
+        await pool.query("UPDATE teams SET total_score = 0, penalty = 0, last_solved_at = NULL");
+        await pool.query("TRUNCATE TABLE score_ledger").catch(() => {});
+        await pool.query("TRUNCATE TABLE question_submissions").catch(() => {});
+        await pool.query("TRUNCATE TABLE team_hint_usages").catch(() => {});
+      } catch {}
+    }
   }
 
   public updateTeam(teamId: string, updates: Partial<TeamRecord>): TeamRecord | undefined {

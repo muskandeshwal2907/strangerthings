@@ -8,8 +8,17 @@
 import { CONFIG } from "./config";
 import { StageId } from "./stages";
 import { LocationId } from "./tasks";
-import { SabKind } from "./store";
-import { createClient } from "@supabase/supabase-js";
+import { io, Socket } from "socket.io-client";
+
+export type SabKind =
+  | "CORRUPT"
+  | "TIME_FREEZE"
+  | "LOCK"
+  | "DISTORT"
+  | "SIGNAL_JAM"
+  | "WATCH"
+  | "MESSAGE"
+  | "GLITCH";
 
 export type StoryEventType =
   | "gate_open"
@@ -113,29 +122,106 @@ type Handler = (msg: RealtimeMessage) => void;
 
 const subscribers = new Set<Handler>();
 
-// Supabase Realtime Client
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://pxlbktdaldicbtrtbqxu.supabase.co";
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4bGJrdGRhbGRpY2J0cnRicXh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExODc0MzgsImV4cCI6MjEwNjc2MzQzOH0.obE1WiSJyMPrZYYwtBSTL9mkxksK-yr5dP6pm53Ty9A";
-
-let supabaseClient: any = null;
-let realtimeChannel: any = null;
 let localBroadcastChannel: BroadcastChannel | null = null;
 
-export type RealtimeSocketLike = {
-  on: (event: string, handler: (...args: any[]) => void) => void;
-  off: (event: string, handler: (...args: any[]) => void) => void;
-  emit?: (event: string, payload: any) => void;
-  connected?: boolean;
-};
+let socketInstance: Socket | null = null;
 
-export function getSocket(): RealtimeSocketLike | null {
-  return null;
+export function getSocket(): Socket | null {
+  if (typeof window === "undefined") return null;
+  if (!socketInstance) {
+    try {
+      const host = window.location.hostname || "localhost";
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || `http://${host}:5000`;
+
+      let token = "";
+      try {
+        const stored = localStorage.getItem("hawkins-protocol:session");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          token = parsed.token || "";
+        }
+        if (!token) {
+          token = localStorage.getItem("hawkins_admin_token") || "";
+        }
+      } catch {}
+
+      socketInstance = io(backendUrl, {
+        auth: { token },
+        transports: ["websocket", "polling"],
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+      });
+
+      socketInstance.on("connect", () => {
+        console.log("[SOCKET.IO] Connected to Hawkins Security Mainframe on Port 5000");
+      });
+
+      socketInstance.on("leaderboard:update", (data: any) => {
+        dispatchToSubscribers({
+          type: "SCORE_UPDATE",
+          source: "socketio",
+          ...data,
+        });
+      });
+
+      socketInstance.on("sabotage:received", (data: any) => {
+        dispatchToSubscribers({
+          type: "sabotage",
+          ...data,
+        });
+      });
+
+      socketInstance.on("story_event:received", (data: any) => {
+        dispatchToSubscribers({
+          type: "story_event",
+          ...data,
+        });
+      });
+
+      socketInstance.on("challenge_lock:received", (data: any) => {
+        dispatchToSubscribers({
+          type: "challenge_lock",
+          ...data,
+        });
+      });
+
+      socketInstance.on("award:received", (data: any) => {
+        dispatchToSubscribers({
+          type: "award",
+          ...data,
+        });
+      });
+
+      socketInstance.on("team:force_logged_out", (data: any) => {
+        dispatchToSubscribers({
+          type: "force_logout",
+          target: data?.teamId || "all",
+        });
+      });
+    } catch (e) {
+      console.warn("[SOCKET.IO] Connection error:", e);
+    }
+  }
+  return socketInstance;
+}
+
+export function disconnectSocket(): void {
+  if (socketInstance) {
+    try {
+      socketInstance.emit("team:logout");
+      socketInstance.disconnect();
+    } catch {}
+    socketInstance = null;
+  }
 }
 
 function initRealtime() {
   if (typeof window === "undefined") return;
 
-  // 1. Local HTML5 BroadcastChannel for intra-browser messaging
+  // 1. Initialize authoritative Socket.IO client (Port 5000)
+  getSocket();
+
+  // 2. Local HTML5 BroadcastChannel for intra-browser messaging
   if (!localBroadcastChannel && "BroadcastChannel" in window) {
     try {
       localBroadcastChannel = new BroadcastChannel(CONFIG.BROADCAST_CHANNEL);
@@ -143,34 +229,6 @@ function initRealtime() {
         if (event.data) dispatchToSubscribers(event.data);
       };
     } catch {}
-  }
-
-  // 2. Supabase Realtime for cross-laptop messaging
-  if (!supabaseClient) {
-    try {
-      supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-      realtimeChannel = supabaseClient.channel("hawkins-protocol", {
-        config: { broadcast: { ack: false, self: false } },
-      });
-
-      realtimeChannel
-        .on("broadcast", { event: "message" }, ({ payload }: { payload: RealtimeMessage }) => {
-          if (payload) dispatchToSubscribers(payload);
-        })
-        .on("broadcast", { event: "sabotage" }, ({ payload }: { payload: RealtimeMessage }) => {
-          if (payload) dispatchToSubscribers(payload);
-        })
-        .on("broadcast", { event: "force_logout" }, ({ payload }: { payload: RealtimeMessage }) => {
-          if (payload) dispatchToSubscribers(payload);
-        })
-        .subscribe((status: string) => {
-          if (status === "SUBSCRIBED") {
-            console.log("[Realtime] Connected to Hawkins Supabase Realtime mesh!");
-          }
-        });
-    } catch (e) {
-      console.warn("[Realtime] Supabase Realtime init error:", e);
-    }
   }
 }
 
@@ -193,6 +251,26 @@ export function publish(msg: RealtimeMessage): void {
   // Dispatch locally in current window
   dispatchToSubscribers(stampedMsg);
 
+  // Dispatch via Socket.IO to Express Backend (Port 5000)
+  const sock = getSocket();
+  if (sock && sock.connected) {
+    try {
+      if (msg.type === "sabotage") {
+        sock.emit("sabotage", msg);
+      } else if (msg.type === "story_event") {
+        sock.emit("story_event", msg);
+      } else if (msg.type === "challenge_lock") {
+        sock.emit("challenge_lock", msg);
+      } else if (msg.type === "award") {
+        sock.emit("award", msg);
+      } else if (msg.type === "force_logout") {
+        sock.emit("force_logout", msg);
+      }
+    } catch (e) {
+      console.warn("[SOCKET.IO] Emit error:", e);
+    }
+  }
+
   // Dispatch via local BroadcastChannel
   if (localBroadcastChannel) {
     try {
@@ -200,18 +278,6 @@ export function publish(msg: RealtimeMessage): void {
     } catch {}
   }
 
-  // Broadcast to other laptops via Supabase Realtime
-  if (realtimeChannel) {
-    try {
-      realtimeChannel.send({
-        type: "broadcast",
-        event: "message",
-        payload: stampedMsg,
-      });
-    } catch (err) {
-      console.warn("[Realtime] Supabase broadcast error:", err);
-    }
-  }
 }
 
 /**

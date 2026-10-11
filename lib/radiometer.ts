@@ -169,9 +169,9 @@ export const RADIOMETER_PINS: RadiometerPin[] = [
 /**
  * The 5-digit code the player must type at the keypad.
  * Must equal RADIOMETER_PINS[0..4].digit concatenated.
- * Keep in sync manually if you edit the digits above.
+ * In production, master keypad validation is authoritative on the backend.
  */
-export const FINAL_CODE = "83479";
+export const FINAL_CODE = "";
 
 /** Approximate placement angle (degrees, 0 = right, CCW) for each task object
  *  around the instrument face — used by the scene to position click targets. */

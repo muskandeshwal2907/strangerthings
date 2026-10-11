@@ -11,6 +11,7 @@ import { db } from "./db.service";
 
 class SocketService {
   private io: SocketIOServer | null = null;
+  private onlineTeams = new Set<string>();
 
   public init(server: HttpServer) {
     this.io = new SocketIOServer(server, {
@@ -30,6 +31,42 @@ class SocketService {
     console.log("[SOCKET.IO] Realtime WebSocket engine online.");
   }
 
+  public isTeamOnline(teamId: string): boolean {
+    return this.onlineTeams.has(teamId);
+  }
+
+  public getOnlineTeams(): string[] {
+    return Array.from(this.onlineTeams);
+  }
+
+  public setTeamOffline(teamId: string) {
+    this.onlineTeams.delete(teamId);
+    if (this.io) {
+      const room = this.io.sockets.adapter.rooms.get(`team:${teamId}`);
+      if (room) {
+        for (const socketId of Array.from(room)) {
+          const s = this.io.sockets.sockets.get(socketId);
+          if (s) {
+            s.leave(`team:${teamId}`);
+            s.emit("team:session_terminated", { teamId, reason: "LOGOUT" });
+            s.disconnect(true);
+          }
+        }
+      }
+      this.broadcastLeaderboard();
+      this.io.to("admins").emit("presence:update", { teamId, isOnline: false });
+      this.io.to("public:broadcast").emit("presence:update", { teamId, isOnline: false });
+    }
+  }
+
+  public clearAllOnlineTeams() {
+    this.onlineTeams.clear();
+    if (this.io) {
+      this.broadcastLeaderboard();
+      this.io.to("admins").emit("presence:update", { all: true, isOnline: false });
+    }
+  }
+
   private handleConnection(socket: Socket) {
     const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.replace("Bearer ", "");
     let session = token ? AuthService.verifyToken(token) : null;
@@ -47,18 +84,33 @@ class SocketService {
         socket.join("admins");
       } else if (session.role === "PLAYER") {
         socket.join(`team:${session.teamId}`);
+        if (session.teamId) {
+          this.onlineTeams.add(session.teamId);
+          // Broadcast live presence to admins immediately
+          this.io?.to("admins").emit("presence:update", { teamId: session.teamId, isOnline: true });
+          this.broadcastLeaderboard();
+        }
       }
-    } else if (requestedRole === "VECNA") {
-      socket.join("role:vecna");
-      if (requestedSenderId) {
-        socket.join(`vecna-sender:${requestedSenderId}`);
-      }
-    } else if (requestedRole === "ADMIN") {
-      socket.join("role:admin");
-      socket.join("admins");
-    } else if (requestedTeamId) {
-      socket.join(`team:${requestedTeamId}`);
     }
+
+    // Explicit client logout event
+    socket.on("team:logout", () => {
+      if (session && session.teamId) {
+        this.setTeamOffline(session.teamId);
+      }
+    });
+
+    socket.on("disconnect", () => {
+      if (session && session.teamId) {
+        const remaining = this.io?.sockets.adapter.rooms.get(`team:${session.teamId}`)?.size || 0;
+        if (remaining <= 0) {
+          this.onlineTeams.delete(session.teamId);
+          this.broadcastLeaderboard();
+          this.io?.to("admins").emit("presence:update", { teamId: session.teamId, isOnline: false });
+          this.io?.to("public:broadcast").emit("presence:update", { teamId: session.teamId, isOnline: false });
+        }
+      }
+    });
 
     // Always join public room for live leaderboard and presence broadcast
     socket.join("public:broadcast");
@@ -68,6 +120,10 @@ class SocketService {
     // ─────────────────────────────────────────────────────────────────────────
     socket.on("presence", (payload: TelemetryPayload) => {
       if (!payload || !payload.team) return;
+
+      if (payload.teamId) {
+        this.onlineTeams.add(payload.teamId);
+      }
 
       // Update state in db
       if (payload.teamId) {
@@ -86,7 +142,7 @@ class SocketService {
     });
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 2. Real-Time Sabotage (Vecna -> Server -> Target / All)
+    // 2. Real-Time Sabotage (Vecna / Admin -> Server -> Target / All)
     // ─────────────────────────────────────────────────────────────────────────
     socket.on(
       "sabotage",
@@ -98,6 +154,11 @@ class SocketService {
         operatorName?: string;
         durationSec?: number;
       }) => {
+        if (!session || (session.role !== "VECNA" && session.role !== "ADMIN")) {
+          console.warn("[SOCKET] Unauthorized sabotage attempt blocked from socket:", socket.id);
+          return;
+        }
+
         const durationSec = data.durationSec || 30;
         const sabotageRecord: ActiveSabotage = {
           id: Date.now(),
@@ -105,7 +166,7 @@ class SocketService {
           target: data.target,
           pinIndex: data.pinIndex,
           message: data.message,
-          operatorName: data.operatorName || "HENRY CREEL",
+          operatorName: data.operatorName || (session.role === "VECNA" ? "HENRY CREEL" : "CHIEF ADMIN"),
           expiresAt: Date.now() + durationSec * 1000,
         };
 
@@ -132,7 +193,7 @@ class SocketService {
     );
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 3. Story Events (Vecna -> Server -> Broadcast)
+    // 3. Story Events (Vecna / Admin -> Server -> Broadcast)
     // ─────────────────────────────────────────────────────────────────────────
     socket.on(
       "story_event",
@@ -141,6 +202,11 @@ class SocketService {
         target?: string;
         operatorName?: string;
       }) => {
+        if (!session || (session.role !== "VECNA" && session.role !== "ADMIN")) {
+          console.warn("[SOCKET] Unauthorized story_event attempt blocked from socket:", socket.id);
+          return;
+        }
+
         const payload = {
           type: "story_event",
           event: data.event,
@@ -155,7 +221,7 @@ class SocketService {
     );
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 4. Challenge Locks
+    // 4. Challenge Locks (Vecna / Admin -> Server -> Broadcast)
     // ─────────────────────────────────────────────────────────────────────────
     socket.on(
       "challenge_lock",
@@ -165,6 +231,11 @@ class SocketService {
         target?: string;
         operatorName?: string;
       }) => {
+        if (!session || (session.role !== "VECNA" && session.role !== "ADMIN")) {
+          console.warn("[SOCKET] Unauthorized challenge_lock attempt blocked from socket:", socket.id);
+          return;
+        }
+
         const payload = {
           type: "challenge_lock",
           challengeId: data.challengeId,
@@ -179,7 +250,7 @@ class SocketService {
     );
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 5. Teamwork Point Awards
+    // 5. Teamwork Point Awards (Admin Only)
     // ─────────────────────────────────────────────────────────────────────────
     socket.on(
       "award",
@@ -188,6 +259,11 @@ class SocketService {
         points: number;
         operatorName?: string;
       }) => {
+        if (!session || session.role !== "ADMIN") {
+          console.warn("[SOCKET] Unauthorized award attempt blocked from socket:", socket.id);
+          return;
+        }
+
         const targetTeam = db.getTeamById(data.target) || db.getTeamByCredentials(data.target, "");
         if (targetTeam) {
           db.updateTeam(targetTeam.id, {
@@ -232,6 +308,10 @@ class SocketService {
    */
   public broadcast(event: string, data: any) {
     this.io?.to("public:broadcast").emit(event, data);
+  }
+
+  public broadcastEvent(event: string, data: any) {
+    this.broadcast(event, data);
   }
 
   /**
