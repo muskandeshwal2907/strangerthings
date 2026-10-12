@@ -3,6 +3,7 @@ import { ValidationService } from "../services/validation.service";
 import { ScoreService } from "../services/score.service";
 import { db } from "../services/db.service";
 import { socketService } from "../services/socket.service";
+import { tidb } from "../config/tidb";
 
 export const TasksController = {
   /**
@@ -33,7 +34,7 @@ export const TasksController = {
   /**
    * POST /api/tasks/hint/unlock — Deducts penalty and unlocks classified intel
    */
-  unlockHint(req: Request, res: Response) {
+  async unlockHint(req: Request, res: Response) {
     const { hintKey, cost, teamId } = req.body;
 
     if (!hintKey) {
@@ -51,6 +52,7 @@ export const TasksController = {
             success: true,
             hintKey,
             cost: 0,
+            currentScore: team.totalScore ?? 0,
             message: "CLASSIFIED INTEL ALREADY DECRYPTED (NO ADDITIONAL PENALTY)",
           });
         }
@@ -60,15 +62,38 @@ export const TasksController = {
           return res.status(400).json({
             success: false,
             error: "INSUFFICIENT_BALANCE",
+            currentScore,
             message: "Insufficient score balance. You need at least 5 points to unlock an Intel Clue.",
           });
         }
 
         const nextHints = { ...team.unlockedHints, [hintKey]: true };
+        const newScore = Math.max(0, currentScore - penaltyCost);
         const updated = db.updateTeam(team.id, {
           unlockedHints: nextHints,
           penalty: team.penalty + penaltyCost,
+          totalScore: newScore,
         });
+
+        // Persist to TiDB if pool is available
+        const pool = tidb.pool;
+        if (pool) {
+          try {
+            await pool.query(
+              `INSERT INTO score_ledger (team_id, round_id, question_id, source_type, source_id, points_delta, created_at)
+               VALUES (?, 1, NULL, 'hint_penalty', ?, ?, NOW(3))
+               ON DUPLICATE KEY UPDATE points_delta = points_delta`,
+              [team.id, String(hintKey), -penaltyCost]
+            );
+            await pool.query(
+              "UPDATE teams SET penalty = penalty + ?, total_score = GREATEST(0, total_score - ?) WHERE team_id = ?",
+              [penaltyCost, penaltyCost, team.id]
+            );
+          } catch (tidbErr) {
+            console.warn("[TASKS] TiDB hint penalty write warning:", tidbErr);
+          }
+        }
+
         socketService.broadcastLeaderboard();
 
         if (updated) {
@@ -77,23 +102,28 @@ export const TasksController = {
             teamId: team.id,
             teamName: team.teamName,
             newScore: updated.totalScore,
+            score: updated.totalScore,
             delta: -penaltyCost,
             breakdown: updated.breakdown,
             source: "INTEL_CLUE",
             ts: Date.now(),
           };
           socketService.emitToTeam(team.id, "score:update", scorePayload);
+          socketService.broadcastToAdmins("score:update", scorePayload);
           socketService.broadcast("score:update", scorePayload);
         }
+
+        return res.json({
+          success: true,
+          hintKey,
+          cost: penaltyCost,
+          currentScore: newScore,
+          message: `CLASSIFIED INTEL DECRYPTED (-${penaltyCost} PTS PENALTY)`,
+        });
       }
     }
 
-    return res.json({
-      success: true,
-      hintKey,
-      cost: penaltyCost,
-      message: `CLASSIFIED INTEL DECRYPTED (-${penaltyCost} PTS PENALTY)`,
-    });
+    return res.status(404).json({ success: false, error: "TEAM_NOT_FOUND" });
   },
 
   /**

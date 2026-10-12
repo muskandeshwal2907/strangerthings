@@ -193,6 +193,15 @@ export class QuestionService {
         const roundId = q.round_id;
         const questionPoints = Number(q.points) || 10;
 
+        // Ensure team exists in TiDB teams table to guarantee foreign key integrity
+        const [tRows] = await pool.query<any[]>("SELECT team_id FROM teams WHERE team_id = ?", [teamId]);
+        if (!Array.isArray(tRows) || tRows.length === 0) {
+          const mem = db.getTeamById(teamId);
+          if (mem) {
+            await db.persistTeamToTiDB(mem);
+          }
+        }
+
         // Check if already submitted (IDEMPOTENCY SAFEGUARD)
         const [existingSubs] = await pool.query<any[]>(
           "SELECT * FROM question_submissions WHERE team_id = ? AND question_id = ?",
@@ -368,6 +377,37 @@ export class QuestionService {
     }
 
     // Local fallback for in-process testing using the secret vault
+    const team = db.getTeamById(teamId);
+    if (!team) {
+      return {
+        success: false,
+        isCorrect: false,
+        pointsAwarded: 0,
+        currentScore: 0,
+        isLocked: false,
+        message: "Team not found.",
+        error: "TEAM_NOT_FOUND",
+      };
+    }
+
+    const completed = team.completedTasks || [];
+    const isAlreadyAttempted =
+      completed.includes(questionCode) ||
+      (team.taskScores && team.taskScores[questionCode] !== undefined);
+
+    if (isAlreadyAttempted) {
+      const alreadyAwarded = team.taskScores?.[questionCode] || 0;
+      return {
+        success: true,
+        isCorrect: alreadyAwarded > 0,
+        pointsAwarded: 0,
+        currentScore: team.totalScore || 0,
+        isLocked: true,
+        idempotentRecovery: true,
+        message: "Question already attempted and locked.",
+      };
+    }
+
     let expectedAnswer = "";
     for (const chList of Object.values(RAW_CHAPTER_QUESTIONS)) {
       const found = chList.find(
@@ -378,16 +418,22 @@ export class QuestionService {
         break;
       }
     }
+
     const isCorrect = expectedAnswer
       ? submittedAnswer.trim().toUpperCase() === expectedAnswer.trim().toUpperCase()
       : submittedAnswer.trim().toUpperCase() === "A";
+
     const pointsAwarded = isCorrect ? 10 : 0;
-    const team = db.getTeamById(teamId);
-    let newScore = (team?.totalScore || 0);
-    if (team && isCorrect) {
-      newScore = team.totalScore + pointsAwarded;
-      db.updateTeam(teamId, { totalScore: newScore, lastSolvedAt: new Date().toISOString() });
-    }
+    const newScore = (team.totalScore || 0) + pointsAwarded;
+    const nextCompleted = Array.from(new Set([...completed, questionCode]));
+    const nextTaskScores = { ...(team.taskScores || {}), [questionCode]: pointsAwarded };
+
+    db.updateTeam(teamId, {
+      totalScore: newScore,
+      completedTasks: nextCompleted,
+      taskScores: nextTaskScores,
+      lastSolvedAt: new Date().toISOString(),
+    });
 
     const scorePayload = {
       type: "SCORE_UPDATE",

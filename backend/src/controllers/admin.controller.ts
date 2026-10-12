@@ -224,7 +224,7 @@ export const AdminController = {
   /**
    * PUT /api/admin/teams/:id/score — Manually updates a team's score or status
    */
-  updateTeamScore(req: Request, res: Response) {
+  async updateTeamScore(req: Request, res: Response) {
     const teamId = req.params.id;
     const { points, status, reason } = req.body;
 
@@ -233,22 +233,58 @@ export const AdminController = {
       return res.status(404).json({ success: false, error: "TEAM_NOT_FOUND" });
     }
 
+    const ptsDelta = points !== undefined ? Number(points) : 0;
     const newBreakdown = { ...team.breakdown };
-    if (points !== undefined) {
-      newBreakdown.teamwork = (newBreakdown.teamwork || 0) + Number(points);
-    }
+    newBreakdown.teamwork = (newBreakdown.teamwork || 0) + ptsDelta;
 
+    const newTotalScore = Math.max(0, (team.totalScore || 0) + ptsDelta);
     const updated = db.updateTeam(teamId, {
+      totalScore: newTotalScore,
       breakdown: newBreakdown,
       status: status || team.status,
     });
 
+    const pool = tidb.pool;
+    if (pool && ptsDelta !== 0) {
+      try {
+        const adjustId = `ADJUST_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        await pool.query(
+          `INSERT INTO score_ledger (team_id, round_id, question_id, source_type, source_id, points_delta, created_at)
+           VALUES (?, 1, NULL, 'ADMIN_ADJUSTMENT', ?, ?, NOW(3))`,
+          [teamId, adjustId, ptsDelta]
+        );
+        await pool.query(
+          "UPDATE teams SET total_score = GREATEST(0, total_score + ?) WHERE team_id = ?",
+          [ptsDelta, teamId]
+        );
+      } catch (tidbErr) {
+        console.warn("[ADMIN] TiDB updateTeamScore warning:", tidbErr);
+      }
+    }
+
     socketService.broadcastLeaderboard();
+    if (updated) {
+      const scorePayload = {
+        type: "SCORE_UPDATE",
+        teamId,
+        teamName: team.teamName,
+        newScore: updated.totalScore,
+        score: updated.totalScore,
+        delta: ptsDelta,
+        breakdown: updated.breakdown,
+        reason: reason || "ORGANIZER AWARD",
+        source: "ADMIN_ADJUSTMENT",
+        ts: Date.now(),
+      };
+      socketService.emitToTeam(teamId, "score:update", scorePayload);
+      socketService.broadcastToAdmins("score:update", scorePayload);
+      socketService.broadcast("score:update", scorePayload);
+    }
 
     return res.json({
       success: true,
       team: updated,
-      message: `TEAM [${team.teamName}] SCORE ADJUSTED (${points >= 0 ? "+" : ""}${points} PTS) - ${reason || "ORGANIZER AWARD"}`,
+      message: `TEAM [${team.teamName}] SCORE ADJUSTED (${ptsDelta >= 0 ? "+" : ""}${ptsDelta} PTS) - ${reason || "ORGANIZER AWARD"}`,
     });
   },
 
@@ -579,7 +615,7 @@ export const AdminController = {
 /**
  * POST /api/admin/leaderboard/score - Override team score directly
  */
-export const updateAdminTeamScore = (req: Request, res: Response) => {
+export const updateAdminTeamScore = async (req: Request, res: Response) => {
   const { teamId, score } = req.body;
   if (!teamId || score === undefined) {
     return res.status(400).json({ success: false, error: "TEAM_ID_AND_SCORE_REQUIRED" });
@@ -591,15 +627,51 @@ export const updateAdminTeamScore = (req: Request, res: Response) => {
   }
 
   const nextScore = Number(score);
+  const delta = nextScore - (existing.totalScore || 0);
+
   const updated = db.updateTeam(String(teamId), {
     totalScore: nextScore,
     breakdown: {
       ...existing.breakdown,
-      teamwork: (existing.breakdown?.teamwork || 0) + (nextScore - existing.totalScore),
+      teamwork: (existing.breakdown?.teamwork || 0) + delta,
     },
   });
 
+  const pool = tidb.pool;
+  if (pool) {
+    try {
+      const overrideId = `OVERRIDE_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      await pool.query(
+        `INSERT INTO score_ledger (team_id, round_id, question_id, source_type, source_id, points_delta, created_at)
+         VALUES (?, 1, NULL, 'ADMIN_OVERRIDE', ?, ?, NOW(3))`,
+        [String(teamId), overrideId, delta]
+      );
+      await pool.query(
+        "UPDATE teams SET total_score = ? WHERE team_id = ?",
+        [nextScore, String(teamId)]
+      );
+    } catch (tidbErr) {
+      console.warn("[ADMIN] TiDB updateAdminTeamScore warning:", tidbErr);
+    }
+  }
+
   socketService.broadcastLeaderboard();
+  if (updated) {
+    const scorePayload = {
+      type: "SCORE_UPDATE",
+      teamId: String(teamId),
+      teamName: existing.teamName,
+      newScore: nextScore,
+      score: nextScore,
+      delta: delta,
+      reason: "ADMIN_OVERRIDE",
+      source: "ADMIN_OVERRIDE",
+      ts: Date.now(),
+    };
+    socketService.emitToTeam(String(teamId), "score:update", scorePayload);
+    socketService.broadcastToAdmins("score:update", scorePayload);
+    socketService.broadcast("score:update", scorePayload);
+  }
 
   res.json({
     success: true,

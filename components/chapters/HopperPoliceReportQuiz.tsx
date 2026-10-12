@@ -264,7 +264,10 @@ export default function HopperPoliceReportQuiz({
     return true;
   };
 
-  const verifiedScore = Object.values(questionStates).reduce((sum, q) => sum + (q.earnedPoints || 0), 0);
+  const verifiedScore =
+    typeof score === "number"
+      ? score
+      : Object.values(questionStates).reduce((sum, q) => sum + (q.earnedPoints || 0), 0);
   const doneCount = Object.values(questionStates).filter((q) => q.status === "solved" || q.status === "failed").length;
   const allQuestionsDone = doneCount === totalQuestions;
 

@@ -54,6 +54,7 @@ export interface TeamInfo {
   currentTask: string;
   storyProgress: number; // 0-100
   score: number;
+  totalScore?: number;
   powers: PowerId[];
   powerCharges: Record<PowerId, number>;
   completedTasks: string[];
@@ -526,21 +527,33 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
         if (isMyTeam) {
           setS((p) => {
+            const authoritativeTotal =
+              m.newScore !== undefined
+                ? m.newScore
+                : (m as any).score !== undefined
+                ? (m as any).score
+                : undefined;
+
             let nextBreakdown = { ...p.breakdown };
             if ((m as any).breakdown) {
               nextBreakdown = { ...(m as any).breakdown };
+            } else if (authoritativeTotal !== undefined) {
+              const currentTotal = totalScore(p.breakdown, p.penalty);
+              const diff = authoritativeTotal - currentTotal;
+              nextBreakdown.tech += diff;
             } else if (m.delta) {
               nextBreakdown.tech += m.delta;
-            } else if (m.newScore !== undefined) {
-              const currentTotal = totalScore(p.breakdown, p.penalty);
-              const diff = m.newScore - currentTotal;
-              nextBreakdown.tech += diff;
             }
 
             const nextCompletedTasks =
               m.taskId && !p.completedTasks.includes(m.taskId)
                 ? [...p.completedTasks, m.taskId]
                 : p.completedTasks;
+
+            const finalTeamScore =
+              authoritativeTotal !== undefined
+                ? authoritativeTotal
+                : totalScore(nextBreakdown, p.penalty);
 
             return {
               ...p,
@@ -549,7 +562,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               team: p.team
                 ? {
                     ...p.team,
-                    score: m.newScore !== undefined ? m.newScore : totalScore(nextBreakdown, p.penalty),
+                    score: finalTeamScore,
+                    totalScore: finalTeamScore,
                     completedTasks: nextCompletedTasks,
                   }
                 : p.team,
@@ -1425,10 +1439,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       s,
       hydrated,
       session,
-      score: Math.max(
-        totalScore(s.breakdown, s.penalty),
-        Object.values(s.taskScores || {}).reduce((a, b) => a + (b || 0), 0)
-      ),
+      score:
+        typeof s.team?.totalScore === "number"
+          ? s.team.totalScore
+          : typeof s.team?.score === "number"
+          ? s.team.score
+          : Math.max(
+              totalScore(s.breakdown, s.penalty),
+              Object.values(s.taskScores || {}).reduce((a, b) => a + (b || 0), 0)
+            ),
       isPaused: Boolean(s.isPaused),
       sabotage,
       cutscene,

@@ -68,7 +68,7 @@ export const AuthController = {
     return res.json({
       success: true,
       session: req.user,
-      team,
+      team: team ? { ...team, score: team.totalScore } : null,
     });
   },
 };

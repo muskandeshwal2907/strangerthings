@@ -384,7 +384,22 @@ class DatabaseService {
   // ─────────────────────────────────────────────────────────────────────────────
 
   public getTeamById(teamId: string): TeamRecord | undefined {
-    return this.teams.get(teamId);
+    if (!teamId) return undefined;
+    const direct = this.teams.get(teamId);
+    if (direct) return direct;
+
+    const clean = teamId.trim().toUpperCase();
+    for (const [id, team] of this.teams.entries()) {
+      if (id.toUpperCase() === clean) return team;
+      const numA = id.replace(/\D/g, "");
+      const numB = clean.replace(/\D/g, "");
+      if (numA && numB && parseInt(numA, 10) === parseInt(numB, 10)) {
+        if ((id.startsWith("T") || id.startsWith("TEAM")) && (clean.startsWith("T") || clean.startsWith("TEAM"))) {
+          return team;
+        }
+      }
+    }
+    return undefined;
   }
 
   public getTeamByCredentials(teamName: string, leaderName: string): TeamRecord | undefined {
@@ -543,11 +558,18 @@ class DatabaseService {
       };
     }
 
-    // Recompute total score if breakdown or penalty changed
-    if (updates.breakdown || updates.penalty !== undefined) {
+    // Authoritative totalScore calculation:
+    // 1. Explicit totalScore update has highest precedence
+    if (updates.totalScore !== undefined) {
+      updated.totalScore = Number(updates.totalScore);
+    } else if (updates.breakdown) {
+      // 2. Explicit breakdown provided: compute from breakdown and penalty
       updated.totalScore = ScoreService.calculateTotalScore(updated.breakdown, updated.penalty);
-    } else if (updates.totalScore !== undefined) {
-      updated.totalScore = updates.totalScore;
+    } else if (updates.penalty !== undefined) {
+      // 3. Penalty changed alone without breakdown: deduct delta penalty from existing totalScore
+      // DO NOT recompute from empty breakdown!
+      const deltaPenalty = (Number(updates.penalty) || 0) - (Number(existing.penalty) || 0);
+      updated.totalScore = Math.max(0, (Number(existing.totalScore) || 0) - deltaPenalty);
     }
 
     this.teams.set(teamId, updated);
