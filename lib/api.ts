@@ -68,12 +68,24 @@ export async function loginOnServer(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ teamName, leaderName }),
     });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {}
+
+  // Try via Next.js internal API proxy
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teamName, leaderName }),
+    });
     return await res.json();
   } catch (err) {
     return {
       success: false,
       error: "BACKEND_UNREACHABLE",
-      message: "Security backend is offline. Ensure backend is running on port 5000.",
+      message: "Security backend is offline. Ensure backend is running.",
     };
   }
 }

@@ -173,8 +173,8 @@ export default function HopperPoliceReportQuiz({
     setUnansweredPrompt(false);
   };
 
-  // Verify answer against correct answer: locked permanently on submission (Issue 2)
-  const handleVerifyCurrentQuestion = () => {
+  // Verify answer against authoritative backend: locked permanently on submission
+  const handleVerifyCurrentQuestion = async () => {
     if (isCurrentDone) return; // Cannot re-submit once completed
 
     const chosen = selectedAnswers[currentIdx];
@@ -184,7 +184,41 @@ export default function HopperPoliceReportQuiz({
       return;
     }
 
-    const isCorrect = chosen.trim().toUpperCase() === currentQ.correctAnswerId.trim().toUpperCase();
+    const qCode = currentQ.id || `ch${chapterNumber}-q${currentIdx + 1}`;
+    let isCorrect = false;
+    let earnedPoints = 0;
+
+    try {
+      let token = "";
+      try {
+        const stored = localStorage.getItem("hawkins-protocol:session");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          token = parsed.token || "";
+        }
+      } catch {}
+
+      const res = await fetch(`/api/questions/${encodeURIComponent(qCode)}/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ answer: chosen, teamId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        isCorrect = Boolean(data.isCorrect);
+        earnedPoints = typeof data.pointsAwarded === "number" ? data.pointsAwarded : (isCorrect ? 10 : 0);
+      } else {
+        isCorrect = Boolean(currentQ.correctAnswerId && chosen.trim().toUpperCase() === currentQ.correctAnswerId.trim().toUpperCase());
+        earnedPoints = isCorrect ? 10 : 0;
+      }
+    } catch {
+      isCorrect = Boolean(currentQ.correctAnswerId && chosen.trim().toUpperCase() === currentQ.correctAnswerId.trim().toUpperCase());
+      earnedPoints = isCorrect ? 10 : 0;
+    }
 
     if (isCorrect) {
       sfx("ok");
@@ -193,7 +227,7 @@ export default function HopperPoliceReportQuiz({
         [currentIdx]: {
           attempts: 1,
           status: "solved",
-          earnedPoints: 5,
+          earnedPoints: earnedPoints,
         },
       }));
     } else {
@@ -207,16 +241,6 @@ export default function HopperPoliceReportQuiz({
         },
       }));
     }
-
-    // Persist submission attempt to backend asynchronously
-    try {
-      const qCode = currentQ.id || `ch${chapterNumber}-q${currentIdx + 1}`;
-      fetch(`/api/questions/${encodeURIComponent(qCode)}/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answer: chosen, teamId }),
-      }).catch(() => {});
-    } catch {}
   };
 
   // Tab unlock condition: cannot advance to tab N until 0..(N-1) are completed

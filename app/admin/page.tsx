@@ -533,9 +533,10 @@ export default function AdminPage() {
       setToken(tokenVal);
       setPasskeyInput("");
       try {
-        localStorage.removeItem("hawkins_admin_token");
-        sessionStorage.removeItem("hawkins_admin_token");
+        localStorage.setItem("hawkins_admin_token", tokenVal);
+        sessionStorage.setItem("hawkins_admin_token", tokenVal);
       } catch {}
+      authenticateSocket(tokenVal);
       loadData();
     } else {
       sfx("err");

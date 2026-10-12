@@ -49,9 +49,9 @@ export class SessionService {
           const isOnline = socketService.isTeamOnline(teamId);
           const isStale = row.seconds_ago !== null && row.seconds_ago > 300;
 
-          // If the team is completely disconnected from sockets AND inactive for > 5 mins,
-          // allow session rotation / reconnection
-          if (!isOnline && isStale) {
+          // If the team is completely disconnected from sockets,
+          // allow session rotation / reconnection immediately so page refresh or tab reopening works
+          if (!isOnline) {
             console.log(`[SESSION SERVICE] Team ${teamId} reconnecting: replacing orphaned/offline session`);
             await pool.query("DELETE FROM team_active_sessions WHERE team_id = ?", [teamId]);
             this.localTeamSessions.delete(teamId);
@@ -83,7 +83,7 @@ export class SessionService {
       const secondsAgo = (Date.now() - new Date(local.lastSeenAt).getTime()) / 1000;
       const isStale = secondsAgo > 300;
 
-      if (!isOnline && isStale) {
+      if (!isOnline) {
         this.localTeamSessions.delete(teamId);
       } else {
         return {

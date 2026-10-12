@@ -281,46 +281,38 @@ export async function authenticateTeamWithTiDB(
         success: false,
         error: res.message || "This squad is already active on another station. Contact Chief Hopper to reset.",
       };
+    } else if (res.error === "EVENT_NOT_STARTED") {
+      return {
+        success: false,
+        error: res.message || "Event has not started yet.",
+      };
+    } else if (res.error === "EVENT_ENDED") {
+      return {
+        success: false,
+        error: res.message || "This tournament event has ended.",
+      };
+    } else if (res.error === "LOGINS_LOCKED") {
+      return {
+        success: false,
+        error: "Player logins are currently locked by administration.",
+      };
+    } else if (res.error) {
+      return {
+        success: false,
+        error: res.message || res.error || "Authentication rejected.",
+      };
     }
-  } catch (err) {
-    console.warn("[TIDB AUTH] Server unreachable, attempting local canon check:", err);
-  }
-
-  // 2. Vecna Game Character Credentials
-  if (normTeam === "vecna" && (normLeader === "henry creel" || normLeader === "vecna" || normLeader === "001")) {
+  } catch (err: any) {
     return {
-      success: true,
-      session: {
-        role: "VECNA",
-        teamName: "Vecna",
-        leaderName: "Henry Creel",
-        teamId: "VECNA-001",
-      },
-      source: "canon",
+      success: false,
+      error: "SECURITY MAINFRAME OFFLINE: Cannot establish connection to Hawkins backend server.",
     };
   }
 
-  // 3. Fallback to Canon Player Teams
-  const canonMatch = CANON_FALLBACK_TEAMS.find(
-    (t) =>
-      t.teamName.trim().toLowerCase() === normTeam &&
-      t.leaderName.trim().toLowerCase() === normLeader
-  );
-
-  if (canonMatch) {
-    return {
-      success: true,
-      session: {
-        role: "PLAYER",
-        teamName: canonMatch.teamName,
-        leaderName: canonMatch.leaderName,
-        teamId: canonMatch.id,
-      },
-      source: "canon",
-    };
-  }
-
-  return { success: false, error: "Unrecognized squad credentials. Confirm team and leader name." };
+  return {
+    success: false,
+    error: "SECURITY MAINFRAME REJECTED: Unrecognized squad credentials.",
+  };
 }
 
 /**
