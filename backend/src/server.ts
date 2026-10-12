@@ -36,8 +36,8 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
-// Health check endpoint
-app.get("/api/health", (_req: Request, res: Response) => {
+// Health check endpoints (compatible with Render default root and /health checks)
+const healthHandler = (_req: Request, res: Response) => {
   res.json({
     status: "ONLINE",
     sector: "HAWKINS_MAINFRAME_BACKEND",
@@ -45,7 +45,10 @@ app.get("/api/health", (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     version: "2.0.0",
   });
-});
+};
+app.get("/api/health", healthHandler);
+app.get("/health", healthHandler);
+app.get("/", healthHandler);
 
 // Mount Routes
 app.use("/api/auth", authRoutes);

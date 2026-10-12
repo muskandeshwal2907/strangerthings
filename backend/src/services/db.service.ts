@@ -21,6 +21,7 @@ interface DatabaseSnapshot {
   chapters: ChapterDef[];
   activeSabotages: Record<string, ActiveSabotage>; // key = sabotageId
   vecnaProgress?: Record<string, Record<string, any>>;
+  eventHistory?: any[];
 }
 
 class DatabaseService {
@@ -28,6 +29,7 @@ class DatabaseService {
   private chapters: ChapterDef[] = [];
   private activeSabotages = new Map<string, ActiveSabotage>();
   private vecnaQuestionProgress = new Map<string, Record<string, any>>();
+  private eventHistory: any[] = [];
   private isTiDBOnline = false;
 
   constructor() {
@@ -139,8 +141,11 @@ class DatabaseService {
             this.vecnaQuestionProgress.set(k, v)
           );
         }
+        if (parsed.eventHistory && Array.isArray(parsed.eventHistory)) {
+          this.eventHistory = parsed.eventHistory;
+        }
         console.log(
-          `[DATABASE] Loaded snapshot: ${this.teams.size} teams, ${this.chapters.length} chapters.`
+          `[DATABASE] Loaded snapshot: ${this.teams.size} teams, ${this.chapters.length} chapters, ${this.eventHistory.length} historical events.`
         );
       } else {
         this.chapters = buildDefaultChapters();
@@ -171,6 +176,7 @@ class DatabaseService {
         chapters: this.chapters,
         activeSabotages: sabotagesObj,
         vecnaProgress: vecnaProgObj,
+        eventHistory: this.eventHistory,
       };
 
       fs.writeFileSync(STATE_FILE, JSON.stringify(snapshot, null, 2), "utf-8");
@@ -455,19 +461,39 @@ class DatabaseService {
     return newTeam;
   }
 
+  public archiveCurrentEvent(eventId = 1, eventCode = "HAWKINS_1983"): void {
+    const results = Array.from(this.teams.values())
+      .filter((t) => t.role === "PLAYER" || t.role === "VECNA")
+      .map((t) => ({
+        teamId: t.id,
+        teamName: t.teamName,
+        leaderName: t.leaderName,
+        role: t.role,
+        score: t.totalScore,
+        penalty: t.penalty,
+        solvedChapters: [...(t.solvedChapters || [])],
+        completedTasks: [...(t.completedTasks || [])],
+        lastSolvedAt: t.lastSolvedAt,
+      }));
+
+    this.eventHistory.push({
+      eventId,
+      eventCode,
+      archivedAt: new Date().toISOString(),
+      results,
+    });
+    this.saveSnapshot();
+  }
+
+  public getEventHistory(): any[] {
+    return this.eventHistory;
+  }
+
   public async resetAllTeamScores(): Promise<void> {
-    const toDelete: string[] = [];
-    for (const [id, team] of this.teams.entries()) {
-      if (
-        id.startsWith("TestSquad_") ||
-        id.startsWith("ScoringSquad_") ||
-        team.teamName.startsWith("TestSquad_") ||
-        team.teamName.startsWith("ScoringSquad_") ||
-        team.teamName.startsWith("DebugSquad_")
-      ) {
-        toDelete.push(id);
-        continue;
-      }
+    if (this.eventHistory.length === 0) {
+      this.archiveCurrentEvent();
+    }
+    for (const team of this.teams.values()) {
       team.totalScore = 0;
       team.penalty = 0;
       team.lastSolvedAt = null;
@@ -479,9 +505,6 @@ class DatabaseService {
       team.radiometerSolved = [false, false, false, false, false];
       team.breakdown = { tech: 0, puzzle: 0, speed: 0, clue: 0, story: 0, teamwork: 0 };
     }
-    for (const id of toDelete) {
-      this.teams.delete(id);
-    }
     this.vecnaQuestionProgress.clear();
     this.activeSabotages.clear();
     this.saveSnapshot();
@@ -489,9 +512,16 @@ class DatabaseService {
     if (pool) {
       try {
         await pool.query("UPDATE teams SET total_score = 0, penalty = 0, last_solved_at = NULL");
-        await pool.query("TRUNCATE TABLE score_ledger").catch(() => {});
-        await pool.query("TRUNCATE TABLE question_submissions").catch(() => {});
-        await pool.query("TRUNCATE TABLE team_hint_usages").catch(() => {});
+        // Backup historical tables before preparing clean workspace for next event
+        await pool.query("CREATE TABLE IF NOT EXISTS historical_score_ledger LIKE score_ledger").catch(() => {});
+        await pool.query("INSERT IGNORE INTO historical_score_ledger SELECT * FROM score_ledger").catch(() => {});
+        await pool.query("CREATE TABLE IF NOT EXISTS historical_question_submissions LIKE question_submissions").catch(() => {});
+        await pool.query("INSERT IGNORE INTO historical_question_submissions SELECT * FROM question_submissions").catch(() => {});
+        await pool.query("CREATE TABLE IF NOT EXISTS historical_team_hint_usages LIKE team_hint_usages").catch(() => {});
+        await pool.query("INSERT IGNORE INTO historical_team_hint_usages SELECT * FROM team_hint_usages").catch(() => {});
+        await pool.query("DELETE FROM score_ledger WHERE 1=1").catch(() => {});
+        await pool.query("DELETE FROM question_submissions WHERE 1=1").catch(() => {});
+        await pool.query("DELETE FROM team_hint_usages WHERE 1=1").catch(() => {});
       } catch {}
     }
   }

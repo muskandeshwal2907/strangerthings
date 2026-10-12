@@ -7,7 +7,7 @@ import { CONFIG, AuthSession, getStoredSession, saveSession, clearSession } from
 import { usePathname } from "next/navigation";
 import { setDroneTheme, sfx } from "./audio";
 import { subscribe, presence, RealtimeMessage, StoryEventType, SabKind, disconnectSocket, authenticateSocket } from "./realtime";
-import { API_BASE, validateMasterKeypadOnServer, validateRadiometerPinOnServer, saveTeamProgressToServer } from "./api";
+import { API_BASE, validateMasterKeypadOnServer, validateRadiometerPinOnServer, saveTeamProgressToServer, unlockHintOnServer } from "./api";
 
 export type { SabKind };
 
@@ -697,7 +697,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       DISTORT: 40,
       SIGNAL_JAM: 30,
       WATCH: 8,
-      MESSAGE: 15,
+      MESSAGE: 8,
       GLITCH: 3,
     };
 
@@ -1371,6 +1371,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         },
       }));
       say(`CLASSIFIED INTEL DECRYPTED (-${cost} PTS)`);
+
+      // Authoritatively persist Intel Clue unlock and score deduction to backend
+      unlockHintOnServer(hintKey, cur.team?.id)
+        .then((res) => {
+          if (!res.success && res.error === "INSUFFICIENT_BALANCE") {
+            setS((p) => ({
+              ...p,
+              penalty: Math.max(0, p.penalty - cost),
+              unlockedHints: {
+                ...(p.unlockedHints || {}),
+                [hintKey]: false,
+              },
+            }));
+            say("INSUFFICIENT SCORE: You need at least 5 points to unlock an Intel Clue.");
+            sfx("err");
+          }
+        })
+        .catch(() => {});
+
       return true;
     },
     [say]

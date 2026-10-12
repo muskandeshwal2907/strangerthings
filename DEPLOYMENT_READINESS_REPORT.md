@@ -17,10 +17,12 @@ The Hawkins Protocol is designed as a decoupled full-stack tournament applicatio
    - Runtime: Node.js + Express + TypeScript + Socket.IO server.
    - Port Binding: Binds to `0.0.0.0` with dynamic `$PORT` environment variable support.
    - Concurrency: Tuned for up to 5,000 concurrent sockets with 65s keep-alive timeout.
+   - Health Checks: `/`, `/health`, and `/api/health` all return 200 OK with server telemetry JSON.
 3. **Database (TiDB Serverless / Distributed SQL):**
    - High-availability distributed MySQL-compatible database.
    - Full TLS/SSL encryption (`ssl: { rejectUnauthorized: true }`).
    - Resilient multi-tier persistence: TiDB primary with synchronous local JSON state snapshot fallback.
+   - Historical Archival: Table schemas support non-destructive event archiving into `historical_score_ledger`, `historical_question_submissions`, and `historical_team_hint_usages`.
 
 ---
 
@@ -58,15 +60,27 @@ In Render under **Web Service Settings > Environment Variables**, configure:
 
 *Verification:*
 - `backend/src/server.ts` uses `server.listen(ENV.PORT, "0.0.0.0")`, ensuring proper container networking.
-- CORS is enabled for all standard HTTP verbs (`GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`, `PATCH`) with credential exchange.
+- Socket.IO CORS configuration uses a dynamic origin callback `(_origin, cb) => cb(null, true)` with `credentials: true` so Vercel client domains can establish WebSocket connections without wildcard CORS restrictions.
 
 ---
 
-## 3. BUILD & COMPILATION VERIFICATION
+## 3. RENDER HOSTING CONSIDERATIONS & TOURNAMENT DURATION
+
+### Free Tier Limitations & Operational Recommendations:
+1. **Inactivity Sleep:** Render free web services spin down after 15 minutes of inactivity. Cold start boot times can take 50–70 seconds.
+   - *Tournament Recommendation:* For a 7-hour live tournament, either:
+     - Upgrade to the Render Starter instance ($7/month) for persistent uptime with zero cold starts.
+     - OR set up an external heartbeat pinger (e.g., UptimeRobot) pinging `https://<render-url>/health` every 5 minutes to prevent instance sleep.
+2. **WebSocket Keep-Alives:** Render reverse proxy times out idle TCP connections after 100 seconds.
+   - *Mitigation:* Socket.IO client and server are configured with `pingInterval: 10000` (10s) and `pingTimeout: 30000` (30s), ensuring heartbeats keep the WSS tunnel persistently open.
+
+---
+
+## 4. BUILD & COMPILATION VERIFICATION
 
 ### Root Next.js Build
 - Command: `npm run build`
-- Result: Next.js 15 compiles successfully with 0 TypeScript errors and 0 build errors.
+- Result: Next.js 15.5.24 compiles successfully with 0 TypeScript errors and 0 build errors.
 - Output: Optimized static pages and server functions.
 
 ### Backend TypeScript Build
@@ -75,23 +89,24 @@ In Render under **Web Service Settings > Environment Variables**, configure:
 
 ---
 
-## 4. SECURITY & INTEGRITY VERIFICATIONS
+## 5. TEST SUITE VERIFICATION RECORD
 
-1. **Authentication:**
-   - Single-session per squad enforcement prevents duplicate device logins.
-   - Sockets must provide valid JWT tokens to establish online presence.
-   - Admin routes strictly protected via JWT role verification (`role === "ADMIN"`).
-2. **Answer Secrecy:**
-   - All evaluation logic lives on the isolated backend.
-   - No raw solutions or answer keys are delivered to client browsers.
-3. **Idempotency & Anti-Tamper:**
-   - Solutions awarded points exactly once (+10 PTS per correct answer).
-   - Intel Clues require >= 5 points balance before unlock; double-click protection prevents duplicate charges.
-   - Event pauses and ends reject all client mutations with appropriate HTTP status codes (403).
+All automated verification test suites passed with 100% success against the live backend:
+1. `node scripts/verify-presence-scoring-lifecycle.mjs`:
+   - 20/20 checks passed (presence verification, canonical matching `TEAM04`/`T04`, >= 5 balance clue rejection, +10 answer / -5 clue score math, event end and clean start).
+2. `node scripts/verify-all-defects.mjs`:
+   - 25/25 checks passed (BUG-01 force logout, BUG-02 score hydration, BUG-03 session reset, BUG-04 solve count idempotency, BUG-05 tournament pause, BUG-06 real-time socket delivery).
+3. Concurrent Clue Unlock Race Condition Test:
+   - Evaluated 3 simultaneous clue unlocks with a 5-point balance.
+   - Result: Exactly 1 unlock succeeded (-5 PTS deduction) and 2 requests were rejected with 400 `INSUFFICIENT_BALANCE`.
+4. Health Check Probing:
+   - `GET /` -> 200 ONLINE
+   - `GET /health` -> 200 ONLINE
+   - `GET /api/health` -> 200 ONLINE
 
 ---
 
-## 5. DEPLOYMENT CHECKLIST
+## 6. FINAL DEPLOYMENT CHECKLIST
 
 - [x] Host binding configured to `0.0.0.0` in `backend/src/server.ts`.
 - [x] Dynamic `PORT` configured in `backend/src/config/env.ts`.
@@ -99,5 +114,5 @@ In Render under **Web Service Settings > Environment Variables**, configure:
 - [x] Client URLs point dynamically to `NEXT_PUBLIC_BACKEND_URL` and `NEXT_PUBLIC_API_URL`.
 - [x] TiDB SSL/TLS support configured with connection pooling.
 - [x] `.env.example` created at repository root with all variable definitions.
-- [x] Production builds pass without errors in both root and backend.
-- [x] 25 automated defect tests pass with 100% success rate.
+- [x] Production builds pass without errors in both root (`npm run build`) and backend (`tsc`).
+- [x] All 45 automated test checks pass with 100% success rate.

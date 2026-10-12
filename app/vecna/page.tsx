@@ -248,12 +248,12 @@ export default function VecnaPage() {
   const isQuestionFailed = !!failedQuestions[`${currentTrial.id}-${activeQuestionIdx}`];
   const isQuestionAttempted = isQuestionSolved || isQuestionFailed;
 
-  // Scoring logic: 1 question solved = 5 points across all 60 questions (300 points max)
+  // Unified scoring rules: 1 question solved = +10 PTS across all questions
   const [spentPowerPoints, setSpentPowerPoints] = useState(0);
   const totalVecnaSolved = Object.values(solvedQuestions).filter(Boolean).length;
-  const totalVecnaScore = Math.max(0, totalVecnaSolved * 5 - spentPowerPoints);
+  const totalVecnaScore = totalVecnaSolved * 10 - spentPowerPoints;
   const currentTrialSolvedCount = currentQuestions.filter((_, idx) => !!solvedQuestions[`${currentTrial.id}-${idx}`]).length;
-  const currentTrialScore = currentTrialSolvedCount * 5;
+  const currentTrialScore = currentTrialSolvedCount * 10;
 
   const handleVerifyCurrentQuestion = async () => {
     if (!currentQuestion || isQuestionAttempted) return;
@@ -428,19 +428,10 @@ export default function VecnaPage() {
       targetTeamId,
       targetTeamName,
       message,
+      duration: 10,
+      durationSec: 10,
       ts: Date.now(),
     });
-
-    const sock = getSocket();
-    if (sock && sock.connected) {
-      sock.emit("sabotage", {
-        kind: "MESSAGE",
-        target,
-        targetTeamId,
-        message,
-        durationSec: 10,
-      });
-    }
 
     // Persist to Express backend Vecna approval queue (Port 5055/5000)
     try {

@@ -219,6 +219,42 @@ export async function validateMasterKeypadOnServer(code: string): Promise<Backen
   }
 }
 
+/**
+ * Authoritatively unlocks an Intel Clue on the server and records -5 PTS penalty.
+ */
+export async function unlockHintOnServer(
+  hintKey: string,
+  teamId?: string
+): Promise<{ success: boolean; hintKey?: string; cost?: number; error?: string; message?: string }> {
+  try {
+    let token = "";
+    try {
+      const stored = localStorage.getItem("hawkins-protocol:session");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        token = parsed.token || "";
+      }
+    } catch {}
+
+    const res = await fetch(`${API_BASE}/tasks/hint/unlock`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ hintKey, teamId }),
+    });
+
+    return await res.json();
+  } catch (err: any) {
+    return {
+      success: false,
+      error: "BACKEND_UNREACHABLE",
+      message: err?.message || "Failed to contact backend server.",
+    };
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Admin Control API Clients
 // ─────────────────────────────────────────────────────────────────────────────

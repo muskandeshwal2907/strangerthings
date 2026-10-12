@@ -417,11 +417,30 @@ export default function AdminPage() {
     }
     const unsubPresence = subscribeToPresence(({ teamId, isOnline }) => {
       setLeaderboard((prev) =>
-        prev.map((item) =>
-          item.teamId === teamId
+        prev.map((item) => {
+          if (teamId === "all") {
+            return { ...item, isOnline, status: isOnline ? "ACTIVE" : "OFFLINE" };
+          }
+          const cleanA = (item.teamId || "").trim().toUpperCase();
+          const cleanB = (teamId || "").trim().toUpperCase();
+          const cleanU = ((item as any).username || "").trim().toUpperCase();
+          let isMatch = cleanA === cleanB || cleanU === cleanB;
+          if (!isMatch) {
+            const numA = cleanA.replace(/\D/g, "");
+            const numB = cleanB.replace(/\D/g, "");
+            if (numA && numB && parseInt(numA, 10) === parseInt(numB, 10)) {
+              if (
+                (cleanA.startsWith("T") || cleanA.startsWith("TEAM")) &&
+                (cleanB.startsWith("T") || cleanB.startsWith("TEAM"))
+              ) {
+                isMatch = true;
+              }
+            }
+          }
+          return isMatch
             ? { ...item, isOnline, status: isOnline ? "ACTIVE" : "OFFLINE" }
-            : item
-        )
+            : item;
+        })
       );
     });
 

@@ -187,7 +187,7 @@ export default function SabotageOverlay() {
             />
           </svg>
 
-          {/* The Content Card Held by the Hands */}
+          {/* The Content Card Framed by Subtle Vines */}
           <div
             style={{
               background:
@@ -200,6 +200,9 @@ export default function SabotageOverlay() {
               position: "relative",
               overflow: "hidden",
               zIndex: 5,
+              maxHeight: "85vh",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             {/* Ambient Eldritch Pulse Overlay inside Card */}
@@ -303,6 +306,8 @@ export default function SabotageOverlay() {
                 position: "relative",
                 zIndex: 2,
                 padding: "4px 2px",
+                maxHeight: "55vh",
+                overflowY: "auto",
               }}
             >
               &ldquo;{sabotage.message || "I KNOW WHERE YOU ARE."}&rdquo;
@@ -474,7 +479,7 @@ export default function SabotageOverlay() {
         )}
       </AnimatePresence>
 
-      {sabotage && (hide || sabotage.kind === "WATCH") && (
+      {sabotage && sabotage.kind !== "MESSAGE" && (hide || sabotage.kind === "WATCH") && (
         <div className="sab-banner">
           [ALERT]{" "}
           {sabotage.kind === "LOCK" && sabotage.pinIndex !== undefined

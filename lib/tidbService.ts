@@ -214,8 +214,12 @@ export function subscribeToPresence(onPresence: (data: { teamId: string; isOnlin
     const socket = getSocket();
     if (socket) {
       const handler = (data: any) => {
-        if (data && data.teamId !== undefined) {
-          onPresence({ teamId: String(data.teamId), isOnline: Boolean(data.isOnline) });
+        if (data) {
+          if (data.all) {
+            onPresence({ teamId: "all", isOnline: Boolean(data.isOnline) });
+          } else if (data.teamId !== undefined) {
+            onPresence({ teamId: String(data.teamId), isOnline: Boolean(data.isOnline) });
+          }
         }
       };
       socket.on("presence:update", handler);

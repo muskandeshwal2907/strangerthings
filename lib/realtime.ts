@@ -59,6 +59,7 @@ export interface SabotagePayload {
   pinIndex?: number;
   message?: string;
   duration?: number;
+  durationSec?: number;
   operatorId?: string;
   operatorName?: string;
   teams?: string[];
