@@ -133,15 +133,37 @@ export class QuestionService {
   ): Promise<SubmitAnswerResult> {
     // 1. Check event state
     const eventState = await EventControlService.getEventState();
-    if (!eventState.submissionsOpen || eventState.isPaused || eventState.status === "ended") {
+    if (eventState.status === "ended") {
       return {
         success: false,
         isCorrect: false,
         pointsAwarded: 0,
         currentScore: 0,
         isLocked: false,
-        message: "Submissions are currently closed or event is paused.",
-        error: "SUBMISSIONS_CLOSED",
+        message: "Tournament has ended. Submissions are closed.",
+        error: "EVENT_ENDED",
+      };
+    }
+    if (eventState.isPaused) {
+      return {
+        success: false,
+        isCorrect: false,
+        pointsAwarded: 0,
+        currentScore: 0,
+        isLocked: false,
+        message: "Tournament is currently paused.",
+        error: "EVENT_PAUSED",
+      };
+    }
+    if (!eventState.submissionsOpen) {
+      return {
+        success: false,
+        isCorrect: false,
+        pointsAwarded: 0,
+        currentScore: 0,
+        isLocked: false,
+        message: "Submissions are currently closed.",
+        error: "EVENT_PAUSED",
       };
     }
 
@@ -169,7 +191,7 @@ export class QuestionService {
         const q = qRows[0];
         const questionId = q.question_id;
         const roundId = q.round_id;
-        const questionPoints = Number(q.points);
+        const questionPoints = Number(q.points) || 10;
 
         // Check if already submitted (IDEMPOTENCY SAFEGUARD)
         const [existingSubs] = await pool.query<any[]>(
@@ -192,12 +214,28 @@ export class QuestionService {
             currentScore,
             isLocked: true,
             idempotentRecovery: true,
-            message: "Existing submission recovered. Question is permanently locked.",
+            message: "Question already attempted and locked.",
           };
         }
 
+        // Find fallback answer from vault if needed
+        let expectedFallbackAnswer = "";
+        for (const chList of Object.values(RAW_CHAPTER_QUESTIONS)) {
+          const found = chList.find(
+            (item) => item.id === questionCode || String(item.itemNumber) === String(questionCode)
+          );
+          if (found) {
+            expectedFallbackAnswer = found.correctAnswerId;
+            break;
+          }
+        }
+
         // Validate answer using HMAC
-        const isCorrect = await AnswerValidationService.validateAnswer(questionId, submittedAnswer);
+        const isCorrect = await AnswerValidationService.validateAnswer(
+          questionId,
+          submittedAnswer,
+          expectedFallbackAnswer
+        );
         const pointsAwarded = isCorrect ? questionPoints : 0;
 
         // Use atomic transaction for submission and ledger
@@ -205,7 +243,7 @@ export class QuestionService {
         try {
           await conn.beginTransaction();
 
-          // Insert submission record
+          // 1. Insert immutable submission record (permanently locks question due to unique constraint)
           const [subRes]: any = await conn.query(
             `INSERT INTO question_submissions (team_id, round_id, question_id, submitted_answer, is_correct, points_awarded, submitted_at)
              VALUES (?, ?, ?, ?, ?, ?, NOW(3))`,
@@ -213,22 +251,22 @@ export class QuestionService {
           );
           const submissionId = subRes.insertId;
 
-          // If correct, insert immutable score ledger entry
+          // 2. If correct, insert immutable score ledger entry and update teams table
           if (isCorrect) {
             await conn.query(
               `INSERT INTO score_ledger (team_id, round_id, question_id, source_type, source_id, points_delta, created_at)
-               VALUES (?, ?, ?, 'correct_answer', ?, ?, NOW(3))`,
+               VALUES (?, ?, ?, 'QUESTION_SUBMISSION', ?, ?, NOW(3))`,
               [teamId, roundId, questionId, String(submissionId), pointsAwarded]
             );
 
-            // Update team total_score cache in teams table
+            // Update team cached total_score in teams table
             await conn.query(
               "UPDATE teams SET total_score = total_score + ?, last_solved_at = NOW(3) WHERE team_id = ?",
               [pointsAwarded, teamId]
             );
           }
 
-          // Check if round questions completed -> unlock next round
+          // 3. Check if all round questions submitted -> mark round completed and unlock next round
           const [qCountRows] = await conn.query<any[]>(
             "SELECT COUNT(*) AS total FROM questions WHERE round_id = ? AND is_active = 1",
             [roundId]
@@ -243,7 +281,6 @@ export class QuestionService {
               "UPDATE team_round_progress SET status = 'completed', completed_at = NOW(3) WHERE team_id = ? AND round_id = ?",
               [teamId, roundId]
             );
-            // Unlock next round
             await conn.query(
               `INSERT INTO team_round_progress (team_id, round_id, status, unlocked_at)
                VALUES (?, ? + 1, 'unlocked', NOW(3))
@@ -260,14 +297,42 @@ export class QuestionService {
           conn.release();
         }
 
-        // Calculate fresh overall score
+        // Calculate fresh overall score from score_ledger
         const [scoreRows] = await pool.query<any[]>(
           "SELECT COALESCE(SUM(points_delta), 0) AS total FROM score_ledger WHERE team_id = ?",
           [teamId]
         );
         const currentScore = Number(scoreRows?.[0]?.total || 0);
 
-        // Emit real-time updates
+        // Synchronize in-memory db.teams so db.getLeaderboard() matches TiDB
+        const memTeam = db.getTeamById(teamId);
+        if (memTeam) {
+          const completedTasks = Array.from(new Set([...(memTeam.completedTasks || []), questionCode]));
+          db.updateTeam(teamId, {
+            totalScore: currentScore,
+            completedTasks,
+            lastSolvedAt: new Date().toISOString(),
+          });
+        }
+
+        // Real-time broadcasts: score:update across team room, admins room, and public broadcast
+        const scorePayload = {
+          type: "SCORE_UPDATE",
+          teamId,
+          newScore: currentScore,
+          score: currentScore,
+          delta: pointsAwarded,
+          reason: "SUBMISSION",
+          source: "QUESTION_SUBMISSION",
+          questionCode,
+          ts: Date.now(),
+        };
+
+        socketService.emitToTeam(teamId, "score:update", scorePayload);
+        socketService.broadcastToAdmins("score:update", scorePayload);
+        socketService.broadcast("score:update", scorePayload);
+
+        // Also emit team:score_updated and admin:submission_created for backwards compatibility
         socketService.emitToTeam(teamId, "team:score_updated", {
           overallScore: currentScore,
           pointsAwarded,
@@ -284,6 +349,9 @@ export class QuestionService {
           submittedAt: new Date().toISOString(),
         });
 
+        // Broadcast updated leaderboard to all clients and admin dashboard
+        socketService.broadcastLeaderboard();
+
         return {
           success: true,
           isCorrect,
@@ -291,8 +359,8 @@ export class QuestionService {
           currentScore,
           isLocked: true,
           message: isCorrect
-            ? `Correct! +${pointsAwarded} points awarded.`
-            : "Wrong answer. 0 points awarded. Question locked permanently.",
+            ? "CORRECT! Solution verified by central cipher."
+            : "INCORRECT! Terminal access for this frequency has been locked.",
         };
       } catch (err: any) {
         console.warn("[QUESTION SERVICE] TiDB submitAnswer error:", err);
@@ -315,17 +383,37 @@ export class QuestionService {
       : submittedAnswer.trim().toUpperCase() === "A";
     const pointsAwarded = isCorrect ? 10 : 0;
     const team = db.getTeamById(teamId);
+    let newScore = (team?.totalScore || 0);
     if (team && isCorrect) {
-      db.updateTeam(teamId, { totalScore: team.totalScore + pointsAwarded });
+      newScore = team.totalScore + pointsAwarded;
+      db.updateTeam(teamId, { totalScore: newScore, lastSolvedAt: new Date().toISOString() });
     }
+
+    const scorePayload = {
+      type: "SCORE_UPDATE",
+      teamId,
+      newScore,
+      score: newScore,
+      delta: pointsAwarded,
+      reason: "SUBMISSION",
+      source: "QUESTION_SUBMISSION",
+      questionCode,
+      ts: Date.now(),
+    };
+    socketService.emitToTeam(teamId, "score:update", scorePayload);
+    socketService.broadcastToAdmins("score:update", scorePayload);
+    socketService.broadcast("score:update", scorePayload);
+    socketService.broadcastLeaderboard();
 
     return {
       success: true,
       isCorrect,
       pointsAwarded,
-      currentScore: (team?.totalScore || 0) + pointsAwarded,
+      currentScore: newScore,
       isLocked: true,
-      message: isCorrect ? "Correct!" : "Wrong answer.",
+      message: isCorrect
+        ? "CORRECT! Solution verified by central cipher."
+        : "INCORRECT! Terminal access for this frequency has been locked.",
     };
   }
 
@@ -455,6 +543,33 @@ export class QuestionService {
         );
         const currentScore = Number(scoreRows?.[0]?.total || 0);
 
+        // Synchronize in-memory db.teams so db.getLeaderboard() matches TiDB
+        const memTeam = db.getTeamById(teamId);
+        if (memTeam) {
+          db.updateTeam(teamId, {
+            totalScore: currentScore,
+            penalty: (memTeam.penalty || 0) + penalty,
+          });
+        }
+
+        // Broadcast score:update and updated leaderboard
+        const scorePayload = {
+          type: "SCORE_UPDATE",
+          teamId,
+          newScore: currentScore,
+          score: currentScore,
+          delta: -penalty,
+          reason: "HINT_PENALTY",
+          source: "INTEL_CLUE",
+          hintId,
+          ts: Date.now(),
+        };
+
+        socketService.emitToTeam(teamId, "score:update", scorePayload);
+        socketService.broadcastToAdmins("score:update", scorePayload);
+        socketService.broadcast("score:update", scorePayload);
+        socketService.broadcastLeaderboard();
+
         socketService.emitToTeam(teamId, "team:score_updated", {
           overallScore: currentScore,
           penaltyApplied: penalty,
@@ -486,12 +601,36 @@ export class QuestionService {
       };
     }
 
+    const updatedScore = curScore - 5;
+    if (team) {
+      db.updateTeam(teamId, {
+        totalScore: updatedScore,
+        penalty: (team.penalty || 0) + 5,
+      });
+    }
+
+    const scorePayload = {
+      type: "SCORE_UPDATE",
+      teamId,
+      newScore: updatedScore,
+      score: updatedScore,
+      delta: -5,
+      reason: "HINT_PENALTY",
+      source: "INTEL_CLUE",
+      hintId,
+      ts: Date.now(),
+    };
+    socketService.emitToTeam(teamId, "score:update", scorePayload);
+    socketService.broadcastToAdmins("score:update", scorePayload);
+    socketService.broadcast("score:update", scorePayload);
+    socketService.broadcastLeaderboard();
+
     return {
       success: true,
       hintId,
       hintText: "Recall the forensic autopsy log file 14-B.",
       penaltyPoints: 5,
-      currentScore: curScore - 5,
+      currentScore: updatedScore,
     };
   }
 }

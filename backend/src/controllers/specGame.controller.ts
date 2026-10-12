@@ -9,7 +9,7 @@ function resolveTeamId(req: Request): string {
   if (req.user?.role === "ADMIN" && (req.query.teamId || req.body.teamId)) {
     return String(req.query.teamId || req.body.teamId);
   }
-  return req.user?.teamId || "T01";
+  return req.user?.teamId || (req.body?.teamId as string) || (req.query?.teamId as string) || "T01";
 }
 
 export const SpecGameController = {
@@ -146,6 +146,19 @@ export const SpecGameController = {
     }
 
     const result = await QuestionService.submitAnswer(teamId, questionCode, answer);
+    if (!result.success) {
+      if (
+        result.error === "EVENT_PAUSED" ||
+        result.error === "EVENT_ENDED" ||
+        result.error === "SUBMISSIONS_CLOSED"
+      ) {
+        return res.status(403).json(result);
+      }
+      if (result.error === "QUESTION_NOT_FOUND") {
+        return res.status(404).json(result);
+      }
+      return res.status(400).json(result);
+    }
     return res.json(result);
   },
 

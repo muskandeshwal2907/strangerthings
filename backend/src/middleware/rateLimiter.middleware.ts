@@ -2,11 +2,11 @@ import rateLimit from "express-rate-limit";
 
 /**
  * Anti-Brute-Force Rate Limiter for Answer Verification
- * Allows up to 45 validation attempts per minute per IP.
+ * Scaled for multi-team tournaments where 50+ squads share a single venue NAT IP.
  */
 export const validationRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute window
-  max: 45, // max 45 attempts per window per IP
+  max: process.env.NODE_ENV === "test" ? 10000 : 1200, // supports 50+ concurrent teams submitting simultaneously
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -18,11 +18,11 @@ export const validationRateLimiter = rateLimit({
 
 /**
  * Login Rate Limiter for Authentication Protection
- * Limits authentication attempts to 15 per minute per IP.
+ * Scaled for simultaneous tournament opening where 50+ squads log in at once from venue Wi-Fi.
  */
 export const loginRateLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 15,
+  max: process.env.NODE_ENV === "test" ? 10000 : 600, // permits 600 logins/min so 50+ squads can log in concurrently
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -31,3 +31,4 @@ export const loginRateLimiter = rateLimit({
     message: "Too many login attempts. Please wait 60 seconds before trying again.",
   },
 });
+

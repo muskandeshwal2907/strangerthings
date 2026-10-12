@@ -58,7 +58,8 @@ export class AnswerValidationService {
 
         if (Array.isArray(rows) && rows.length > 0) {
           for (const row of rows) {
-            if (this.safeCompare(row.accepted_answer_hmac, candidateHmac)) {
+            const storedHmac = String(row.accepted_answer_hmac || "").trim().toLowerCase();
+            if (this.safeCompare(storedHmac, candidateHmac)) {
               return true;
             }
           }
