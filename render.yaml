@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: hawkins-protocol-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: JWT_SECRET
+        value: HAWKINS_NATIONAL_LAB_SECRET_KEY_1983
+      - key: ADMIN_PASSKEY
+        value: "1234567"
+      - key: TIDB_HOST
+        value: gateway01.ap-southeast-1.prod.aws.tidbcloud.com
+      - key: TIDB_PORT
+        value: "4000"
+      - key: TIDB_USER
+        value: XvTn2VkXqThHS3a.root
+      - key: TIDB_PASSWORD
+        value: 7h1Om30uVXky8w2D
+      - key: TIDB_DATABASE
+        value: stranger_thinks
+      - key: TIDB_SSL
+        value: "true"
