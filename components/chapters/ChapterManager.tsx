@@ -375,7 +375,11 @@ function PokemonFireRedBottomDialog({
 
   const handleAskHint = (e: React.MouseEvent) => {
     e.stopPropagation();
-    unlockHint(dialogHintKey, 10);
+    const confirmed = window.confirm(
+      "TRANSMISSION WARNING: Requesting character intel will deduct 5 points (-5 PTS) from your team score. Proceed?"
+    );
+    if (!confirmed) return;
+    unlockHint(dialogHintKey, 5);
     const hintText = `${character.nameTag || character.name.toUpperCase()} INTEL: "${CHAPTER_HINTS[chapter.id] || "Investigate the facility telemetry carefully."}"`;
     setLines((prev) => [...prev, hintText]);
     setLineIdx((prev) => prev + 1);

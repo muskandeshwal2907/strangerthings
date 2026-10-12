@@ -41,7 +41,7 @@ export const TasksController = {
     }
 
     const targetTeamId = req.user?.teamId || teamId;
-    const penaltyCost = 10;
+    const penaltyCost = 5;
 
     if (targetTeamId) {
       const team = db.getTeamById(targetTeamId);

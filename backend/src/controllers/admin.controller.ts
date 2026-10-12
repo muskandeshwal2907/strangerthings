@@ -133,10 +133,15 @@ export const AdminController = {
   /**
    * GET /api/admin/leaderboard — Dumps the live tournament leaderboard
    */
-  getLeaderboard(_req: Request, res: Response) {
+  async getLeaderboard(_req: Request, res: Response) {
+    const eventState = await EventControlService.getEventState();
+    const isUnstarted = eventState.status === "not_started";
     const leaderboard = db.getLeaderboard();
     const enriched = leaderboard.map((t) => ({
       ...t,
+      score: isUnstarted ? 0 : t.score,
+      solvedCount: isUnstarted ? 0 : t.solvedCount,
+      currentStage: isUnstarted ? 1 : ((t as any).currentStage || 1),
       isOnline: socketService.isTeamOnline(t.teamId),
     }));
     return res.json({
@@ -389,6 +394,9 @@ export const AdminController = {
       } catch {}
     }
 
+    const eventState = await EventControlService.getEventState();
+    const isUnstarted = eventState.status === "not_started";
+
     const teams = rawTeams.map((t, idx) => {
       const isSocketOnline = socketService.isTeamOnline(t.id);
       const hasActiveSession = activeSessionTeamIds.has(t.id) || SessionService.hasActiveSessionSync(t.id);
@@ -415,14 +423,14 @@ export const AdminController = {
         ...t,
         rank: idx + 1,
         teamId: t.id,
-        score: typeof t.totalScore === "number" ? t.totalScore : 0,
-        totalScore: typeof t.totalScore === "number" ? t.totalScore : 0,
+        score: isUnstarted ? 0 : (typeof t.totalScore === "number" ? t.totalScore : 0),
+        totalScore: isUnstarted ? 0 : (typeof t.totalScore === "number" ? t.totalScore : 0),
         username: isVecna ? "VECNA-001" : ((t as any).username || `TEAM${numPart.padStart(2, "0")}`),
         password: isVecna ? "HAWKINS1986" : ((t as any).password || `hawkins83_${numPart.padStart(2, "0")}`),
         isOnline,
         hasSession: hasActiveSession,
-        solvedCount: isVecna ? 6 : distinctStages.size,
-        currentStage: isVecna ? 6 : Math.min(6, distinctStages.size + 1),
+        solvedCount: isUnstarted ? 0 : (isVecna ? 0 : distinctStages.size),
+        currentStage: isUnstarted ? 1 : (isVecna ? 1 : Math.min(6, distinctStages.size + 1)),
       };
     });
 

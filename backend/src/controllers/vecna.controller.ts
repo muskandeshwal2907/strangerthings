@@ -418,7 +418,7 @@ export const VecnaController = {
     }
 
     const isCorrect = answer.trim().toUpperCase() === q.correctAnswerId.trim().toUpperCase();
-    const pointsAwarded = isCorrect ? 5 : 0;
+    const pointsAwarded = isCorrect ? 10 : 0;
     const status = isCorrect ? "solved" : "failed";
 
     // Record authoritative attempt in backend
@@ -446,7 +446,7 @@ export const VecnaController = {
       isLocked: true,
       nextQuestionIdx: Math.min(9, questionIdx + 1),
       message: isCorrect
-        ? `LEVEL ${questionIdx + 1} OVERRIDE CONFIRMED (+5 PTS)`
+        ? `LEVEL ${questionIdx + 1} OVERRIDE CONFIRMED (+10 PTS)`
         : `INCORRECT VECTOR · LEVEL ${questionIdx + 1} LOCKED (0 PTS)`,
     });
   },

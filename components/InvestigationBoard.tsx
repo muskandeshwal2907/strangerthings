@@ -747,33 +747,6 @@ export default function InvestigationBoard({
               {CASE_CARDS.map((card) => {
                 const cleared = isChapterCleared(card.id);
                 const unlocked = isChapterUnlocked(card.id);
-                const earnedPts = (() => {
-                  const taskIds = [
-                    `ch${card.id}-quiz`,
-                    `ch${card.id}-police`,
-                    `ch${card.id}-byers`,
-                    `ch${card.id}-lab`,
-                    `ch${card.id}-forest`,
-                    `ch${card.id}-radio-tower`,
-                    `ch${card.id}-upsidedown`,
-                    `ch${card.id}-gate`,
-                    `ch${card.id}`,
-                  ];
-                  for (const tid of taskIds) {
-                    if (s.taskScores?.[tid] !== undefined) {
-                      return s.taskScores[tid];
-                    }
-                  }
-
-                  if (card.id === 1 && s.taskScores?.["town-1"] !== undefined) return s.taskScores["town-1"];
-                  if (card.id === 4 && s.taskScores?.["lab-terminal"] !== undefined) return s.taskScores["lab-terminal"];
-                  if (card.id === 5 && s.taskScores?.["forest-marks"] !== undefined) return s.taskScores["forest-marks"];
-                  if (card.id === 6 && s.taskScores?.["tower-pins"] !== undefined) return s.taskScores["tower-pins"];
-                  if (card.id === 7 && s.taskScores?.["gate-unlock"] !== undefined) return s.taskScores["gate-unlock"];
-
-                  return 0;
-                })();
-
                 return (
                   <div
                     key={card.id}
@@ -832,7 +805,7 @@ export default function InvestigationBoard({
                         }}
                       >
                         {cleared
-                          ? `✓ CLEARED (+${earnedPts} PTS)`
+                          ? "✓ CLEARED"
                           : unlocked
                           ? "READY TO ACCESS"
                           : `LOCKED [STAGE ${card.id - 1} REQ]`}

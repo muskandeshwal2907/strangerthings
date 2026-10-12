@@ -456,16 +456,34 @@ class DatabaseService {
   }
 
   public async resetAllTeamScores(): Promise<void> {
-    for (const team of this.teams.values()) {
-      if (team.role === "PLAYER") {
-        team.totalScore = 0;
-        team.penalty = 0;
-        team.lastSolvedAt = null;
-        team.solvedChapters = [];
-        team.completedTasks = [];
-        team.breakdown = { tech: 0, puzzle: 0, speed: 0, clue: 0, story: 0, teamwork: 0 };
+    const toDelete: string[] = [];
+    for (const [id, team] of this.teams.entries()) {
+      if (
+        id.startsWith("TestSquad_") ||
+        id.startsWith("ScoringSquad_") ||
+        team.teamName.startsWith("TestSquad_") ||
+        team.teamName.startsWith("ScoringSquad_") ||
+        team.teamName.startsWith("DebugSquad_")
+      ) {
+        toDelete.push(id);
+        continue;
       }
+      team.totalScore = 0;
+      team.penalty = 0;
+      team.lastSolvedAt = null;
+      team.solvedChapters = [];
+      team.completedTasks = [];
+      team.taskScores = {};
+      team.unlockedHints = {};
+      team.radiometerPins = ["-", "-", "-", "-", "-"];
+      team.radiometerSolved = [false, false, false, false, false];
+      team.breakdown = { tech: 0, puzzle: 0, speed: 0, clue: 0, story: 0, teamwork: 0 };
     }
+    for (const id of toDelete) {
+      this.teams.delete(id);
+    }
+    this.vecnaQuestionProgress.clear();
+    this.activeSabotages.clear();
     this.saveSnapshot();
     const pool = tidb.pool;
     if (pool) {

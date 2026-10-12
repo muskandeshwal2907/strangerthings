@@ -313,7 +313,7 @@ export class QuestionService {
     const isCorrect = expectedAnswer
       ? submittedAnswer.trim().toUpperCase() === expectedAnswer.trim().toUpperCase()
       : submittedAnswer.trim().toUpperCase() === "A";
-    const pointsAwarded = isCorrect ? 100 : 0;
+    const pointsAwarded = isCorrect ? 10 : 0;
     const team = db.getTeamById(teamId);
     if (team && isCorrect) {
       db.updateTeam(teamId, { totalScore: team.totalScore + pointsAwarded });
@@ -460,8 +460,8 @@ export class QuestionService {
       success: true,
       hintId,
       hintText: "Recall the forensic autopsy log file 14-B.",
-      penaltyPoints: 20,
-      currentScore: 80,
+      penaltyPoints: 5,
+      currentScore: (db.getTeamById(teamId)?.totalScore || 0) - 5,
     };
   }
 }

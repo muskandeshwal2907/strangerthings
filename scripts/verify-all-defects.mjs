@@ -56,8 +56,10 @@ async function run() {
   assert("Admin logs in successfully", adminLogin.status === 200 && adminLogin.data.success);
   const adminToken = adminLogin.data.token;
 
-  // Ensure event is active initially
+  // Ensure event is active initially and reset stale test sessions & scores
   await post(`${BACKEND_BASE}/admin/event/resume`, {}, adminToken);
+  await post(`${BACKEND_BASE}/admin/teams/reset-all-sessions`, {}, adminToken);
+  await post(`${BACKEND_BASE}/admin/teams/reset-all-scores`, {}, adminToken);
 
   // -------------------------------------------------------------------------
   // BUG-01: Admin force logout immediately logs team out

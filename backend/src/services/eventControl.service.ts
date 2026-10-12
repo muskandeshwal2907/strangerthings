@@ -78,6 +78,8 @@ export class EventControlService {
         );
       } catch {}
     }
+    // Initialize/reset all team scores to 0 upon event start
+    await db.resetAllTeamScores();
     this.localEvent.status = "active";
     this.localEvent.loginOpen = true;
     this.localEvent.submissionsOpen = true;

@@ -274,23 +274,28 @@ export default function LandingPage({ onEnterVecna }: LandingPageProps) {
     <div
       className="screen"
       style={{
-        height: "100dvh",
-        maxHeight: "100dvh",
-        width: "100%",
+        position: "fixed",
+        inset: 0,
+        height: "100vh",
+        maxHeight: "100vh",
+        width: "100vw",
+        maxWidth: "100vw",
+        margin: 0,
+        padding: 0,
+        border: "none",
+        outline: "none",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        position: "relative",
         overflow: "hidden",
         backgroundColor: "#000000",
         background: "#000000",
       }}
     >
-      {/* Cinematic Photorealistic Pumpkin Patch & High-Intensity Red Lightning Background */}
+      {/* Cinematic Photorealistic Pumpkin Patch Background (Clean Static Image) */}
       <CinematicBackground
         src="/pumpkin-patch-bg-hd.jpg"
-        videoSrc="/stranger-things-bg.mp4"
         particles="none"
         vignette="none"
         overlayOpacity={1.0}

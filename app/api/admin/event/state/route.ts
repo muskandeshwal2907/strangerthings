@@ -57,7 +57,13 @@ export async function PATCH(req: NextRequest) {
     } else if (body.status === "paused") {
       await fetch(`${base}/admin/event/pause`, { method: "POST", headers: { Authorization: token } });
     } else if (body.status === "active") {
-      await fetch(`${base}/admin/event/resume`, { method: "POST", headers: { Authorization: token } });
+      const currentEvRes = await fetch(`${base}/event/state`, { cache: "no-store" }).catch(() => null);
+      const currentEvData = currentEvRes?.ok ? await currentEvRes.json() : null;
+      if (currentEvData?.event?.status === "not_started") {
+        await fetch(`${base}/admin/event/start`, { method: "POST", headers: { Authorization: token } });
+      } else {
+        await fetch(`${base}/admin/event/resume`, { method: "POST", headers: { Authorization: token } });
+      }
     }
 
     if (body.loginOpen === true) {

@@ -15,7 +15,7 @@ export const ScoreService = {
       (breakdown.teamwork || 0) -
       penalty;
 
-    return Math.max(0, Math.round(raw));
+    return Math.round(raw);
   },
 
   /**

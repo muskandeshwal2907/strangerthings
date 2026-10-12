@@ -302,7 +302,7 @@ export default function VecnaPage() {
           ...prev,
           [`${currentTrial.id}-${activeQuestionIdx}`]: true,
         }));
-        setSuccessMessage(`LEVEL ${activeQuestionIdx + 1} OVERRIDE CONFIRMED (+5 PTS)`);
+        setSuccessMessage(`LEVEL ${activeQuestionIdx + 1} OVERRIDE CONFIRMED (+10 PTS)`);
         setErrorMessage(null);
 
         // Check if all questions in this trial will be cleared
@@ -335,9 +335,17 @@ export default function VecnaPage() {
           ...prev,
           [`${currentTrial.id}-${activeQuestionIdx}`]: true,
         }));
-        setErrorMessage(`INCORRECT VECTOR · LEVEL ${activeQuestionIdx + 1} LOCKED (0 PTS)`);
+        setErrorMessage(`INCORRECT VECTOR · LEVEL ${activeQuestionIdx + 1} RECORDED (0 PTS)`);
         setSuccessMessage(null);
-        setTimeout(() => setErrorMessage(null), 3000);
+        // Auto advance to next question on wrong answer
+        if (activeQuestionIdx < totalQuestionsForTrial - 1) {
+          setTimeout(() => {
+            setActiveQuestionIdx((i) => i + 1);
+            setErrorMessage(null);
+          }, 650);
+        } else {
+          setTimeout(() => setErrorMessage(null), 3000);
+        }
       }
     } catch (e) {
       // Local fallback
@@ -348,14 +356,26 @@ export default function VecnaPage() {
           ...prev,
           [`${currentTrial.id}-${activeQuestionIdx}`]: true,
         }));
-        setSuccessMessage(`LEVEL ${activeQuestionIdx + 1} OVERRIDE CONFIRMED (+5 PTS)`);
+        setSuccessMessage(`LEVEL ${activeQuestionIdx + 1} OVERRIDE CONFIRMED (+10 PTS)`);
+        if (activeQuestionIdx < totalQuestionsForTrial - 1) {
+          setTimeout(() => {
+            setActiveQuestionIdx((i) => i + 1);
+            setSuccessMessage(null);
+          }, 650);
+        }
       } else {
         sfx("err");
         setFailedQuestions((prev) => ({
           ...prev,
           [`${currentTrial.id}-${activeQuestionIdx}`]: true,
         }));
-        setErrorMessage(`INCORRECT VECTOR · LEVEL ${activeQuestionIdx + 1} LOCKED (0 PTS)`);
+        setErrorMessage(`INCORRECT VECTOR · LEVEL ${activeQuestionIdx + 1} RECORDED (0 PTS)`);
+        if (activeQuestionIdx < totalQuestionsForTrial - 1) {
+          setTimeout(() => {
+            setActiveQuestionIdx((i) => i + 1);
+            setErrorMessage(null);
+          }, 650);
+        }
       }
     }
   };
@@ -1189,11 +1209,11 @@ export default function VecnaPage() {
                 }}
               >
                 {isQuestionSolved ? (
-                  <span>✓ LEVEL CLEARED (+5 PTS)</span>
+                  <span>✓ LEVEL CLEARED (+10 PTS)</span>
                 ) : isQuestionFailed ? (
-                  <span>✕ VECTOR LOCKED (0 PTS)</span>
+                  <span>✕ VECTOR RECORDED (0 PTS)</span>
                 ) : (
-                  <span>SUBMIT LEVEL (+5 PTS)</span>
+                  <span>SUBMIT LEVEL (+10 PTS)</span>
                 )}
               </button>
             </div>

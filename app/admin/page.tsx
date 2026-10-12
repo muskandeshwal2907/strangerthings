@@ -1823,8 +1823,12 @@ export default function AdminPage() {
                             <span style={{ color: "#ff4d58", fontWeight: "bold", fontSize: 12 }}>Omniscient Control</span>
                           ) : (
                             <>
-                              <span style={{ color: "#36e0c4", fontWeight: "bold" }}>Stage {item.currentStage || 1}/6</span>
-                              <span style={{ color: "#555566", fontSize: 12, marginLeft: 6 }}>({item.solvedCount} solves)</span>
+                              <span style={{ color: "#36e0c4", fontWeight: "bold" }}>
+                                Stage {eventState?.status === "not_started" ? 1 : (item.currentStage || 1)}/6
+                              </span>
+                              <span style={{ color: "#555566", fontSize: 12, marginLeft: 6 }}>
+                                ({eventState?.status === "not_started" ? 0 : item.solvedCount} solves)
+                              </span>
                             </>
                           )}
                         </td>
@@ -1869,7 +1873,7 @@ export default function AdminPage() {
                         </td>
                         <td style={{ padding: "14px 16px", textAlign: "right" }}>
                           <span style={{ fontSize: 16, fontWeight: "bold", color: "#ffb454" }}>
-                            {typeof item.score === "number" && !isNaN(item.score) ? item.score : 0} PTS
+                            {eventState?.status === "not_started" ? 0 : (typeof item.score === "number" && !isNaN(item.score) ? item.score : 0)} PTS
                           </span>
                         </td>
                         <td style={{ padding: "14px 16px", textAlign: "center" }}>

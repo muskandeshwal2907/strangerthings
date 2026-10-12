@@ -1345,7 +1345,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const radiometerPinCount = s.radiometer.pinsSolved.filter(Boolean).length;
 
   const unlockHint = useCallback(
-    (hintKey: string, cost = 10): boolean => {
+    (hintKey: string, cost = 5): boolean => {
       const cur = sRef.current;
       if (cur.isPaused) {
         say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");

@@ -332,22 +332,6 @@ export default function VecnaChaptersModal({
                     >
                       TRIAL {ch.id}
                     </span>
-
-                    <span
-                      style={{
-                        padding: "3px 8px",
-                        background: "rgba(0, 0, 0, 0.75)",
-                        color: "#ffcdd2",
-                        fontFamily: '"Share Tech Mono", monospace',
-                        fontSize: "10.5px",
-                        fontWeight: "bold",
-                        letterSpacing: "0.08em",
-                        borderRadius: "3px",
-                        border: "1px solid rgba(255, 45, 58, 0.3)",
-                      }}
-                    >
-                      50 PTS
-                    </span>
                   </div>
 
                   {/* Center Content: Title & Subtitle */}
@@ -413,9 +397,6 @@ export default function VecnaChaptersModal({
                     >
                       <span style={{ color: isAllCleared ? "#81c784" : "#ffb3ba" }}>
                         {isAllCleared ? "✓ ALL CLEARED" : `CLEARED: ${clearedCount} / 10`}
-                      </span>
-                      <span style={{ color: "rgba(255, 180, 180, 0.6)" }}>
-                        {clearedCount * 5} / 50 PTS
                       </span>
                     </div>
 

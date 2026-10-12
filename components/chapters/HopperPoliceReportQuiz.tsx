@@ -688,8 +688,12 @@ export default function HopperPoliceReportQuiz({
 
               const handleUnlockHint = (e: React.MouseEvent) => {
                 e.stopPropagation();
+                const confirmed = window.confirm(
+                  "TRANSMISSION WARNING: Unlocking this classified intel clue will deduct 5 points (-5 PTS) from your team score. Proceed?"
+                );
+                if (!confirmed) return;
                 setUnlockingHintKey(currentHintKey);
-                unlockHint(currentHintKey, 10);
+                unlockHint(currentHintKey, 5);
                 setTimeout(() => {
                   setUnlockingHintKey(null);
                 }, 400);
@@ -849,7 +853,7 @@ export default function HopperPoliceReportQuiz({
                           e.currentTarget.style.background = "#24130d";
                           e.currentTarget.style.color = "#ffd54f";
                         }}
-                        title="Unlock classified dossier clue for 10 points"
+                        title="Unlock classified dossier clue for 5 points (-5 PTS)"
                       >
                         <span>{isUnlocking ? "⚡ DECRYPTING..." : "🔒 UNLOCK CLUE"}</span>
                       </button>

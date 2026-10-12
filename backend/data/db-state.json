@@ -6,60 +6,6 @@
       "leaderName": "Aarav Sharma",
       "role": "PLAYER",
       "status": "ACTIVE",
-      "totalScore": 75,
-      "breakdown": {
-        "tech": 0,
-        "puzzle": 0,
-        "speed": 0,
-        "clue": 0,
-        "story": 0,
-        "teamwork": 0
-      },
-      "penalty": 25,
-      "startedAt": null,
-      "finishedAt": null,
-      "lastSolvedAt": "2026-10-11T13:05:20.613Z",
-      "location": "town",
-      "stage": "hawkins",
-      "storyProgress": 5,
-      "completedTasks": [],
-      "solvedChapters": [],
-      "unlockedLocations": {
-        "town": true,
-        "policeStation": true,
-        "byersHouse": true,
-        "radioTower": true,
-        "lab": false,
-        "forest": false,
-        "gate": false,
-        "upsidedown": false,
-        "mind": false
-      },
-      "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      "radiometerSolved": [
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "radiometerCodeSolved": false,
-      "unlockedHints": {},
-      "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T13:05:21.585Z"
-    },
-    "T02": {
-      "id": "T02",
-      "teamName": "Stack Smashers",
-      "leaderName": "Maya Lin",
-      "role": "PLAYER",
-      "status": "ACTIVE",
       "totalScore": 0,
       "breakdown": {
         "tech": 0,
@@ -90,11 +36,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -106,7 +52,67 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T03:14:39.006Z"
+      "updatedAt": "2026-10-11T16:15:20.095Z",
+      "taskScores": {}
+    },
+    "T02": {
+      "id": "T02",
+      "teamName": "Stack Smashers",
+      "leaderName": "Maya Lin",
+      "role": "PLAYER",
+      "status": "ACTIVE",
+      "totalScore": 120,
+      "breakdown": {
+        "tech": 50,
+        "puzzle": 50,
+        "speed": 10,
+        "clue": 0,
+        "story": 10,
+        "teamwork": 0
+      },
+      "penalty": 0,
+      "startedAt": "2026-10-11T22:40:40.058Z",
+      "finishedAt": null,
+      "lastSolvedAt": "2026-10-11T22:40:52.358Z",
+      "location": "town",
+      "stage": "hawkins",
+      "storyProgress": 5,
+      "completedTasks": [
+        "ch1-quiz"
+      ],
+      "solvedChapters": [
+        1
+      ],
+      "unlockedLocations": {
+        "town": true,
+        "policeStation": true,
+        "byersHouse": true,
+        "radioTower": true,
+        "lab": false,
+        "forest": false,
+        "gate": false,
+        "upsidedown": false,
+        "mind": false
+      },
+      "radiometerPins": [
+        "8",
+        "-",
+        "4",
+        "-",
+        "-"
+      ],
+      "radiometerSolved": [
+        true,
+        false,
+        true,
+        false,
+        false
+      ],
+      "radiometerCodeSolved": false,
+      "unlockedHints": {},
+      "createdAt": "2026-10-10T22:48:58.653Z",
+      "updatedAt": "2026-10-12T02:51:22.502Z",
+      "taskScores": {}
     },
     "T03": {
       "id": "T03",
@@ -144,11 +150,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -160,7 +166,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T03:14:39.006Z"
+      "updatedAt": "2026-10-11T16:15:20.095Z",
+      "taskScores": {}
     },
     "T04": {
       "id": "T04",
@@ -198,11 +205,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -214,7 +221,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T03:14:39.006Z"
+      "updatedAt": "2026-10-11T16:15:20.095Z",
+      "taskScores": {}
     },
     "T05": {
       "id": "T05",
@@ -252,11 +260,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -268,7 +276,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T03:14:39.006Z"
+      "updatedAt": "2026-10-11T16:15:20.095Z",
+      "taskScores": {}
     },
     "T06": {
       "id": "T06",
@@ -286,7 +295,7 @@
         "teamwork": 0
       },
       "penalty": 0,
-      "startedAt": "2026-10-11T18:40:49.451Z",
+      "startedAt": null,
       "finishedAt": null,
       "lastSolvedAt": null,
       "location": "town",
@@ -306,11 +315,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -322,7 +331,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T18:41:01.483Z"
+      "updatedAt": "2026-10-11T16:15:20.095Z",
+      "taskScores": {}
     },
     "T07": {
       "id": "T07",
@@ -360,11 +370,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -376,7 +386,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-10T22:48:58.653Z"
+      "updatedAt": "2026-10-11T16:15:20.095Z",
+      "taskScores": {}
     },
     "T08": {
       "id": "T08",
@@ -414,11 +425,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -430,7 +441,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-10T22:48:58.653Z"
+      "updatedAt": "2026-10-11T16:15:20.095Z",
+      "taskScores": {}
     },
     "VECNA-001": {
       "id": "VECNA-001",
@@ -468,23 +480,24 @@
         "mind": true
       },
       "radiometerPins": [
-        "8",
-        "3",
-        "4",
-        "7",
-        "9"
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
-        true,
-        true,
-        true,
-        true,
-        true
+        false,
+        false,
+        false,
+        false,
+        false
       ],
       "radiometerCodeSolved": true,
       "unlockedHints": {},
       "createdAt": "2026-10-09T06:18:39.429Z",
-      "updatedAt": "2026-10-11T18:43:03.056Z"
+      "updatedAt": "2026-10-11T18:43:03.056Z",
+      "taskScores": {}
     },
     "VECNA-TEST-SEQ": {
       "id": "VECNA-TEST-SEQ",
@@ -522,11 +535,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -538,7 +551,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-11T18:31:27.475Z",
-      "updatedAt": "2026-10-11T18:31:27.475Z"
+      "updatedAt": "2026-10-11T18:31:27.475Z",
+      "taskScores": {}
     },
     "HAWKINS-SCORE-TEST": {
       "id": "HAWKINS-SCORE-TEST",
@@ -576,11 +590,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -592,7 +606,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-11T18:28:28.593Z",
-      "updatedAt": "2026-10-11T18:28:28.593Z"
+      "updatedAt": "2026-10-11T18:28:28.593Z",
+      "taskScores": {}
     },
     "VECNA-TEST-SEQ-1791743522368": {
       "id": "VECNA-TEST-SEQ-1791743522368",
@@ -600,9 +615,9 @@
       "leaderName": "Henry Creel",
       "role": "VECNA",
       "status": "ACTIVE",
-      "totalScore": 5,
+      "totalScore": 0,
       "breakdown": {
-        "tech": 5,
+        "tech": 0,
         "puzzle": 0,
         "speed": 0,
         "clue": 0,
@@ -630,11 +645,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -646,7 +661,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-11T18:32:02.368Z",
-      "updatedAt": "2026-10-11T18:32:02.376Z"
+      "updatedAt": "2026-10-11T18:32:02.376Z",
+      "taskScores": {}
     },
     "HAWKINS-SCORE-TEST-1791743522436": {
       "id": "HAWKINS-SCORE-TEST-1791743522436",
@@ -684,11 +700,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -700,7 +716,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-11T18:32:02.436Z",
-      "updatedAt": "2026-10-11T18:32:02.436Z"
+      "updatedAt": "2026-10-11T18:32:02.436Z",
+      "taskScores": {}
     },
     "VECNA-TEST-SEQ-1791743549282": {
       "id": "VECNA-TEST-SEQ-1791743549282",
@@ -708,9 +725,9 @@
       "leaderName": "Henry Creel",
       "role": "VECNA",
       "status": "ACTIVE",
-      "totalScore": 5,
+      "totalScore": 0,
       "breakdown": {
-        "tech": 5,
+        "tech": 0,
         "puzzle": 0,
         "speed": 0,
         "clue": 0,
@@ -738,11 +755,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -754,7 +771,8 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-11T18:32:29.282Z",
-      "updatedAt": "2026-10-11T18:32:29.289Z"
+      "updatedAt": "2026-10-11T18:32:29.289Z",
+      "taskScores": {}
     },
     "HAWKINS-SCORE-TEST-1791743549352": {
       "id": "HAWKINS-SCORE-TEST-1791743549352",
@@ -762,28 +780,24 @@
       "leaderName": "Dustin Henderson",
       "role": "PLAYER",
       "status": "ACTIVE",
-      "totalScore": 40,
+      "totalScore": 0,
       "breakdown": {
-        "tech": 50,
+        "tech": 0,
         "puzzle": 0,
         "speed": 0,
         "clue": 0,
         "story": 0,
         "teamwork": 0
       },
-      "penalty": 10,
+      "penalty": 0,
       "startedAt": "2026-10-11T18:32:29.353Z",
       "finishedAt": null,
-      "lastSolvedAt": "2026-10-11T18:32:29.355Z",
+      "lastSolvedAt": null,
       "location": "town",
       "stage": "hawkins",
       "storyProgress": 14,
-      "completedTasks": [
-        "ch1"
-      ],
-      "solvedChapters": [
-        1
-      ],
+      "completedTasks": [],
+      "solvedChapters": [],
       "unlockedLocations": {
         "town": true,
         "policeStation": true,
@@ -796,11 +810,11 @@
         "mind": false
       },
       "radiometerPins": [
-        null,
-        null,
-        null,
-        null,
-        null
+        "-",
+        "-",
+        "-",
+        "-",
+        "-"
       ],
       "radiometerSolved": [
         false,
@@ -810,11 +824,10 @@
         false
       ],
       "radiometerCodeSolved": false,
-      "unlockedHints": {
-        "ch1_hint_1": true
-      },
+      "unlockedHints": {},
       "createdAt": "2026-10-11T18:32:29.352Z",
-      "updatedAt": "2026-10-11T18:32:29.356Z"
+      "updatedAt": "2026-10-11T18:32:29.356Z",
+      "taskScores": {}
     }
   },
   "chapters": [
@@ -2968,66 +2981,6 @@
       ]
     }
   ],
-  "activeSabotages": {
-    "1791744164149": {
-      "id": 1791744164149,
-      "kind": "MESSAGE",
-      "target": "all",
-      "message": "I KNOW WHERE YOU ARE.",
-      "operatorName": "HENRY CREEL",
-      "expiresAt": 1791744194149
-    },
-    "1791744164154": {
-      "id": 1791744164154,
-      "kind": "MESSAGE",
-      "target": "all",
-      "message": "I KNOW WHERE YOU ARE.",
-      "operatorName": "HENRY CREEL",
-      "expiresAt": 1791744174154
-    }
-  },
-  "vecnaProgress": {
-    "VECNA-TEST-SEQ": {
-      "1-0": {
-        "status": "failed",
-        "earnedPoints": 0,
-        "chosenAnswer": "WRONG_ANSWER",
-        "submittedAt": "2026-10-11T18:29:35.765Z"
-      },
-      "1-1": {
-        "status": "solved",
-        "earnedPoints": 5,
-        "chosenAnswer": "A",
-        "submittedAt": "2026-10-11T18:29:35.767Z"
-      }
-    },
-    "VECNA-TEST-SEQ-1791743522368": {
-      "1-0": {
-        "status": "failed",
-        "earnedPoints": 0,
-        "chosenAnswer": "WRONG_ANSWER",
-        "submittedAt": "2026-10-11T18:32:02.373Z"
-      },
-      "1-1": {
-        "status": "solved",
-        "earnedPoints": 5,
-        "chosenAnswer": "A",
-        "submittedAt": "2026-10-11T18:32:02.375Z"
-      }
-    },
-    "VECNA-TEST-SEQ-1791743549282": {
-      "1-0": {
-        "status": "failed",
-        "earnedPoints": 0,
-        "chosenAnswer": "WRONG_ANSWER",
-        "submittedAt": "2026-10-11T18:32:29.287Z"
-      },
-      "1-1": {
-        "status": "solved",
-        "earnedPoints": 5,
-        "chosenAnswer": "A",
-        "submittedAt": "2026-10-11T18:32:29.288Z"
-      }
-    }
-  }
+  "activeSabotages": {},
+  "vecnaProgress": {}
 }

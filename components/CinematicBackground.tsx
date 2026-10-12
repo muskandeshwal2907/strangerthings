@@ -111,6 +111,10 @@ export default function CinematicBackground({
               objectFit: "cover",
               objectPosition: "center center",
               backgroundColor: "#000000",
+              border: "none",
+              outline: "none",
+              margin: 0,
+              padding: 0,
               filter: `brightness(${overlayOpacity}) contrast(1.15)`,
             }}
             initial={{ opacity: 0.2, scale: 1.04 }}

@@ -78,8 +78,8 @@ export const ValidationService = {
         }
       });
 
-      // Strictly 5 points per correct question (10 Qs * 5 = 50 pts max)
-      const basePoints = correctCount * 5;
+      // Strictly 10 points per correct question (+10 PTS rule)
+      const basePoints = correctCount * 10;
       const totalAwarded = basePoints;
 
       if (team) {
