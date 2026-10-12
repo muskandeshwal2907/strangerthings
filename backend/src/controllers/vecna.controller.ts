@@ -183,12 +183,15 @@ export const VecnaController = {
     const pool = tidb.pool;
     let sabotageId = Date.now();
 
+    const durationMs = Number(duration) * 1000;
+    const expiresAt = Date.now() + durationMs;
+
     if (pool) {
       try {
         const [result] = await pool.query<any>(
-          `INSERT INTO active_sabotages (target_team, kind, message, duration_seconds, triggered_by)
-           VALUES (?, ?, ?, ?, ?)`,
-          [target, kind, message || null, Number(duration), operatorName]
+          `INSERT INTO active_sabotages (source_team, target_team, kind, message, duration_ms, expires_at)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [operatorName || "VECNA", target, kind, message || null, durationMs, expiresAt]
         );
         sabotageId = result.insertId || sabotageId;
       } catch (err: any) {
@@ -204,7 +207,7 @@ export const VecnaController = {
       message,
       duration: Number(duration),
       operatorName,
-      until: Date.now() + Number(duration) * 1000,
+      until: expiresAt,
       ts: Date.now(),
     };
 
@@ -233,12 +236,12 @@ export const VecnaController = {
     if (pool) {
       try {
         const [sabRows] = await pool.query<any[]>(
-          `SELECT sabotage_id, target_team, kind, message, duration_seconds, created_at
+          `SELECT sabotage_id, source_team, target_team, kind, message, duration_ms, expires_at, created_at
            FROM active_sabotages
            WHERE (target_team = ? OR target_team = 'all')
-             AND created_at >= DATE_SUB(NOW(3), INTERVAL 2 MINUTE)
+             AND expires_at >= ?
            ORDER BY created_at DESC`,
-          [teamId]
+          [teamId, Date.now()]
         );
         activeSabotages = sabRows || [];
 

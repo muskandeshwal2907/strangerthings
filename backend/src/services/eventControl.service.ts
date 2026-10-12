@@ -62,12 +62,14 @@ export class EventControlService {
   }
 
   public static async startEvent(adminId: number = 1): Promise<EventRecord> {
-    // Validate all teams have a valid role assignment (PLAYER or VECNA)
     const { db } = await import("./db.service");
     const allTeams = db.getAllTeams();
-    const invalidTeams = allTeams.filter((t) => t.role !== "PLAYER" && t.role !== "VECNA");
-    if (invalidTeams.length > 0) {
-      throw new Error(`Cannot start event: ${invalidTeams.length} squad(s) have unassigned or invalid roles.`);
+    // Normalize any unassigned or Hawkins roles to standard PLAYER role
+    for (const t of allTeams) {
+      if ((t.role as string) === "HAWKINS") t.role = "PLAYER";
+      if (!t.role || (t.role !== "PLAYER" && t.role !== "VECNA")) {
+        t.role = "PLAYER";
+      }
     }
 
     const pool = tidb.pool;
@@ -78,7 +80,17 @@ export class EventControlService {
         );
       } catch {}
     }
-    // Initialize/reset all team scores to 0 upon event start
+
+    // Invalidate stale sessions from previous event
+    const { SessionService } = await import("./session.service");
+    await SessionService.resetAllSessions(adminId).catch(() => {});
+    await SessionService.deleteVecnaSession(1).catch(() => {});
+    await SessionService.deleteVecnaSession(2).catch(() => {});
+
+    // Clear online tracking from stale connections
+    socketService.clearAllOnlineTeams();
+
+    // Initialize/reset all team scores to 0 upon event start while archiving past history
     await db.resetAllTeamScores();
     this.localEvent.status = "active";
     this.localEvent.loginOpen = true;
@@ -89,6 +101,7 @@ export class EventControlService {
     await this.logAudit(adminId, "event_start");
 
     socketService.broadcast("event:state_changed", this.localEvent);
+    socketService.broadcastLeaderboard();
     return this.getEventState();
   }
 

@@ -1,0 +1,22 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getApiBase } from "@/lib/api";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(req: NextRequest) {
+  try {
+    const base = getApiBase();
+    const token = req.headers.get("authorization") || "Bearer HAWKINS_CHIEF_1983";
+    const res = await fetch(`${base}/admin/event/start`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+    });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}

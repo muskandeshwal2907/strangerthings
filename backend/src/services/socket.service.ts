@@ -18,6 +18,9 @@ class SocketService {
     const cleanA = (a || "").trim().toUpperCase();
     const cleanB = (b || "").trim().toUpperCase();
     if (cleanA === cleanB) return true;
+    if ((cleanA === "VECNA" && cleanB === "VECNA-001") || (cleanA === "VECNA-001" && cleanB === "VECNA")) {
+      return true;
+    }
     const numA = cleanA.replace(/\D/g, "");
     const numB = cleanB.replace(/\D/g, "");
     if (numA && numB && parseInt(numA, 10) === parseInt(numB, 10)) {
@@ -143,17 +146,24 @@ class SocketService {
       this.onlineTeams.add(sess.teamId);
 
       if (sess.role === "VECNA") {
+        this.onlineTeams.add("VECNA");
+        this.onlineTeams.add("VECNA-001");
+        if (sess.teamId) this.onlineTeams.add(sess.teamId);
         socket.join("role:vecna");
         socket.join(`vecna-sender:${sess.teamId}`);
         socket.join(`team:${sess.teamId}`);
       } else if (sess.role === "ADMIN") {
         socket.join("role:admin");
         socket.join("admins");
+        // Push currently online teams to this newly authenticated admin immediately
+        for (const onlineId of this.onlineTeams) {
+          socket.emit("presence:update", { teamId: onlineId, isOnline: true });
+        }
       } else if (sess.role === "PLAYER") {
         socket.join(`team:${sess.teamId}`);
       }
 
-      if (!wasOnline && sess.role !== "ADMIN") {
+      if (sess.role !== "ADMIN") {
         this.io?.to("admins").emit("presence:update", { teamId: sess.teamId, isOnline: true });
         this.io?.to("public:broadcast").emit("presence:update", { teamId: sess.teamId, isOnline: true });
         this.broadcastLeaderboard();
@@ -174,6 +184,15 @@ class SocketService {
         socket.emit("authenticated", { success: true, role: session.role, teamId: session.teamId });
       } else {
         socket.emit("authenticated", { success: false, error: "INVALID_TOKEN" });
+      }
+    });
+
+    // Provide full presence list upon admin request
+    socket.on("presence:sync", () => {
+      const list = Array.from(this.onlineTeams);
+      socket.emit("presence:all", { onlineTeams: list });
+      for (const onlineId of this.onlineTeams) {
+        socket.emit("presence:update", { teamId: onlineId, isOnline: true });
       }
     });
 

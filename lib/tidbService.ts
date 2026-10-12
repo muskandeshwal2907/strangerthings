@@ -222,9 +222,21 @@ export function subscribeToPresence(onPresence: (data: { teamId: string; isOnlin
           }
         }
       };
+      const allHandler = (data: any) => {
+        if (Array.isArray(data?.onlineTeams)) {
+          data.onlineTeams.forEach((tid: string) => {
+            onPresence({ teamId: String(tid), isOnline: true });
+          });
+        }
+      };
       socket.on("presence:update", handler);
+      socket.on("presence:all", allHandler);
+      // Immediately request current presence snapshot
+      socket.emit("presence:sync");
+
       return () => {
         socket.off("presence:update", handler);
+        socket.off("presence:all", allHandler);
       };
     }
   } catch (e) {

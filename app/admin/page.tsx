@@ -424,7 +424,11 @@ export default function AdminPage() {
           const cleanA = (item.teamId || "").trim().toUpperCase();
           const cleanB = (teamId || "").trim().toUpperCase();
           const cleanU = ((item as any).username || "").trim().toUpperCase();
-          let isMatch = cleanA === cleanB || cleanU === cleanB;
+          const cleanN = (item.teamName || "").trim().toUpperCase();
+          let isMatch = cleanA === cleanB || cleanU === cleanB || cleanN === cleanB;
+          if (!isMatch && cleanA.startsWith("VECNA") && cleanB.startsWith("VECNA")) {
+            isMatch = true;
+          }
           if (!isMatch) {
             const numA = cleanA.replace(/\D/g, "");
             const numB = cleanB.replace(/\D/g, "");
@@ -593,7 +597,43 @@ export default function AdminPage() {
     }
   };
 
-  // Bulk Import Teams
+  // Start Fresh Tournament Event (Section 5)
+  const handleStartFreshEvent = async () => {
+    if (!confirm("Start a fresh tournament event? All squads will begin with 0 PTS for the new event, and previous event results will be archived into history.")) {
+      return;
+    }
+    setIsUpdatingEvent(true);
+    try {
+      const activeToken = token || "HAWKINS_CHIEF_1983";
+      const res = await fetch("/api/admin/event/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${activeToken}`,
+        },
+      });
+      const data = await res.json();
+      if (data.success) {
+        sfx("ok");
+        setStatusMessage("Fresh tournament event successfully initiated: All squad scores initialized to 0 PTS. Historical results preserved.");
+        setEventState({
+          status: "active",
+          login_open: true,
+          submissions_open: true,
+          current_round_max: 7,
+        });
+        loadData(true);
+      } else {
+        sfx("err");
+        alert("Failed to start fresh event: " + (data.message || data.error));
+      }
+    } catch (err: any) {
+      sfx("err");
+      alert("Error starting fresh event: " + err.message);
+    } finally {
+      setIsUpdatingEvent(false);
+    }
+  };
   const handleBulkImport = async () => {
     if (!importText.trim()) {
       alert("Please paste squad credentials or upload a CSV file first.");
@@ -1334,7 +1374,7 @@ export default function AdminPage() {
                   <button
                     type="button"
                     disabled={isUpdatingEvent}
-                    onClick={() => updateEventStateAction({ status: "active", submissionsOpen: true, loginOpen: true })}
+                    onClick={handleStartFreshEvent}
                     style={{
                       padding: "8px 22px",
                       fontSize: 12,
@@ -1394,24 +1434,51 @@ export default function AdminPage() {
                     ⏸ PAUSE EVENT
                   </button>
                 ) : (
-                  <div
-                    style={{
-                      padding: "7px 16px",
-                      fontSize: 11,
-                      fontWeight: "bold",
-                      letterSpacing: ".06em",
-                      backgroundColor: "rgba(255, 45, 58, 0.1)",
-                      border: "1px solid #ff2d3a",
-                      color: "#ff2d3a",
-                      borderRadius: 4,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <span>⏹</span>
-                    <span>EVENT CONCLUDED</span>
-                  </div>
+                  <>
+                    <div
+                      style={{
+                        padding: "7px 16px",
+                        fontSize: 11,
+                        fontWeight: "bold",
+                        letterSpacing: ".06em",
+                        backgroundColor: "rgba(255, 45, 58, 0.1)",
+                        border: "1px solid #ff2d3a",
+                        color: "#ff2d3a",
+                        borderRadius: 4,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <span>⏹</span>
+                      <span>EVENT CONCLUDED</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isUpdatingEvent}
+                      onClick={handleStartFreshEvent}
+                      style={{
+                        padding: "8px 22px",
+                        fontSize: 12,
+                        fontWeight: 900,
+                        letterSpacing: ".1em",
+                        backgroundColor: "#ff2d3a",
+                        border: "2px solid #ff5964",
+                        color: "#ffffff",
+                        borderRadius: 4,
+                        cursor: "pointer",
+                        boxShadow: "0 0 20px rgba(255, 45, 58, 0.7), inset 0 0 10px rgba(0,0,0,0.4)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                      title="Initiate fresh Hawkins Tournament: all squad scores initialize to 0 PTS with past results preserved in history"
+                    >
+                      <span>▶</span>
+                      <span>START EVENT</span>
+                    </button>
+                  </>
                 )}
 
                 {/* Reset all scores utility button */}

@@ -402,7 +402,7 @@ export const AdminController = {
       const defaultUsername = `TEAM${numPart.padStart(2, "0")}`;
       const defaultPassword = `hawkins83_${numPart.padStart(2, "0")}`;
       // Sockets alone determine online presence via verified JWT authentication
-      const isOnline = socketService.isTeamOnline(t.id) || socketService.isTeamOnline((t as any).username || defaultUsername);
+      const isOnline = socketService.isTeamOnline(t.id) || socketService.isTeamOnline(t.teamName) || socketService.isTeamOnline((t as any).username || defaultUsername);
       const hasActiveSession = activeSessionTeamIds.has(t.id) || SessionService.hasActiveSessionSync(t.id);
 
       const distinctStages = new Set<number>();

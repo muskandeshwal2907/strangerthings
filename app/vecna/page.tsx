@@ -14,6 +14,7 @@ import {
   RealtimeMessage,
   getSocket,
   authenticateSocket,
+  presence,
 } from "@/lib/realtime";
 import { API_BASE } from "@/lib/api";
 import CinematicBackground from "@/components/CinematicBackground";
@@ -160,6 +161,33 @@ export default function VecnaPage() {
       authenticateSocket((s as any).token);
     }
   }, [router]);
+
+  // Keep Vecna authenticated and online in Security Mainframe
+  useEffect(() => {
+    if (!session || session.role !== "VECNA") return;
+    const token = (session as any)?.token;
+    if (token) {
+      authenticateSocket(token);
+    }
+
+    const interval = setInterval(() => {
+      const currentToken = (session as any)?.token;
+      if (currentToken) {
+        authenticateSocket(currentToken);
+      }
+      presence({
+        team: session.teamName || "Vecna",
+        teamId: session.teamId || "VECNA-001",
+        stage: "final" as any,
+        score: 0,
+        timeLeft: 0,
+        solved: 0,
+        ts: Date.now(),
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [session]);
 
   // Realtime logout & event termination handler (Issue 4 & 5)
   useEffect(() => {

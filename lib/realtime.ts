@@ -142,6 +142,26 @@ let localBroadcastChannel: BroadcastChannel | null = null;
 
 let socketInstance: Socket | null = null;
 
+export function resolveStoredToken(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const stored = localStorage.getItem("hawkins-protocol:session");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.token) return parsed.token;
+    }
+    const adminToken = localStorage.getItem("hawkins_admin_token") || sessionStorage.getItem("hawkins_admin_token");
+    if (adminToken) return adminToken;
+    const directToken = localStorage.getItem("token") || localStorage.getItem("hawkins_token");
+    if (directToken) return directToken;
+    if (typeof document !== "undefined") {
+      const cookieMatch = document.cookie.match(/hawkins_session_token=([^;]+)/);
+      if (cookieMatch && cookieMatch[1]) return decodeURIComponent(cookieMatch[1]);
+    }
+  } catch {}
+  return "";
+}
+
 export function getSocket(): Socket | null {
   if (typeof window === "undefined") return null;
   if (!socketInstance) {
@@ -152,20 +172,10 @@ export function getSocket(): Socket | null {
         (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "") : "") ||
         `http://${host}:5000`;
 
-      let token = "";
-      try {
-        const stored = localStorage.getItem("hawkins-protocol:session");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          token = parsed.token || "";
-        }
-        if (!token) {
-          token = localStorage.getItem("hawkins_admin_token") || "";
-        }
-      } catch {}
+      const initialToken = resolveStoredToken();
 
       socketInstance = io(backendUrl, {
-        auth: { token },
+        auth: { token: initialToken },
         transports: ["websocket", "polling"],
         reconnectionAttempts: 10,
         reconnectionDelay: 1000,
@@ -173,22 +183,20 @@ export function getSocket(): Socket | null {
 
       socketInstance.on("connect", () => {
         console.log(`[SOCKET.IO] Connected to Hawkins Security Mainframe at ${backendUrl}`);
-        if (token) {
-          socketInstance?.emit("authenticate", { token });
+        const currentToken = resolveStoredToken();
+        if (currentToken) {
+          if (socketInstance) socketInstance.auth = { token: currentToken };
+          socketInstance?.emit("authenticate", { token: currentToken });
         }
       });
 
       socketInstance.on("reconnect", () => {
         console.log("[SOCKET.IO] Reconnected to Hawkins Security Mainframe");
-        try {
-          const stored = localStorage.getItem("hawkins-protocol:session");
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed.token) {
-              socketInstance?.emit("authenticate", { token: parsed.token });
-            }
-          }
-        } catch {}
+        const currentToken = resolveStoredToken();
+        if (currentToken) {
+          if (socketInstance) socketInstance.auth = { token: currentToken };
+          socketInstance?.emit("authenticate", { token: currentToken });
+        }
       });
 
       socketInstance.on("leaderboard:update", (data: any) => {
