@@ -12,6 +12,24 @@ import { db } from "./db.service";
 class SocketService {
   private io: SocketIOServer | null = null;
   private onlineTeams = new Set<string>();
+  private teamSockets = new Map<string, Set<string>>();
+
+  private isCanonicalMatch(a: string, b: string): boolean {
+    const cleanA = (a || "").trim().toUpperCase();
+    const cleanB = (b || "").trim().toUpperCase();
+    if (cleanA === cleanB) return true;
+    const numA = cleanA.replace(/\D/g, "");
+    const numB = cleanB.replace(/\D/g, "");
+    if (numA && numB && parseInt(numA, 10) === parseInt(numB, 10)) {
+      if (
+        (cleanA.startsWith("T") || cleanA.startsWith("TEAM")) &&
+        (cleanB.startsWith("T") || cleanB.startsWith("TEAM"))
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   public init(server: HttpServer) {
     this.io = new SocketIOServer(server, {
@@ -32,7 +50,13 @@ class SocketService {
   }
 
   public isTeamOnline(teamId: string): boolean {
-    return this.onlineTeams.has(teamId);
+    if (!teamId) return false;
+    if (this.onlineTeams.has(teamId)) return true;
+
+    for (const id of this.onlineTeams) {
+      if (this.isCanonicalMatch(id, teamId)) return true;
+    }
+    return false;
   }
 
   public getOnlineTeams(): string[] {
@@ -41,6 +65,13 @@ class SocketService {
 
   public setTeamOffline(teamId: string) {
     this.onlineTeams.delete(teamId);
+    this.teamSockets.delete(teamId);
+    for (const key of Array.from(this.teamSockets.keys())) {
+      if (this.isCanonicalMatch(key, teamId)) {
+        this.teamSockets.delete(key);
+        this.onlineTeams.delete(key);
+      }
+    }
     if (this.io) {
       // 1. Emit revocation notices across team room and public broadcast
       const revocationPayload = {
@@ -76,6 +107,7 @@ class SocketService {
 
   public clearAllOnlineTeams() {
     this.onlineTeams.clear();
+    this.teamSockets.clear();
     if (this.io) {
       const revocationPayload = {
         teamId: "all",
@@ -100,29 +132,31 @@ class SocketService {
     const requestedSenderId = socket.handshake.query?.senderId as string;
 
     const joinSessionRooms = (sess: typeof session) => {
-      if (!sess) return;
+      if (!sess || !sess.teamId) return;
+
+      if (!this.teamSockets.has(sess.teamId)) {
+        this.teamSockets.set(sess.teamId, new Set<string>());
+      }
+      this.teamSockets.get(sess.teamId)!.add(socket.id);
+
+      const wasOnline = this.onlineTeams.has(sess.teamId);
+      this.onlineTeams.add(sess.teamId);
+
       if (sess.role === "VECNA") {
         socket.join("role:vecna");
         socket.join(`vecna-sender:${sess.teamId}`);
         socket.join(`team:${sess.teamId}`);
-        if (sess.teamId) {
-          this.onlineTeams.add(sess.teamId);
-          this.io?.to("admins").emit("presence:update", { teamId: sess.teamId, isOnline: true });
-          this.io?.to("public:broadcast").emit("presence:update", { teamId: sess.teamId, isOnline: true });
-          this.broadcastLeaderboard();
-        }
       } else if (sess.role === "ADMIN") {
         socket.join("role:admin");
         socket.join("admins");
       } else if (sess.role === "PLAYER") {
         socket.join(`team:${sess.teamId}`);
-        if (sess.teamId) {
-          this.onlineTeams.add(sess.teamId);
-          // Broadcast live presence to admins and all clients immediately
-          this.io?.to("admins").emit("presence:update", { teamId: sess.teamId, isOnline: true });
-          this.io?.to("public:broadcast").emit("presence:update", { teamId: sess.teamId, isOnline: true });
-          this.broadcastLeaderboard();
-        }
+      }
+
+      if (!wasOnline && sess.role !== "ADMIN") {
+        this.io?.to("admins").emit("presence:update", { teamId: sess.teamId, isOnline: true });
+        this.io?.to("public:broadcast").emit("presence:update", { teamId: sess.teamId, isOnline: true });
+        this.broadcastLeaderboard();
       }
     };
 
@@ -152,14 +186,16 @@ class SocketService {
 
     socket.on("disconnect", () => {
       if (session && session.teamId) {
-        const teamRoomSize = this.io?.sockets.adapter.rooms.get(`team:${session.teamId}`)?.size || 0;
-        const vecnaRoomSize = this.io?.sockets.adapter.rooms.get(`vecna-sender:${session.teamId}`)?.size || 0;
-        const remaining = Math.max(teamRoomSize, vecnaRoomSize);
-        if (remaining <= 0) {
-          this.onlineTeams.delete(session.teamId);
-          this.broadcastLeaderboard();
-          this.io?.to("admins").emit("presence:update", { teamId: session.teamId, isOnline: false });
-          this.io?.to("public:broadcast").emit("presence:update", { teamId: session.teamId, isOnline: false });
+        const teamSet = this.teamSockets.get(session.teamId);
+        if (teamSet) {
+          teamSet.delete(socket.id);
+          if (teamSet.size === 0) {
+            this.teamSockets.delete(session.teamId);
+            this.onlineTeams.delete(session.teamId);
+            this.broadcastLeaderboard();
+            this.io?.to("admins").emit("presence:update", { teamId: session.teamId, isOnline: false });
+            this.io?.to("public:broadcast").emit("presence:update", { teamId: session.teamId, isOnline: false });
+          }
         }
       }
     });
@@ -174,6 +210,9 @@ class SocketService {
       if (!payload || !session || !session.teamId) return;
 
       const targetTeamId = session.teamId;
+      const teamSet = this.teamSockets.get(targetTeamId);
+      if (!teamSet || !teamSet.has(socket.id)) return;
+
       const wasOnline = this.onlineTeams.has(targetTeamId);
       this.onlineTeams.add(targetTeamId);
       if (!wasOnline) {
@@ -256,14 +295,13 @@ class SocketService {
           ts: Date.now(),
         };
 
-        // Always broadcast across public channel for reliable client reception
-        this.io?.to("public:broadcast").emit("sabotage", eventPayload);
-        this.io?.to("public:broadcast").emit("sabotage:received", eventPayload);
-
-        // Also emit directly into team room if targeted
+        // Dispatch single sabotage event cleanly
         if (targetTeamId && targetTeamId !== "all") {
           this.io?.to(`team:${targetTeamId}`).emit("sabotage", eventPayload);
-          this.io?.to(`team:${targetTeamId}`).emit("sabotage:received", eventPayload);
+          this.io?.to("role:vecna").emit("sabotage", eventPayload);
+          this.io?.to("admins").emit("sabotage", eventPayload);
+        } else {
+          this.io?.to("public:broadcast").emit("sabotage", eventPayload);
         }
 
         console.log(

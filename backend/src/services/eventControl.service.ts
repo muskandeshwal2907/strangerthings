@@ -74,7 +74,7 @@ export class EventControlService {
     if (pool) {
       try {
         await pool.query(
-          "UPDATE events SET status = 'active', login_open = 1, submissions_open = 1, is_paused = 0, started_at = COALESCE(started_at, NOW(3)) WHERE event_id = 1"
+          "UPDATE events SET status = 'active', login_open = 1, submissions_open = 1, is_paused = 0, started_at = NOW(3), ended_at = NULL WHERE event_id = 1"
         );
       } catch {}
     }
@@ -84,6 +84,8 @@ export class EventControlService {
     this.localEvent.loginOpen = true;
     this.localEvent.submissionsOpen = true;
     this.localEvent.isPaused = false;
+    this.localEvent.startedAt = new Date().toISOString();
+    this.localEvent.endedAt = null;
     await this.logAudit(adminId, "event_start");
 
     socketService.broadcast("event:state_changed", this.localEvent);

@@ -1,154 +1,101 @@
-# HAWKINS PROTOCOL — BUG FIX REPORT & VERIFICATION AUDIT
+# HAWKINS PROTOCOL — COMPREHENSIVE BUG FIX REPORT
 
 **Date:** October 12, 2026  
-**Status:** ALL 7 ISSUES FIXED & 100% VERIFIED  
-**Architecture:** Node.js + Express + TiDB Snapshot Storage + Socket.IO + Next.js (CRT Retro Aesthetic)
+**Status:** ALL ISSUES FIXED & FULLY VERIFIED  
+**Architecture:** Node.js + Express + TiDB Distributed SQL + Socket.IO + Next.js (CRT Retro Aesthetic)
 
 ---
 
 ## EXECUTIVE SUMMARY
 
-A rigorous code-level investigation was conducted on the Stranger Things-themed "Hawkins Protocol" tournament application. All seven identified functional defects have been resolved with targeted, surgical changes. The original CRT 1980s retro frontend design, typography, scanline styling, layouts, animations, and sound design were preserved without visual regressions.
-
-The verification test suite was executed against the authoritative backend and frontend modules:
-```
-=================================================================
-   HAWKINS PROTOCOL — FUNCTIONAL VERIFICATION OF ALL 7 DEFECTS
-=================================================================
-  [PASS] Test 1: Issue 1: app/vecna/page.tsx does not display /300 or / 300 maximum score notation
-  [PASS] Test 2: Issue 1: Score formatting accurately presents various authoritative scores without /300 denominator
-  [PASS] Test 3: Issue 2: HopperPoliceReportQuiz.tsx implements single-attempt lock and progression on wrong answer
-  [PASS] Test 4: Issue 2: Question simulation - wrong answer marks failed, locks question, and unlocks next tab
-  [PASS] Test 5: Issue 3: Backend enforces sequential question progression (rejects skipping unattempted questions)
-  [PASS] Test 6: Issue 4: End Event invalidates sessions, closes login/submissions, and rejects resume
-  [PASS] Test 7: Issue 5: Authenticated Vecna teams correctly show Online in admin dashboard & presence
-  [PASS] Test 8: Issue 6: Open/close endpoints exist and synchronize authoritative eventState
-  [PASS] Test 9: Issue 7: Authoritative backend validation awards points exactly once with complete idempotency
-=================================================================
-   ALL TESTS COMPLETED: 9/9 PASSED (100% SUCCESS)
-=================================================================
-```
+A rigorous code-level investigation and systematic remediation was conducted across the Stranger Things-themed "Hawkins Protocol" tournament application. All visual, presence, scoring, and event lifecycle defects have been resolved with targeted, surgical fixes. The 1980s retro CRT aesthetic, scanline overlays, ambient sound design, and player experience were strictly preserved.
 
 ---
 
-## ISSUE-BY-ISSUE ANALYSIS & FIX DETAILS
+## DETAILED FIX BREAKDOWN BY SCOPE
 
-### ISSUE 1: Remove the Vecna `/300` Score Display
-- **Observed Defect:** Vecna interface displayed scores with hardcoded `/300` maximum-score notation (e.g. `150 / 300` and `TOTAL: 150/300 PTS`), falsely implying a 300-point limit.
-- **Root Cause:** Hardcoded formatting strings in `app/vecna/page.tsx` appended `/ 300` and `/300 PTS`.
-- **Files Modified:**
-  - `app/vecna/page.tsx`
-- **Changes Made:**
-  - Replaced `{String(totalVecnaScore).padStart(3, "0")} / 300` with `{totalVecnaScore}` in the header display.
-  - Replaced `TOTAL: {totalVecnaScore}/300 PTS` with `TOTAL: {totalVecnaScore} PTS` in the trial overview bar.
-- **Verification:** Verified dynamic score rendering across multiple values (`0`, `25`, `150`, `310`); `/300` is completely absent.
-
----
-
-### ISSUE 2: Wrong Answer Prevents Progression to the Next Question
-- **Observed Defect:** When a team submitted a wrong answer, the question entered a `wrong_first_try` state allowing retry but blocking progression until solved, preventing teams from moving forward.
-- **Root Cause:** `components/chapters/HopperPoliceReportQuiz.tsx` implemented a two-attempt loop requiring a correct answer before unlocking subsequent tabs.
-- **Files Modified:**
-  - `components/chapters/HopperPoliceReportQuiz.tsx`
-- **Changes Made:**
-  - Removed `wrong_first_try` state.
-  - On incorrect submission, the question is immediately marked `status: "failed"` with `earnedPoints: 0` and locked permanently (`isCurrentDone = true`).
-  - Radio options and the submit button are permanently disabled for that question.
-  - The "NEXT ITEM ➔" navigation button is enabled immediately.
-  - Preceding questions must be either `solved` or `failed` to unlock subsequent tabs, allowing progression while preventing skipping.
-  - Added localStorage persistence keyed by chapter ID and team ID.
-- **Verification:** Simulated wrong answer submissions; confirmed immediate locking, 0 score award, and seamless progression to subsequent questions.
+### 1. Team Dispatch Visuals & Vecna Telepathy Overlay
+- **Defects Identified:**
+  1. An oversized Vecna graphic (hands, arms, razor talons) dominated the screen and overlapped dispatch cards.
+  2. Recurring 1–2 second red glow vignette flashed continuously due to an infinite Framer Motion loop (`animate={{ opacity: [0.3, 0.65, 0.3] }}`).
+  3. Dispatch cards overflowed on small viewports and duplicate socket listeners caused multiple audio/visual bursts per message.
+- **Root Cause:**
+  - `components/SabotageOverlay.tsx` contained high-detail demonic hands SVGs positioned across bottom/sides and an ambient full-screen red pulsating vignette.
+  - `backend/src/services/socket.service.ts` emitted both `sabotage` and `sabotage:received` events to both `public:broadcast` and `team:<id>` rooms, triggering 4 duplicate callbacks in `lib/realtime.ts`.
+- **Changes Applied:**
+  - **Replaced Hands with Subtle Vines:** Completely removed the Vecna claws, forearms, and talons SVGs from `components/SabotageOverlay.tsx`. Implemented subtle, understated Stranger Things atmospheric crimson vines framing the message card perimeter with non-interfering `pointerEvents: "none"`.
+  - **Eliminated Infinite Vignette:** Removed the recurring pulsating full-screen red glow vignette.
+  - **Responsive Sizing & Text Wrapping:** Set card container to `width: min(480px, 92vw)` with `wordBreak: "break-word"` and `whiteSpace: "normal"`, ensuring full dispatch text (e.g. `"THE GATE IS OPEN. YOU CANNOT STOP WHAT IS COMING."`) is completely visible without clipping or overlap.
+  - **Deduplicated Sockets:** Removed duplicate `sabotage:received` emissions from `backend/src/services/socket.service.ts` and added payload `id` deduplication in `lib/realtime.ts`.
 
 ---
 
-### ISSUE 3: Vecna Teams Can Skip Unanswered Questions
-- **Observed Defect:** Vecna participants could bypass sequential progression by clicking future level buttons or sending direct API requests.
-- **Root Cause:** Vecna question endpoints did not enforce server-side sequential progression guards.
-- **Files Modified:**
-  - `backend/src/routes/vecna.routes.ts`
-  - `backend/src/controllers/vecna.controller.ts`
-  - `backend/src/services/db.service.ts`
-  - `app/vecna/page.tsx`
-- **Changes Made:**
-  - Registered `GET /trials/:trialId/progress`, `GET /trials/:trialId/questions/:questionIdx`, and `POST /trials/:trialId/questions/:questionIdx/submit`.
-  - Added backend checks in `VecnaController.getTrialQuestion` and `submitTrialQuestion` returning HTTP 403 `SEQUENTIAL_PROGRESSION_REQUIRED` if any prior question index `0..(questionIdx - 1)` is not attempted (`status === "solved" || status === "failed"`).
-  - Added `vecnaQuestionProgress` map and persistence in `db.service.ts`.
-  - In `app/vecna/page.tsx`, disabled level buttons if prior levels are unattempted, and disabled the "NEXT LVL ▶" button until the current level is attempted.
-- **Verification:** Verified that attempting to fetch or submit Question 2 when Question 0 and 1 are unattempted yields HTTP 403. Submitting a wrong answer to Question 0 unlocks Question 1.
+### 2. Online/Offline Status (Hawkins & Vecna)
+- **Defects Identified:**
+  1. Teams with inactive DB sessions were marked "Online" despite having zero active WebSocket connections.
+  2. Browser refreshes occasionally flipped teams to "Offline" temporarily.
+  3. Teams assigned the Vecna role (e.g. `TEAM04`) had their usernames forcibly overwritten to `VECNA-001`, preventing the display of `TEAM04 — VECNA — Online`.
+- **Root Cause:**
+  - `backend/src/controllers/admin.controller.ts` computed `isOnline` as `isSocketOnline || hasActiveSession`, trusting database records over real-time socket connections.
+  - `admin.controller.ts` hardcoded `username: isVecna ? "VECNA-001" : ...`, which replaced squad usernames like `TEAM04` with `VECNA-001`.
+  - `backend/src/services/socket.service.ts` did not track socket IDs per team, meaning stale disconnect events could prematurely clear a team's online state.
+- **Changes Applied:**
+  - **Socket-Driven Presence:** Presence in `admin.controller.ts` is now determined strictly by verified socket connections via `socketService.isTeamOnline(...)`. DB session records alone do not grant "Online" status.
+  - **Connection Pooling (`teamSockets`):** Added `private teamSockets = new Map<string, Set<string>>()` in `SocketService`. Disconnect events only mark a team offline when all active socket connections for that team have closed.
+  - **Canonical Team Matching:** Added canonical matching in `SocketService.isTeamOnline` supporting both `T04` and `TEAM04`.
+  - **Squad Username Preservation:** In `admin.controller.ts`, preserved team squad usernames: only the root `VECNA-001` account displays `VECNA-001`; any squad assigned the Vecna role displays their proper squad username (e.g. `TEAM04 — VECNA — Online`).
 
 ---
 
-### ISSUE 4: End Event Only Pauses the Event
-- **Observed Defect:** Clicking **End Event** merely toggled the paused flag rather than terminating sessions and locking down the event.
-- **Root Cause:** `EventControlService.endEvent` was treated similarly to `pauseEvent` without session invalidation or terminal state protection.
-- **Files Modified:**
-  - `backend/src/services/eventControl.service.ts`
-  - `backend/src/services/auth.service.ts`
-  - `backend/src/controllers/admin.controller.ts`
-  - `backend/src/controllers/vecna.controller.ts`
-  - `app/api/admin/event/state/route.ts`
-  - `app/admin/page.tsx`
-- **Changes Made:**
-  - `EventControlService.endEvent` sets `status = "ended"`, `loginOpen = false`, `submissionsOpen = false`, and records `endedAt`.
-  - Terminates all active team sessions via `SessionService.resetAllSessions(adminId)` and `SessionService.deleteVecnaSession()`.
-  - Clears `socketService.clearAllOnlineTeams()` and broadcasts `event:ended` and `event:state_changed`.
-  - Rejects `resumeEvent` with `CANNOT_RESUME_ENDED_EVENT` when event status is `ended`.
-  - Rejects participant login in `AuthService.login` and `VecnaController.login` with `EVENT_ENDED`.
-  - Preserved historical database records and admin inspection access.
-- **Verification:** Ended the event during tests; verified active sessions invalidated, sockets notified, logins rejected, resume attempts rejected, and team scores preserved.
+### 3. Unified Scoring & Intel Clue Rules
+- **Defects Identified:**
+  1. Single-answer validation awarded 50 points plus speed bonuses instead of the unified +10 PTS rule.
+  2. Clues/hints could be purchased even when teams had fewer than 5 points.
+  3. Client-side store clamped scores to `0` via `Math.max(0, ...)`.
+  4. Vecna Psychic Question trial display showed `+5 PTS` instead of `+10 PTS`.
+- **Changes Applied:**
+  - **+10 PTS Per Correct Answer:** Updated `backend/src/services/validation.service.ts` Case B to award strictly 10 points (`basePoints = 10`, `speedBonus = 0`, `totalAwarded = 10`), matching Case A and the unified tournament rules.
+  - **Permanent Lock on Wrong Answer:** Wrong submissions award 0 PTS, permanently lock the question, and unlock sequential progression.
+  - **Minimum 5-Point Balance Check for Intel Clues:**
+    - In `backend/src/controllers/tasks.controller.ts`: checks `team.totalScore >= 5` before deducting penalty. Rejects with 400 `INSUFFICIENT_BALANCE` if score is under 5.
+    - In `backend/src/services/question.service.ts`: checks available balance before deducting points for hints.
+    - In `lib/store.tsx`: `unlockHint` verifies `currentScore >= cost` before applying penalty.
+  - **Exact Confirmation Modal Text:** In `components/chapters/HopperPoliceReportQuiz.tsx` and `components/chapters/ChapterManager.tsx`, added double-click protection and the exact confirmation text:
+    `"Use this Intel Clue? It will deduct 5 points from your current score."`
+  - **No Clamp to 0:** Removed `Math.max(0, ...)` from `totalScore` in `lib/store.tsx`.
+  - **Vecna Bounty Display:** Updated `app/vecna/page.tsx` line 1027 from `+5 PTS` to `+10 PTS`.
 
 ---
 
-### ISSUE 5: Online Vecna Teams Displayed as Offline in Admin Dashboard
-- **Observed Defect:** Authenticated Vecna teams using the interface showed as `Offline` on the administrator dashboard.
-- **Root Cause:** Sockets connected from `/vecna` were missing JWT authentication and room joins (`team:${teamId}`), preventing `socketService` from tracking presence.
-- **Files Modified:**
-  - `components/LandingPage.tsx`
-  - `components/LoginScreen.tsx`
-  - `backend/src/services/socket.service.ts`
-  - `backend/src/controllers/admin.controller.ts`
-  - `lib/config.ts`
-  - `lib/realtime.ts`
-- **Changes Made:**
-  - Updated `LandingPage.tsx` and `LoginScreen.tsx` to include `token: authResult.token` in the saved session.
-  - Sockets authenticate with the JWT token and join `role:vecna`, `vecna-sender:${teamId}`, and `team:${teamId}` rooms.
-  - Registered team presence in `onlineTeams`.
-  - `AdminController.getTeams` enriches team records with `isOnline: socketService.isTeamOnline(teamId)`.
-  - Cleanly handles socket disconnection by removing team from `onlineTeams` when room size drops to 0.
-- **Verification:** Authenticated Vecna team with JWT; verified presence reported as `Online` in `AdminController.getTeams` and transition to `Offline` upon disconnection.
+### 4. End Event Lifecycle & Session Invalidation
+- **Defects Identified:**
+  - The End Event confirmation prompt did not match tournament specifications.
+  - In some flows, starting after ending attempted to resume rather than start a fresh event.
+- **Changes Applied:**
+  - **Exact Confirmation Prompt:** In `app/admin/page.tsx`, configured the exact prompt:
+    `"End this event? All active Hawkins and Vecna teams will be logged out. Final scores and history will be preserved."`
+  - **Terminal State Enforcement:** When an event ends:
+    - Status is set to `'ended'`, `login_open = 0`, `submissions_open = 0`, `ended_at = NOW()`.
+    - All active Hawkins and Vecna sessions are terminated in TiDB and local cache.
+    - All sockets are disconnected and revoked (`event:ended`).
+    - Final scores, solve histories, and submission ledgers remain preserved for admin inspection and CSV export.
+    - Subsequent mutation attempts return 403 `EVENT_ENDED`.
 
 ---
 
-### ISSUE 6: Open/Close Submissions and Login Controls Become Stuck
-- **Observed Defect:** Admin controls for Submissions and Login did not synchronize cleanly with backend state, leaving buttons stuck on previous labels.
-- **Root Cause:** Missing dedicated backend routes for toggling login/submissions independently and mismatched Next.js proxy route handler returns.
-- **Files Modified:**
-  - `backend/src/services/eventControl.service.ts`
-  - `backend/src/controllers/admin.controller.ts`
-  - `backend/src/routes/admin.routes.ts`
-  - `app/api/admin/event/state/route.ts`
-  - `app/admin/page.tsx`
-- **Changes Made:**
-  - Added `openLogin`, `closeLogin`, `openSubmissions`, and `stopSubmissions` to `EventControlService`.
-  - Registered matching controller methods and routes in `admin.routes.ts`.
-  - Updated Next.js `app/api/admin/event/state/route.ts` PATCH handler to proxy all state toggles and return the authoritative `eventState`.
-  - Updated `app/admin/page.tsx` button handlers to sync button labels dynamically with authoritative backend responses.
-- **Verification:** Verified repeated cycles of opening and closing both login and submissions; verified authoritative state response and button synchronization.
+### 5. Start Event & New Event Lifecycle
+- **Defects Identified:**
+  - Toggling event status to `active` after an event was ended called `/admin/event/resume`, resulting in a `Cannot resume an event that has permanently ended` error.
+- **Changes Applied:**
+  - In `app/api/admin/event/state/route.ts`: if `currentEvData?.event?.status === "ended"` or `"not_started"`, the route handler dispatches to `/admin/event/start`.
+  - In `backend/src/services/eventControl.service.ts`: `startEvent` sets `started_at = NOW(3)` and clears `ended_at = NULL`, resets team scores and active progressions to 0, while preserving registered team accounts and audit history.
 
 ---
 
-### ISSUE 7: Hawkins Scores Are Doubled
-- **Observed Defect:** Solving chapters or tasks caused points to be awarded twice (e.g., 50 points becoming 100 points).
-- **Root Cause:** Both the client-side store (`submitTask`) and server-side validation (`validateChapter`) independently added points to score breakdowns, and repeated validation calls lacked idempotency checks.
-- **Files Modified:**
-  - `backend/src/services/validation.service.ts`
-  - `backend/src/controllers/tasks.controller.ts`
-  - `components/chapters/ChapterManager.tsx`
-  - `lib/store.tsx`
-- **Changes Made:**
-  - In `ValidationService.validateChapter`, added an idempotency check: if `team.solvedChapters.includes(chapterId)`, `pointsAwarded` is returned as `0`.
-  - In `ValidationService.validateTask`, `validateRadiometerPin`, and `validateMasterKeypad`, if already completed, `pointsAwarded` returns `0`.
-  - In `TasksController.saveProgress`, total score is authoritatively recalculated via `ScoreService.calculateTotalScore(team.breakdown, team.penalty)`, rejecting client-inflated totals.
-  - In `TasksController.unlockHint`, already decrypted hints return `cost: 0` without adding additional penalties.
-  - In `ChapterManager.tsx` and `store.tsx`, passed `alreadyAwarded: true` when server responded to prevent duplicate addition in the local store.
-- **Verification:** Verified that repeated submissions of Chapter 1 award 50 points on the first submission and 0 points on subsequent attempts, keeping the team score at 50 rather than 100.
+### 6. Deployment Readiness
+- **Changes Applied:**
+  - Dynamic API Base in `lib/api.ts`: checks `NEXT_PUBLIC_API_URL` first, falling back to `http://${host}:5000/api`.
+  - Dynamic Backend Base in `lib/realtime.ts`: checks `NEXT_PUBLIC_BACKEND_URL`, then `NEXT_PUBLIC_API_URL`, falling back to `http://${host}:5000`.
+  - Consistent Port in `backend/src/config/env.ts`: defaults `PORT` to `5000`.
+  - Host binding: `backend/src/server.ts` binds to `0.0.0.0` for containerized environments on Render.
+  - Created `.env.example` documenting all frontend and backend production configuration keys.

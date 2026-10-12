@@ -1024,7 +1024,7 @@ export default function VecnaPage() {
                   letterSpacing: "0.04em",
                 }}
               >
-                +5 PTS
+                +10 PTS
               </div>
               <div
                 style={{

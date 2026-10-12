@@ -1489,7 +1489,7 @@ export default function AdminPage() {
                   type="button"
                   disabled={isUpdatingEvent || eventState.status === "ended"}
                   onClick={() => {
-                    if (confirm("Are you sure you want to END the event? Active participant sessions will be terminated and logins permanently closed.")) {
+                    if (confirm("End this event? All active Hawkins and Vecna teams will be logged out. Final scores and history will be preserved.")) {
                       updateEventStateAction({ status: "ended", submissionsOpen: false, loginOpen: false });
                     }
                   }}

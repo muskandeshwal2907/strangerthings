@@ -16,7 +16,7 @@
         "teamwork": 0
       },
       "penalty": 0,
-      "startedAt": null,
+      "startedAt": "2026-10-12T04:04:17.193Z",
       "finishedAt": null,
       "lastSolvedAt": null,
       "location": "town",
@@ -52,7 +52,7 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T16:15:20.095Z",
+      "updatedAt": "2026-10-12T04:04:44.935Z",
       "taskScores": {}
     },
     "T02": {
@@ -61,19 +61,19 @@
       "leaderName": "Maya Lin",
       "role": "PLAYER",
       "status": "ACTIVE",
-      "totalScore": 120,
+      "totalScore": 60,
       "breakdown": {
-        "tech": 50,
+        "tech": 10,
         "puzzle": 50,
-        "speed": 10,
+        "speed": 0,
         "clue": 0,
-        "story": 10,
+        "story": 0,
         "teamwork": 0
       },
       "penalty": 0,
-      "startedAt": "2026-10-11T22:40:40.058Z",
+      "startedAt": "2026-10-12T04:04:52.916Z",
       "finishedAt": null,
-      "lastSolvedAt": "2026-10-11T22:40:52.358Z",
+      "lastSolvedAt": "2026-10-12T04:04:55.897Z",
       "location": "town",
       "stage": "hawkins",
       "storyProgress": 5,
@@ -111,7 +111,7 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-12T02:51:22.502Z",
+      "updatedAt": "2026-10-12T04:04:55.897Z",
       "taskScores": {}
     },
     "T03": {
@@ -173,7 +173,7 @@
       "id": "T04",
       "teamName": "Byte Byters",
       "leaderName": "Dustin Henderson",
-      "role": "PLAYER",
+      "role": "VECNA",
       "status": "ACTIVE",
       "totalScore": 0,
       "breakdown": {
@@ -221,7 +221,7 @@
       "radiometerCodeSolved": false,
       "unlockedHints": {},
       "createdAt": "2026-10-10T22:48:58.653Z",
-      "updatedAt": "2026-10-11T16:15:20.095Z",
+      "updatedAt": "2026-10-12T04:04:43.536Z",
       "taskScores": {}
     },
     "T05": {

@@ -59,7 +59,7 @@ export async function PATCH(req: NextRequest) {
     } else if (body.status === "active") {
       const currentEvRes = await fetch(`${base}/event/state`, { cache: "no-store" }).catch(() => null);
       const currentEvData = currentEvRes?.ok ? await currentEvRes.json() : null;
-      if (currentEvData?.event?.status === "not_started") {
+      if (currentEvData?.event?.status === "not_started" || currentEvData?.event?.status === "ended") {
         await fetch(`${base}/admin/event/start`, { method: "POST", headers: { Authorization: token } });
       } else {
         await fetch(`${base}/admin/event/resume`, { method: "POST", headers: { Authorization: token } });

@@ -369,22 +369,32 @@ function PokemonFireRedBottomDialog({
     }
   }, [isTyping, lineIdx, lines.length, currentLine.length, mode, onNextEpisode, onComplete]);
 
-  const { unlockHint, isHintUnlocked } = useGame();
+  const { unlockHint, isHintUnlocked, score } = useGame();
   const dialogHintKey = `ch${chapter.id}-story-intel`;
   const isDialogUnlocked = isHintUnlocked(dialogHintKey);
+  const [isUnlockingIntel, setIsUnlockingIntel] = useState(false);
 
   const handleAskHint = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isUnlockingIntel) return;
+    if (score < 5) {
+      alert("INSUFFICIENT SCORE: You need at least 5 points to unlock an Intel Clue.");
+      return;
+    }
     const confirmed = window.confirm(
-      "TRANSMISSION WARNING: Requesting character intel will deduct 5 points (-5 PTS) from your team score. Proceed?"
+      "Use this Intel Clue? It will deduct 5 points from your current score."
     );
     if (!confirmed) return;
+    setIsUnlockingIntel(true);
     unlockHint(dialogHintKey, 5);
     const hintText = `${character.nameTag || character.name.toUpperCase()} INTEL: "${CHAPTER_HINTS[chapter.id] || "Investigate the facility telemetry carefully."}"`;
     setLines((prev) => [...prev, hintText]);
     setLineIdx((prev) => prev + 1);
     setCharCount(0);
     setIsTyping(true);
+    setTimeout(() => {
+      setIsUnlockingIntel(false);
+    }, 400);
   };
 
   useEffect(() => {

@@ -77,26 +77,7 @@ export default function SabotageOverlay() {
   if (sabotage && sabotage.kind === "MESSAGE" && !hide && isHawkinsOnly) {
     return (
       <AnimatePresence>
-        {/* Disturbing Full-Screen Telepathic Crimson Aura */}
-        <motion.div
-          key="vecna-vignette"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: [0.3, 0.65, 0.3] }}
-          exit={{ opacity: 0 }}
-          transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            pointerEvents: "none",
-            zIndex: 99990,
-            boxShadow:
-              "inset 0 0 100px rgba(220, 20, 35, 0.65), inset 0 0 220px rgba(120, 0, 15, 0.5)",
-            backgroundImage:
-              "radial-gradient(ellipse at center, transparent 40%, rgba(180, 0, 20, 0.2) 100%)",
-          }}
-        />
-
-        {/* The Vecna Telepathic Card with Red Glowing Demonic Hands */}
+        {/* The Vecna Telepathic Card with Subtle Stranger Things Red Vines Decoration */}
         <motion.div
           key={sabotage.id}
           initial={{ opacity: 0, x: -70, y: -20, scale: 0.88 }}
@@ -108,220 +89,101 @@ export default function SabotageOverlay() {
             top: "28px",
             left: "28px",
             zIndex: 99999,
-            width: "min(440px, 90vw)",
+            width: "min(480px, 92vw)",
             pointerEvents: "auto",
           }}
         >
-          {/* Detailed SVG: Red Glowing Demonic Vecna Hands Grasping Card From Behind */}
+          {/* Subtle Red Vines Decorating Perimeter (Stranger Things Atmospheric Vines) */}
           <svg
-            viewBox="0 0 520 280"
+            viewBox="0 0 500 240"
+            preserveAspectRatio="none"
             style={{
               position: "absolute",
-              top: "-52px",
-              left: "-48px",
-              width: "calc(100% + 96px)",
-              height: "calc(100% + 94px)",
+              top: "-8px",
+              left: "-8px",
+              width: "calc(100% + 16px)",
+              height: "calc(100% + 16px)",
               pointerEvents: "none",
-              zIndex: 10,
-              filter: "drop-shadow(0 0 16px rgba(255, 20, 35, 0.95)) drop-shadow(0 0 35px rgba(200, 0, 20, 0.65))",
+              zIndex: 1,
+              overflow: "visible",
+              filter: "drop-shadow(0 0 4px rgba(255, 45, 58, 0.4))",
             }}
           >
             <defs>
-              <linearGradient id="vecna-flesh-left" x1="0%" y1="100%" x2="60%" y2="0%">
-                <stop offset="0%" stopColor="#1a0204" />
-                <stop offset="40%" stopColor="#4a080e" />
-                <stop offset="75%" stopColor="#8c121d" />
-                <stop offset="100%" stopColor="#ff2a3a" />
+              <linearGradient id="vine-grad-main" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8a0f18" />
+                <stop offset="50%" stopColor="#c41c26" />
+                <stop offset="100%" stopColor="#6e0b12" />
               </linearGradient>
-              <linearGradient id="vecna-flesh-right" x1="100%" y1="100%" x2="40%" y2="0%">
-                <stop offset="0%" stopColor="#1a0204" />
-                <stop offset="40%" stopColor="#4a080e" />
-                <stop offset="75%" stopColor="#8c121d" />
-                <stop offset="100%" stopColor="#ff2a3a" />
+              <linearGradient id="vine-grad-accent" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#54070c" />
+                <stop offset="60%" stopColor="#a8151f" />
+                <stop offset="100%" stopColor="#ff2d3a" />
               </linearGradient>
-              <linearGradient id="vecna-vein" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ff6b76" />
-                <stop offset="50%" stopColor="#ff1f30" />
-                <stop offset="100%" stopColor="#a30915" />
-              </linearGradient>
-              <filter id="hand-glow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="4" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
             </defs>
 
-            {/* ────────── LEFT VECNA HAND & CLAWS ────────── */}
-            {/* Left Forearm & Palm creeping from bottom-left */}
+            {/* Top edge creeping vines */}
             <path
-              d="M 12,280 C 18,220 28,170 48,135 C 60,115 78,102 98,92 C 112,85 130,88 128,110 C 122,135 105,175 88,225 C 78,255 70,280 62,280 Z"
-              fill="url(#vecna-flesh-left)"
-              stroke="#ff2a3a"
-              strokeWidth="1.5"
-            />
-            {/* Left Hand Veins */}
-            <path
-              d="M 32,260 Q 48,190 68,145 T 102,105"
+              d="M -4,12 Q 40,2 95,8 T 210,5 Q 310,12 410,4 T 504,10"
               fill="none"
-              stroke="url(#vecna-vein)"
-              strokeWidth="2.2"
+              stroke="url(#vine-grad-main)"
+              strokeWidth="1.8"
               strokeLinecap="round"
             />
             <path
-              d="M 52,210 Q 72,175 88,140"
+              d="M 60,6 Q 85,-4 110,4 M 180,5 Q 200,-3 225,3 M 360,6 Q 385,-2 405,5"
               fill="none"
-              stroke="#ff4d58"
-              strokeWidth="1.4"
-            />
-
-            {/* Left Finger 1 (Index Finger curling tightly over top-left card border) */}
-            <path
-              d="M 85,95 C 80,72 88,48 108,32 C 122,22 138,20 148,32 C 154,42 152,58 142,70 C 135,78 120,86 105,92 Z"
-              fill="url(#vecna-flesh-left)"
-              stroke="#ff2d3a"
-              strokeWidth="1.5"
-            />
-            {/* Sharp razor claw tip pressing down over top edge */}
-            <path
-              d="M 148,32 C 158,36 166,48 162,62 C 156,58 152,48 148,32 Z"
-              fill="#260307"
-              stroke="#ff4d58"
-              strokeWidth="1.6"
-            />
-
-            {/* Left Finger 2 (Middle Demonic Finger — longest, reaching high over card) */}
-            <path
-              d="M 102,88 C 105,58 122,25 148,10 C 168,-2 188,4 195,18 C 202,32 198,52 182,68 C 168,82 145,90 120,95 Z"
-              fill="url(#vecna-flesh-left)"
-              stroke="#ff2d3a"
-              strokeWidth="1.5"
-            />
-            {/* Middle Claw razor talon */}
-            <path
-              d="M 195,18 C 208,25 214,40 206,56 C 199,50 196,36 195,18 Z"
-              fill="#1f0205"
-              stroke="#ff3b47"
-              strokeWidth="1.8"
-            />
-            {/* Middle Finger Knuckle Vein */}
-            <path
-              d="M 125,75 Q 148,42 172,25"
-              fill="none"
-              stroke="url(#vecna-vein)"
-              strokeWidth="1.8"
-            />
-
-            {/* Left Finger 3 (Ring Finger curling over top edge) */}
-            <path
-              d="M 118,98 C 135,75 160,52 188,44 C 206,38 222,46 225,60 C 228,74 218,88 198,96 C 178,104 150,105 130,102 Z"
-              fill="url(#vecna-flesh-left)"
-              stroke="#ff2d3a"
-              strokeWidth="1.5"
-            />
-            {/* Ring Finger Claw */}
-            <path
-              d="M 225,60 C 235,68 238,82 228,95 C 224,88 222,76 225,60 Z"
-              fill="#240206"
-              stroke="#ff4d58"
-              strokeWidth="1.5"
-            />
-
-            {/* Left Thumb (Curling tightly around the left side border) */}
-            <path
-              d="M 68,138 C 55,148 45,165 48,185 C 50,198 62,206 75,200 C 88,194 92,176 88,158 C 85,145 78,138 68,138 Z"
-              fill="url(#vecna-flesh-left)"
-              stroke="#ff2d3a"
-              strokeWidth="1.5"
-            />
-            <path
-              d="M 48,185 C 40,195 44,212 58,214 C 54,204 50,194 48,185 Z"
-              fill="#1a0204"
-              stroke="#ff3b47"
-              strokeWidth="1.6"
-            />
-
-            {/* ────────── RIGHT VECNA HAND & CLAWS ────────── */}
-            {/* Right Forearm & Palm creeping from bottom-right */}
-            <path
-              d="M 508,280 C 502,220 492,170 472,135 C 460,115 442,102 422,92 C 408,85 390,88 392,110 C 398,135 415,175 432,225 C 442,255 450,280 458,280 Z"
-              fill="url(#vecna-flesh-right)"
-              stroke="#ff2a3a"
-              strokeWidth="1.5"
-            />
-            {/* Right Hand Veins */}
-            <path
-              d="M 488,260 Q 472,190 452,145 T 418,105"
-              fill="none"
-              stroke="url(#vecna-vein)"
-              strokeWidth="2.2"
+              stroke="url(#vine-grad-accent)"
+              strokeWidth="1.1"
               strokeLinecap="round"
             />
 
-            {/* Right Finger 1 (Index Finger curling over top-right card border) */}
+            {/* Bottom edge creeping vines */}
             <path
-              d="M 435,95 C 440,72 432,48 412,32 C 398,22 382,20 372,32 C 366,42 368,58 378,70 C 385,78 400,86 415,92 Z"
-              fill="url(#vecna-flesh-right)"
-              stroke="#ff2d3a"
-              strokeWidth="1.5"
-            />
-            {/* Right Index Claw talon */}
-            <path
-              d="M 372,32 C 362,36 354,48 358,62 C 364,58 368,48 372,32 Z"
-              fill="#260307"
-              stroke="#ff4d58"
-              strokeWidth="1.6"
-            />
-
-            {/* Right Finger 2 (Middle Finger — reaching over top right) */}
-            <path
-              d="M 418,88 C 415,58 398,25 372,10 C 352,-2 332,4 325,18 C 318,32 322,52 338,68 C 352,82 375,90 400,95 Z"
-              fill="url(#vecna-flesh-right)"
-              stroke="#ff2d3a"
-              strokeWidth="1.5"
-            />
-            {/* Right Middle Claw talon */}
-            <path
-              d="M 325,18 C 312,25 306,40 314,56 C 321,50 324,36 325,18 Z"
-              fill="#1f0205"
-              stroke="#ff3b47"
-              strokeWidth="1.8"
-            />
-            <path
-              d="M 395,75 Q 372,42 348,25"
+              d="M -4,228 Q 65,236 150,230 T 320,234 Q 415,228 504,232"
               fill="none"
-              stroke="url(#vecna-vein)"
+              stroke="url(#vine-grad-main)"
               strokeWidth="1.8"
-            />
-
-            {/* Right Thumb (Curling tightly around the right side border) */}
-            <path
-              d="M 452,138 C 465,148 475,165 472,185 C 470,198 458,206 445,200 C 432,194 428,176 432,158 C 435,145 442,138 452,138 Z"
-              fill="url(#vecna-flesh-right)"
-              stroke="#ff2d3a"
-              strokeWidth="1.5"
-            />
-            <path
-              d="M 472,185 C 480,195 476,212 462,214 C 466,204 470,194 472,185 Z"
-              fill="#1a0204"
-              stroke="#ff3b47"
-              strokeWidth="1.6"
-            />
-
-            {/* Creeping Crimson Tendrils & Roots along bottom & perimeter */}
-            <path
-              d="M 25,270 Q 70,260 140,268 T 280,264 Q 400,270 495,268"
-              fill="none"
-              stroke="#8c0e18"
-              strokeWidth="3"
               strokeLinecap="round"
             />
             <path
-              d="M 120,268 Q 180,250 240,265 T 380,255"
+              d="M 80,232 Q 105,242 130,234 M 250,233 Q 275,243 300,235 M 390,231 Q 415,241 440,233"
               fill="none"
-              stroke="#ff2a3a"
-              strokeWidth="1.8"
+              stroke="url(#vine-grad-accent)"
+              strokeWidth="1.1"
+              strokeLinecap="round"
+            />
+
+            {/* Left edge subtle curling vine */}
+            <path
+              d="M 8,-4 Q 2,60 7,120 T 4,244"
+              fill="none"
+              stroke="url(#vine-grad-main)"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+            <path
+              d="M 6,45 Q -4,65 5,85 M 5,150 Q -3,170 6,190"
+              fill="none"
+              stroke="url(#vine-grad-accent)"
+              strokeWidth="1.1"
+              strokeLinecap="round"
+            />
+
+            {/* Right edge subtle curling vine */}
+            <path
+              d="M 492,-4 Q 498,60 493,120 T 496,244"
+              fill="none"
+              stroke="url(#vine-grad-main)"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+            <path
+              d="M 494,50 Q 504,70 495,90 M 495,155 Q 503,175 494,195"
+              fill="none"
+              stroke="url(#vine-grad-accent)"
+              strokeWidth="1.1"
+              strokeLinecap="round"
             />
           </svg>
 

@@ -54,12 +54,37 @@ export const TasksController = {
             message: "CLASSIFIED INTEL ALREADY DECRYPTED (NO ADDITIONAL PENALTY)",
           });
         }
+
+        const currentScore = typeof team.totalScore === "number" ? team.totalScore : 0;
+        if (currentScore < penaltyCost) {
+          return res.status(400).json({
+            success: false,
+            error: "INSUFFICIENT_BALANCE",
+            message: "Insufficient score balance. You need at least 5 points to unlock an Intel Clue.",
+          });
+        }
+
         const nextHints = { ...team.unlockedHints, [hintKey]: true };
-        db.updateTeam(team.id, {
+        const updated = db.updateTeam(team.id, {
           unlockedHints: nextHints,
           penalty: team.penalty + penaltyCost,
         });
         socketService.broadcastLeaderboard();
+
+        if (updated) {
+          const scorePayload = {
+            type: "SCORE_UPDATE",
+            teamId: team.id,
+            teamName: team.teamName,
+            newScore: updated.totalScore,
+            delta: -penaltyCost,
+            breakdown: updated.breakdown,
+            source: "INTEL_CLUE",
+            ts: Date.now(),
+          };
+          socketService.emitToTeam(team.id, "score:update", scorePayload);
+          socketService.broadcast("score:update", scorePayload);
+        }
       }
     }
 

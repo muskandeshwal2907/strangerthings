@@ -398,11 +398,12 @@ export const AdminController = {
     const isUnstarted = eventState.status === "not_started";
 
     const teams = rawTeams.map((t, idx) => {
-      const isSocketOnline = socketService.isTeamOnline(t.id);
-      const hasActiveSession = activeSessionTeamIds.has(t.id) || SessionService.hasActiveSessionSync(t.id);
-      // Online if socket is connected OR an active session exists
-      const isOnline = isSocketOnline || hasActiveSession;
       const numPart = t.id.replace(/\D/g, "") || String(idx + 1);
+      const defaultUsername = `TEAM${numPart.padStart(2, "0")}`;
+      const defaultPassword = `hawkins83_${numPart.padStart(2, "0")}`;
+      // Sockets alone determine online presence via verified JWT authentication
+      const isOnline = socketService.isTeamOnline(t.id) || socketService.isTeamOnline((t as any).username || defaultUsername);
+      const hasActiveSession = activeSessionTeamIds.has(t.id) || SessionService.hasActiveSessionSync(t.id);
 
       const distinctStages = new Set<number>();
       (t.solvedChapters || []).forEach((c) => {
@@ -418,6 +419,8 @@ export const AdminController = {
       });
 
       const isVecna = t.role === "VECNA";
+      const username = t.id === "VECNA-001" ? "VECNA-001" : ((t as any).username || defaultUsername);
+      const password = t.id === "VECNA-001" ? "HAWKINS1986" : ((t as any).password || defaultPassword);
 
       return {
         ...t,
@@ -425,8 +428,8 @@ export const AdminController = {
         teamId: t.id,
         score: isUnstarted ? 0 : (typeof t.totalScore === "number" ? t.totalScore : 0),
         totalScore: isUnstarted ? 0 : (typeof t.totalScore === "number" ? t.totalScore : 0),
-        username: isVecna ? "VECNA-001" : ((t as any).username || `TEAM${numPart.padStart(2, "0")}`),
-        password: isVecna ? "HAWKINS1986" : ((t as any).password || `hawkins83_${numPart.padStart(2, "0")}`),
+        username,
+        password,
         isOnline,
         hasSession: hasActiveSession,
         solvedCount: isUnstarted ? 0 : (isVecna ? 0 : distinctStages.size),

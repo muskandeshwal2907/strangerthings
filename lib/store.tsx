@@ -153,7 +153,7 @@ const KEY = CONFIG.STORAGE_KEY;
 export const stageIndex = (s: StageId) => STAGE_ORDER.indexOf(s);
 
 export const totalScore = (b: Breakdown, penalty = 0) =>
-  Math.max(0, b.tech + b.puzzle + b.clue + b.speed + b.story + b.teamwork - penalty);
+  Math.round(b.tech + b.puzzle + b.clue + b.speed + b.story + b.teamwork - penalty);
 
 interface Ctx {
   s: GameState;
@@ -1353,6 +1353,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
       if (cur.unlockedHints?.[hintKey]) return true;
+
+      const currentScore = totalScore(cur.breakdown, cur.penalty);
+      if (currentScore < cost) {
+        say("INSUFFICIENT SCORE: You need at least 5 points to unlock an Intel Clue.");
+        sfx("err");
+        return false;
+      }
 
       sfx("clue");
       setS((p) => ({

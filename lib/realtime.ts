@@ -146,7 +146,10 @@ export function getSocket(): Socket | null {
   if (!socketInstance) {
     try {
       const host = window.location.hostname || "localhost";
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || `http://${host}:5055`;
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "") : "") ||
+        `http://${host}:5000`;
 
       let token = "";
       try {
@@ -168,7 +171,7 @@ export function getSocket(): Socket | null {
       });
 
       socketInstance.on("connect", () => {
-        console.log("[SOCKET.IO] Connected to Hawkins Security Mainframe on Port 5000");
+        console.log(`[SOCKET.IO] Connected to Hawkins Security Mainframe at ${backendUrl}`);
         if (token) {
           socketInstance?.emit("authenticate", { token });
         }
@@ -224,14 +227,10 @@ export function getSocket(): Socket | null {
         });
       });
 
+      let lastSabotageId = 0;
       socketInstance.on("sabotage", (data: any) => {
-        dispatchToSubscribers({
-          type: "sabotage",
-          ...data,
-        });
-      });
-
-      socketInstance.on("sabotage:received", (data: any) => {
+        if (data?.id && data.id === lastSabotageId) return;
+        if (data?.id) lastSabotageId = data.id;
         dispatchToSubscribers({
           type: "sabotage",
           ...data,

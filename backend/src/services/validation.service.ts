@@ -185,9 +185,10 @@ export const ValidationService = {
     const isTaskSecretCorrect = taskSecret && taskSecret.answerPattern.test(candidateAnswer);
 
     if (isMcqCorrect || isTaskSecretCorrect) {
-      const basePoints = rawChapter.points || 50;
-      const speedBonus = team ? ScoreService.calculateSpeedBonus(basePoints, team.startedAt) : 0;
-      const totalAwarded = basePoints + speedBonus;
+      // Unified scoring rules: Correct = +10 PTS, Wrong = 0 PTS
+      const basePoints = 10;
+      const speedBonus = 0;
+      const totalAwarded = basePoints;
 
       if (team) {
         const isAlreadySolved = team.solvedChapters?.includes(chapterId);
@@ -217,8 +218,6 @@ export const ValidationService = {
           breakdown: {
             ...team.breakdown,
             tech: team.breakdown.tech + basePoints,
-            speed: team.breakdown.speed + speedBonus,
-            story: team.breakdown.story + 10,
           },
         });
 

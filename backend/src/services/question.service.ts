@@ -401,6 +401,23 @@ export class QuestionService {
           };
         }
 
+        // Must have >= penalty balance before consuming Intel Clue
+        const [scoreCheckRows] = await pool.query<any[]>(
+          "SELECT COALESCE(SUM(points_delta), 0) AS total FROM score_ledger WHERE team_id = ?",
+          [teamId]
+        );
+        const availableBalance = Number(scoreCheckRows?.[0]?.total || 0);
+        if (availableBalance < penalty) {
+          return {
+            success: false,
+            hintId,
+            hintText: "",
+            penaltyPoints: 0,
+            currentScore: availableBalance,
+            error: "INSUFFICIENT_BALANCE",
+          };
+        }
+
         // Record usage and negative penalty ledger entry atomically
         const conn = await pool.getConnection();
         try {
@@ -456,12 +473,25 @@ export class QuestionService {
       }
     }
 
+    const team = db.getTeamById(teamId);
+    const curScore = team?.totalScore || 0;
+    if (curScore < 5) {
+      return {
+        success: false,
+        hintId,
+        hintText: "",
+        penaltyPoints: 0,
+        currentScore: curScore,
+        error: "INSUFFICIENT_BALANCE",
+      };
+    }
+
     return {
       success: true,
       hintId,
       hintText: "Recall the forensic autopsy log file 14-B.",
       penaltyPoints: 5,
-      currentScore: (db.getTeamById(teamId)?.totalScore || 0) - 5,
+      currentScore: curScore - 5,
     };
   }
 }

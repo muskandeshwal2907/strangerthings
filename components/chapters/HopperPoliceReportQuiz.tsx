@@ -688,8 +688,13 @@ export default function HopperPoliceReportQuiz({
 
               const handleUnlockHint = (e: React.MouseEvent) => {
                 e.stopPropagation();
+                if (isUnlocking) return;
+                if (score < 5) {
+                  alert("INSUFFICIENT SCORE: You need at least 5 points to unlock an Intel Clue.");
+                  return;
+                }
                 const confirmed = window.confirm(
-                  "TRANSMISSION WARNING: Unlocking this classified intel clue will deduct 5 points (-5 PTS) from your team score. Proceed?"
+                  "Use this Intel Clue? It will deduct 5 points from your current score."
                 );
                 if (!confirmed) return;
                 setUnlockingHintKey(currentHintKey);
