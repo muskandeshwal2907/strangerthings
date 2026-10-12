@@ -78,9 +78,9 @@ export const ValidationService = {
         }
       });
 
-      // Strictly 10 points per correct question (+10 PTS rule)
-      const basePoints = correctCount * 10;
-      const totalAwarded = basePoints;
+      // Questions are already individually evaluated and scored via QuestionService (+10 PTS per correct question).
+      // Final docket submission completes the chapter milestone and must NOT double-award points (+20 glitch fix).
+      const totalAwarded = 0;
 
       if (team) {
         const isAlreadySolved = team.solvedChapters?.includes(chapterId);
@@ -133,36 +133,19 @@ export const ValidationService = {
           unlockedLocations: nextUnlocked,
           storyProgress: Math.max(team.storyProgress, nextProgress),
           lastSolvedAt: new Date().toISOString(),
-          breakdown: {
-            ...team.breakdown,
-            tech: team.breakdown.tech + basePoints,
-          },
         });
 
-        // Record in TiDB ledger & solve history
-        db.recordChapterSolve(team.id, chapterId, basePoints).catch(() => {});
+        // Record in TiDB chapter_solves
+        db.recordChapterSolve(team.id, chapterId, 0).catch(() => {});
 
         if (updated) {
-          const scorePayload = {
-            type: "SCORE_UPDATE",
-            teamId: team.id,
-            teamName: team.teamName,
-            newScore: updated.totalScore,
-            delta: totalAwarded,
-            chapterId,
-            taskId,
-            breakdown: updated.breakdown,
-            source: "CHAPTER_SOLVED",
-            ts: Date.now(),
-          };
-          socketService.emitToTeam(team.id, "score:update", scorePayload);
-          socketService.broadcast("score:update", scorePayload);
+          socketService.broadcastLeaderboard();
         }
       }
 
       return {
         success: true,
-        pointsAwarded: totalAwarded,
+        pointsAwarded: 0,
         speedBonus: 0,
         correctCount,
         totalCount: questions.length,

@@ -435,10 +435,10 @@ export const AdminController = {
 
     const teams = rawTeams.map((t, idx) => {
       const numPart = t.id.replace(/\D/g, "") || String(idx + 1);
-      const defaultUsername = `TEAM${numPart.padStart(2, "0")}`;
-      const defaultPassword = `hawkins83_${numPart.padStart(2, "0")}`;
+      const defaultUsername = t.id === "VECNA-001" ? "VECNA-001" : `TEAM${numPart.padStart(2, "0")}`;
+      const defaultPassword = t.id === "VECNA-001" ? "HAWKINS1986" : `hawkins83_${numPart.padStart(2, "0")}`;
       // Sockets alone determine online presence via verified JWT authentication
-      const isOnline = socketService.isTeamOnline(t.id) || socketService.isTeamOnline(t.teamName) || socketService.isTeamOnline((t as any).username || defaultUsername);
+      const isOnline = socketService.isTeamOnline(t.id);
       const hasActiveSession = activeSessionTeamIds.has(t.id) || SessionService.hasActiveSessionSync(t.id);
 
       const distinctStages = new Set<number>();

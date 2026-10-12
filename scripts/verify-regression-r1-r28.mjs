@@ -542,10 +542,12 @@ async function runRegressionSuite() {
       post("/questions/ch1-q1/submit", { answer: "B" }, token),
       (async () => {
         s.disconnect();
+        s.close();
         await wait(100);
         const s2 = io(SOCKET_URL, { auth: { token }, transports: ["websocket"] });
         await wait(200);
         s2.disconnect();
+        s2.close();
       })(),
     ]);
 
@@ -570,6 +572,7 @@ async function runRegressionSuite() {
 
     // Disconnect socket & logout
     s.disconnect();
+    s.close();
     await wait(400);
     await post("/auth/logout", {}, token);
 

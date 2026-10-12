@@ -63,6 +63,7 @@ export interface TeamInfo {
   timeRemaining: number;
   vecnaStatus: "INACTIVE" | "ACTIVE";
   unlocked: Record<string, boolean>;
+  solvedChapters?: number[];
 }
 
 export interface GameState {

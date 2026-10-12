@@ -487,28 +487,6 @@ export default function HopperPoliceReportQuiz({
             <span>📁</span>
             <span>CASE BRIEFING</span>
           </button>
-
-          {/* Case Points Badge */}
-          <div
-            style={{
-              padding: "6px 12px",
-              background: "rgba(0,0,0,0.65)",
-              border: "1.5px solid rgba(255,180,84,0.4)",
-              borderRadius: 4,
-              color: "#ffb454",
-              fontFamily: "'Benguiat Bold', serif",
-              fontSize: 11.5,
-              fontWeight: 800,
-              letterSpacing: ".14em",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <span>+{points} PTS</span>
-            <span style={{ fontSize: 9.5, opacity: 0.75, fontFamily: "'Courier New', monospace" }}>[5 PTS/Q]</span>
-          </div>
         </div>
       </div>
 
@@ -653,20 +631,6 @@ export default function HopperPoliceReportQuiz({
                   </button>
                 );
               })}
-            </div>
-
-            <div
-              style={{
-                fontSize: 11,
-                color: "#544638",
-                fontWeight: 800,
-                letterSpacing: ".08em",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-                marginLeft: 8,
-              }}
-            >
-              VERIFIED SCORE: <b style={{ color: "#b81d24" }}>{verifiedScore}</b> / {totalQuestions * 5} PTS · COMPLETED: <b>{doneCount}</b> / {totalQuestions}
             </div>
           </div>
         )}
@@ -995,7 +959,7 @@ export default function HopperPoliceReportQuiz({
                   }}
                 >
                   <span>🔒</span>
-                  <span>SUBMIT LEVEL (+5 PTS)</span>
+                  <span>SUBMIT LEVEL</span>
                 </button>
               ) : (
                 <div
@@ -1011,7 +975,7 @@ export default function HopperPoliceReportQuiz({
                     background: currentQState.status === "solved" ? "#e8f5e9" : "#ffebee",
                   }}
                 >
-                  {currentQState.status === "solved" ? "✓ LEVEL CLEARED (+5 PTS)" : "✕ TESTIMONY REJECTED (0 PTS)"}
+                  {currentQState.status === "solved" ? "✓ LEVEL CLEARED" : "✕ TESTIMONY REJECTED (0 PTS)"}
                 </div>
               )}
             </div>
@@ -1170,7 +1134,7 @@ export default function HopperPoliceReportQuiz({
             {isPaused
               ? "TOURNAMENT PAUSED BY HAWKINS COMMAND"
               : allQuestionsDone
-              ? `SUBMIT FINAL REPORT (+${verifiedScore} PTS) ➔`
+              ? "SUBMIT FINAL REPORT ➔"
               : `COMPLETE ALL ITEMS TO SUBMIT [${doneCount}/${totalQuestions}]`}
           </button>
         </div>

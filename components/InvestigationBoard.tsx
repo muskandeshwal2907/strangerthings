@@ -136,6 +136,10 @@ export default function InvestigationBoard({
   // Check if a chapter is cleared
   const isChapterCleared = useCallback(
     (chapterId: number) => {
+      // 1. Direct check on solvedChapters array from team record/state
+      if (s.team?.solvedChapters?.includes(chapterId)) return true;
+
+      // 2. Direct check on completedTasks or solved tasks
       const taskIds = [
         `ch${chapterId}`,
         `ch${chapterId}-quiz`,
@@ -145,16 +149,24 @@ export default function InvestigationBoard({
         `ch${chapterId}-forest`,
         `ch${chapterId}-radio-tower`,
         `ch${chapterId}-gate`,
+        `ch${chapterId}-upsidedown`,
+        `ch${chapterId}-coding`,
       ];
+      if (taskIds.some((tid) => s.completedTasks.includes(tid) || !!s.solved[tid])) return true;
+
+      // 3. Check any task in completedTasks that begins with ch${chapterId}- or ch${chapterId}
+      if (s.completedTasks.some((tid) => tid === `ch${chapterId}` || tid.startsWith(`ch${chapterId}-`))) return true;
+
+      // 4. Specific milestone task aliases
       if (chapterId === 1 && (s.completedTasks.includes("town-1") || s.solved["town-1"])) return true;
       if (chapterId === 4 && (s.completedTasks.includes("lab-terminal") || s.solved["lab-terminal"])) return true;
-      if (chapterId === 5 && (s.completedTasks.includes("forest-marks") || s.solved["forest-marks"])) return true;
-      if (chapterId === 6 && (s.completedTasks.includes("tower-pins") || s.solved["tower-pins"] || s.radiometer?.pinsSolved?.every(Boolean))) return true;
+      if (chapterId === 5 && (s.completedTasks.includes("forest-marks") || s.solved["forest-marks"] || s.completedTasks.includes("tower-pins") || s.solved["tower-pins"] || s.radiometer?.pinsSolved?.every(Boolean))) return true;
+      if (chapterId === 6 && (s.completedTasks.includes("ch6-upsidedown") || s.solved["ch6-upsidedown"] || s.completedTasks.includes("gate-unlock") || s.solved["gate-unlock"])) return true;
       if (chapterId === 7 && (s.completedTasks.includes("gate-unlock") || s.solved["gate-unlock"])) return true;
 
-      return taskIds.some((tid) => s.completedTasks.includes(tid) || !!s.solved[tid]);
+      return false;
     },
-    [s.completedTasks, s.solved, s.radiometer]
+    [s.team?.solvedChapters, s.completedTasks, s.solved, s.radiometer]
   );
 
   // Check if a chapter is unlocked:

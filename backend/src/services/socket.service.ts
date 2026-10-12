@@ -21,15 +21,12 @@ class SocketService {
     if ((cleanA === "VECNA" && cleanB === "VECNA-001") || (cleanA === "VECNA-001" && cleanB === "VECNA")) {
       return true;
     }
-    const numA = cleanA.replace(/\D/g, "");
-    const numB = cleanB.replace(/\D/g, "");
-    if (numA && numB && parseInt(numA, 10) === parseInt(numB, 10)) {
-      if (
-        (cleanA.startsWith("T") || cleanA.startsWith("TEAM")) &&
-        (cleanB.startsWith("T") || cleanB.startsWith("TEAM"))
-      ) {
-        return true;
-      }
+    // Only match standard team identifiers: T01, T1, TEAM01, TEAM1, TEAM-01
+    // Do NOT match arbitrary strings like TEAM_R1 or VECNA-001 to T01!
+    const mA = cleanA.match(/^(?:T|TEAM)-?0*(\d+)$/);
+    const mB = cleanB.match(/^(?:T|TEAM)-?0*(\d+)$/);
+    if (mA && mB && parseInt(mA[1], 10) === parseInt(mB[1], 10)) {
+      return true;
     }
     return false;
   }
