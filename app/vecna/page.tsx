@@ -322,7 +322,7 @@ export default function VecnaPage() {
         }
       }
 
-      const isCorrect = data.isCorrect ?? (chosen.trim().toUpperCase() === currentQuestion.correctAnswerId.trim().toUpperCase());
+      const isCorrect = Boolean(data.isCorrect);
 
       if (isCorrect) {
         sfx("boom");
@@ -376,35 +376,10 @@ export default function VecnaPage() {
         }
       }
     } catch (e) {
-      // Local fallback
-      const isCorrect = chosen.trim().toUpperCase() === currentQuestion.correctAnswerId.trim().toUpperCase();
-      if (isCorrect) {
-        sfx("boom");
-        setSolvedQuestions((prev) => ({
-          ...prev,
-          [`${currentTrial.id}-${activeQuestionIdx}`]: true,
-        }));
-        setSuccessMessage(`LEVEL ${activeQuestionIdx + 1} OVERRIDE CONFIRMED (+10 PTS)`);
-        if (activeQuestionIdx < totalQuestionsForTrial - 1) {
-          setTimeout(() => {
-            setActiveQuestionIdx((i) => i + 1);
-            setSuccessMessage(null);
-          }, 650);
-        }
-      } else {
-        sfx("err");
-        setFailedQuestions((prev) => ({
-          ...prev,
-          [`${currentTrial.id}-${activeQuestionIdx}`]: true,
-        }));
-        setErrorMessage(`INCORRECT VECTOR · LEVEL ${activeQuestionIdx + 1} RECORDED (0 PTS)`);
-        if (activeQuestionIdx < totalQuestionsForTrial - 1) {
-          setTimeout(() => {
-            setActiveQuestionIdx((i) => i + 1);
-            setErrorMessage(null);
-          }, 650);
-        }
-      }
+      setErrorMessage("VECNA TELEMETRY DISCONNECTED: Central server unreachable. Solutions cannot be evaluated offline.");
+      sfx("err");
+      setTimeout(() => setErrorMessage(null), 3000);
+      return;
     }
   };
 

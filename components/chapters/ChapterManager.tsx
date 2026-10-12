@@ -1004,16 +1004,11 @@ export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = 
       console.warn("[CHAPTER BACKEND VALIDATION FALLBACK]", e);
     }
 
-    // If standalone backend was offline, validate locally against canonical answer key
+    // Authoritative backend validation enforcement: reject offline local evaluation
     if (!serverResponded) {
-      for (let idx = 0; idx < questions.length; idx++) {
-        const q = questions[idx];
-        const chosen = answers[idx] || "";
-        if (chosen && q.correctAnswerId && chosen.trim().toUpperCase() === q.correctAnswerId.trim().toUpperCase()) {
-          correctCount++;
-          totalPointsAwarded += 5;
-        }
-      }
+      say("HAWKINS MAINFRAME OFFLINE: Central server unreachable. Solutions cannot be evaluated offline.");
+      sfx("err");
+      return;
     }
 
     sfx("ok");

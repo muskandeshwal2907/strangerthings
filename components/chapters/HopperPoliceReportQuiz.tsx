@@ -212,12 +212,21 @@ export default function HopperPoliceReportQuiz({
         isCorrect = Boolean(data.isCorrect);
         earnedPoints = typeof data.pointsAwarded === "number" ? data.pointsAwarded : (isCorrect ? 10 : 0);
       } else {
-        isCorrect = Boolean(currentQ.correctAnswerId && chosen.trim().toUpperCase() === currentQ.correctAnswerId.trim().toUpperCase());
-        earnedPoints = isCorrect ? 10 : 0;
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 403 && errData.error === "EVENT_PAUSED") {
+          say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+        } else if (res.status === 403 && errData.error === "EVENT_ENDED") {
+          say("HAWKINS COMMAND: TOURNAMENT CONCLUDED. SUBMISSIONS CLOSED.");
+        } else {
+          say(errData.message || "COMMUNICATION FAILURE: Mainframe rejected transmission.");
+        }
+        sfx("err");
+        return;
       }
-    } catch {
-      isCorrect = Boolean(currentQ.correctAnswerId && chosen.trim().toUpperCase() === currentQ.correctAnswerId.trim().toUpperCase());
-      earnedPoints = isCorrect ? 10 : 0;
+    } catch (e) {
+      say("TRANSMISSION ERROR: Central server unreachable. Solutions cannot be evaluated while offline.");
+      sfx("err");
+      return;
     }
 
     if (isCorrect) {
