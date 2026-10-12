@@ -146,9 +146,6 @@ class SocketService {
       this.onlineTeams.add(sess.teamId);
 
       if (sess.role === "VECNA") {
-        this.onlineTeams.add("VECNA");
-        this.onlineTeams.add("VECNA-001");
-        if (sess.teamId) this.onlineTeams.add(sess.teamId);
         socket.join("role:vecna");
         socket.join(`vecna-sender:${sess.teamId}`);
         socket.join(`team:${sess.teamId}`);
@@ -211,6 +208,11 @@ class SocketService {
           if (teamSet.size === 0) {
             this.teamSockets.delete(session.teamId);
             this.onlineTeams.delete(session.teamId);
+            for (const key of Array.from(this.onlineTeams)) {
+              if (this.isCanonicalMatch(key, session.teamId)) {
+                this.onlineTeams.delete(key);
+              }
+            }
             this.broadcastLeaderboard();
             this.io?.to("admins").emit("presence:update", { teamId: session.teamId, isOnline: false });
             this.io?.to("public:broadcast").emit("presence:update", { teamId: session.teamId, isOnline: false });
