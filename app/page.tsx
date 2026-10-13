@@ -24,12 +24,22 @@ export default function Home() {
   }, [hydrated, session]);
 
   if (!hydrated) {
-    return <div style={{ minHeight: "100vh", background: "#000" }} />;
+    return <LandingPage onEnterVecna={() => setShowVecnaChosen(true)} />;
   }
+
 
   // Vecna Entry Screen (Image 2) when user has Vecna role
   if (showVecnaChosen || (session && session.role === "VECNA")) {
     return <VecnaEntryScreen onEnter={() => router.push("/vecna")} />;
+  }
+
+  // Allow direct viewing of landing page via query param (e.g. ?landing=1)
+  const forceLanding =
+    typeof window !== "undefined" &&
+    (window.location.search.includes("landing=1") || window.location.search.includes("force=1"));
+
+  if (forceLanding) {
+    return <LandingPage onEnterVecna={() => setShowVecnaChosen(true)} />;
   }
 
   // Without a valid player session, show the Image 1 Landing Page

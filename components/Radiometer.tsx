@@ -493,9 +493,9 @@ function Keypad({ onFail }: { onFail?: () => void }) {
   const [fails, setFails] = useState(0);
   const rm = s.radiometer;
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = submitRadiometerCode(code);
+    const ok = await submitRadiometerCode(code);
     if (ok) {
       say("LAB ACCESS GRANTED — DOOR UNLOCKED");
     } else {

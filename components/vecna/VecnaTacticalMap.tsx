@@ -354,54 +354,39 @@ export default function VecnaTacticalMap({
                   </g>
                 </g>
 
-                {/* TEAMS AT THIS LOCATION (Clearly visible & clickable) */}
+                {/* TEAMS AT THIS LOCATION (Only number of teams displayed) */}
                 {teamsHere.length > 0 && (
                   <g transform={`translate(${loc.x + 12}, ${loc.y + 14})`}>
-                    {teamsHere.map((t, tIdx) => {
-                      const badgeText = `${t.id} ${t.name}`;
-                      const badgeWidth = badgeText.length * 6.5 + 16;
-                      const yOffset = tIdx * 18;
-
-                      return (
-                        <g
-                          key={t.id}
-                          transform={`translate(0, ${yOffset})`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            sfx("click");
-                            if (onInspectTeam) onInspectTeam(t.id);
-                          }}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <rect
-                            x="0"
-                            y="0"
-                            width={badgeWidth}
-                            height="16"
-                            rx="3"
-                            fill="rgba(18, 4, 7, 0.95)"
-                            stroke={t.status === "Stuck" ? "#ff2d3a" : "#36e0c4"}
-                            strokeWidth="1"
-                          />
-                          <circle
-                            cx="7"
-                            cy="8"
-                            r="3"
-                            fill={t.status === "Stuck" ? "#ff2d3a" : "#36e0c4"}
-                          />
-                          <text
-                            x="14"
-                            y="12"
-                            fill="#ffffff"
-                            fontSize="9"
-                            fontFamily="var(--font-mono)"
-                            fontWeight="bold"
-                          >
-                            {badgeText}
-                          </text>
-                        </g>
-                      );
-                    })}
+                    <g
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        sfx("click");
+                      }}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <rect
+                        x="0"
+                        y="0"
+                        width={teamsHere.length === 1 ? 74 : 80}
+                        height="18"
+                        rx="3"
+                        fill="rgba(18, 4, 7, 0.95)"
+                        stroke="#36e0c4"
+                        strokeWidth="1"
+                      />
+                      <circle cx="8" cy="9" r="3" fill="#36e0c4" />
+                      <text
+                        x="16"
+                        y="13"
+                        fill="#ffffff"
+                        fontSize="9.5"
+                        fontFamily="var(--font-mono)"
+                        fontWeight="bold"
+                        letterSpacing="0.06em"
+                      >
+                        {`${teamsHere.length} ${teamsHere.length === 1 ? "TEAM" : "TEAMS"}`}
+                      </text>
+                    </g>
                   </g>
                 )}
               </g>

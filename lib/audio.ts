@@ -275,7 +275,8 @@ export type Sfx =
   | "morseDash"
   | "snap"
   | "dial"
-  | "staticBurst";
+  | "staticBurst"
+  | "vecnaCurse";
 
 export function sfx(name: Sfx): void {
   const c = ensure();
@@ -386,6 +387,20 @@ export function sfx(name: Sfx): void {
 
     case "staticBurst":
       burst(0.35, 0.25, 1800);
+      break;
+
+    case "vecnaCurse":
+      // Terrifying deep subterranean frequency sweep + ominous grandfather clock toll + sinister static burst
+      tone(48, 3.8, "sawtooth", 0.48, 20); // Sub-bass descending sweep
+      tone(96, 3.2, "sine", 0.35, 40);
+      burst(1.8, 0.22, 180);              // Rumbling atmospheric noise
+      // Sinister clock chime harmonic overlay
+      tone(196, 3.0, "sine", 0.38, 192, 0.2);
+      tone(392, 2.2, "sine", 0.24, 388, 0.2);
+      tone(587, 1.8, "triangle", 0.14, undefined, 0.25);
+      // Dual sinister heartbeat thump
+      tone(50, 0.28, "sine", 0.45, 25, 0.7);
+      tone(42, 0.32, "sine", 0.38, 22, 1.05);
       break;
   }
 }

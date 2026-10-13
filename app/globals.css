@@ -67,27 +67,37 @@
   --glow:    none;
 }
 
-/* ─── Reset & Base (Zero Glow Policy) ─── */
+/* ─── Reset & Base ─── */
 *,*::before,*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  text-shadow: none !important;
 }
-*:hover, *:focus, *:active {
-  text-shadow: none !important;
-  box-shadow: none !important;
+html {
+  background-color: #000000 !important;
+  background: #000000 !important;
+  color: var(--ink);
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  color-scheme: dark;
 }
-button:hover, .btn:hover, a:hover, input:hover {
-  text-shadow: none !important;
-  box-shadow: none !important;
-}
-html,body { min-height: 100%; background: var(--bg); color: var(--ink); overflow-x: hidden; overflow-y: auto; }
 body {
+  background-color: #000000 !important;
+  background: #000000 !important;
+  color: var(--ink);
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
   font-family: var(--font-mono);
-  transition: background 1.4s ease, color 1.4s ease;
   -webkit-font-smoothing: antialiased;
   cursor: crosshair;
+  color-scheme: dark;
 }
 ::selection { background: var(--accent); color: #000; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
@@ -96,7 +106,7 @@ a { color: inherit; text-decoration: none; }
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CRT OVERLAY SYSTEM
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-.crt { position: fixed; inset: 0; pointer-events: none; z-index: 9000; opacity: 0.55; }
+.crt { position: fixed; inset: 0; pointer-events: none; z-index: 9000; opacity: 0.55; overflow: hidden; }
 
 /* Scanlines - faint and subtle */
 .crt-scan {
@@ -145,7 +155,7 @@ a { color: inherit; text-decoration: none; }
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LAYOUT
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-.screen    { position: relative; height: 100vh; max-height: 100vh; width: 100%; overflow: hidden; isolation: isolate; }
+.screen    { position: relative; min-height: 100vh; min-height: 100dvh; height: 100vh; height: 100dvh; width: 100%; overflow: hidden; isolation: isolate; background-color: #000000 !important; background: #000000 !important; }
 .layer     { position: absolute; inset: 0; pointer-events: none; }
 .content   { position: relative; z-index: 5; }
 .stage-wrap {

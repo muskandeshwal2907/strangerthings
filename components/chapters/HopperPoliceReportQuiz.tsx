@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { sfx } from "@/lib/audio";
 import { useGame } from "@/lib/store";
 import { QuizQuestion, STAGE_QUIZ_CONFIGS } from "@/lib/chapterQuestions";
+import QuestionTypeRenderer from "./QuestionTypeRenderer";
 
 interface HopperPoliceReportQuizProps {
   chapterNumber?: number;
@@ -61,14 +62,50 @@ export default function HopperPoliceReportQuiz({
 
   const totalQuestions = questions.length;
   const [currentIdx, setCurrentIdx] = useState(0);
+  const { s, unlockHint, isHintUnlocked, score, isPaused, say } = useGame();
+  const teamId = s?.team?.id || "anon";
+
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`hawkins_quiz_answers_ch${chapterNumber}_${s?.team?.id || "anon"}`);
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
     if (legacySelectedId) {
       return { 0: legacySelectedId };
     }
     return {};
   });
 
-  const { unlockHint, isHintUnlocked, score } = useGame();
+  // Track attempts, completion status, and points awarded per question
+  const [questionStates, setQuestionStates] = useState<
+    Record<number, { attempts: number; status: "unanswered" | "wrong_first_try" | "solved" | "failed"; earnedPoints: number }>
+  >(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`hawkins_quiz_states_ch${chapterNumber}_${s?.team?.id || "anon"}`);
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`hawkins_quiz_answers_ch${chapterNumber}_${s?.team?.id || "anon"}`, JSON.stringify(selectedAnswers));
+      } catch {}
+    }
+  }, [selectedAnswers, chapterNumber, s?.team?.id]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`hawkins_quiz_states_ch${chapterNumber}_${s?.team?.id || "anon"}`, JSON.stringify(questionStates));
+      } catch {}
+    }
+  }, [questionStates, chapterNumber, s?.team?.id]);
   const [unlockingHintKey, setUnlockingHintKey] = useState<string | null>(null);
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -116,7 +153,15 @@ export default function HopperPoliceReportQuiz({
   const currentQ = questions[currentIdx] || questions[0];
   const currentSelectedOption = selectedAnswers[currentIdx] || (currentIdx === 0 ? legacySelectedId : null);
 
+  const currentQState = questionStates[currentIdx] || {
+    attempts: 0,
+    status: "unanswered" as const,
+    earnedPoints: 0,
+  };
+  const isCurrentDone = currentQState.status === "solved" || currentQState.status === "failed";
+
   const handleOptionClick = (optId: string) => {
+    if (isCurrentDone) return; // Cannot modify once completed (solved or failed)
     sfx("type");
     setSelectedAnswers((prev) => ({
       ...prev,
@@ -128,10 +173,109 @@ export default function HopperPoliceReportQuiz({
     setUnansweredPrompt(false);
   };
 
-  const answeredCount = Object.keys(selectedAnswers).filter((k) => !!selectedAnswers[Number(k)]).length;
-  const allAnswered = answeredCount === totalQuestions;
+  // Verify answer against authoritative backend: locked permanently on submission
+  const handleVerifyCurrentQuestion = async () => {
+    if (isCurrentDone) return; // Cannot re-submit once completed
+
+    const chosen = selectedAnswers[currentIdx];
+    if (!chosen || !chosen.trim()) {
+      sfx("err");
+      setUnansweredPrompt(true);
+      return;
+    }
+
+    const qCode = currentQ.id || `ch${chapterNumber}-q${currentIdx + 1}`;
+    let isCorrect = false;
+    let earnedPoints = 0;
+
+    try {
+      let token = "";
+      try {
+        const stored = localStorage.getItem("hawkins-protocol:session");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          token = parsed.token || "";
+        }
+      } catch {}
+
+      const res = await fetch(`/api/questions/${encodeURIComponent(qCode)}/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ answer: chosen, teamId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        isCorrect = Boolean(data.isCorrect);
+        earnedPoints = typeof data.pointsAwarded === "number" ? data.pointsAwarded : (isCorrect ? 10 : 0);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 403 && errData.error === "EVENT_PAUSED") {
+          say("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+        } else if (res.status === 403 && errData.error === "EVENT_ENDED") {
+          say("HAWKINS COMMAND: TOURNAMENT CONCLUDED. SUBMISSIONS CLOSED.");
+        } else {
+          say(errData.message || "COMMUNICATION FAILURE: Mainframe rejected transmission.");
+        }
+        sfx("err");
+        return;
+      }
+    } catch (e) {
+      say("TRANSMISSION ERROR: Central server unreachable. Solutions cannot be evaluated while offline.");
+      sfx("err");
+      return;
+    }
+
+    if (isCorrect) {
+      sfx("ok");
+      setQuestionStates((prev) => ({
+        ...prev,
+        [currentIdx]: {
+          attempts: 1,
+          status: "solved",
+          earnedPoints: earnedPoints,
+        },
+      }));
+    } else {
+      sfx("err");
+      setQuestionStates((prev) => ({
+        ...prev,
+        [currentIdx]: {
+          attempts: 1,
+          status: "failed",
+          earnedPoints: 0,
+        },
+      }));
+    }
+  };
+
+  // Tab unlock condition: cannot advance to tab N until 0..(N-1) are completed
+  const isTabUnlocked = (idx: number) => {
+    if (idx <= currentIdx) return true;
+    for (let i = 0; i < idx; i++) {
+      const qSt = questionStates[i];
+      if (!qSt || (qSt.status !== "solved" && qSt.status !== "failed")) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const verifiedScore =
+    typeof score === "number"
+      ? score
+      : Object.values(questionStates).reduce((sum, q) => sum + (q.earnedPoints || 0), 0);
+  const doneCount = Object.values(questionStates).filter((q) => q.status === "solved" || q.status === "failed").length;
+  const allQuestionsDone = doneCount === totalQuestions;
 
   const handleNext = () => {
+    if (!isCurrentDone) {
+      sfx("err");
+      return;
+    }
     sfx("click");
     if (currentIdx < totalQuestions - 1) {
       setCurrentIdx((i) => i + 1);
@@ -146,11 +290,20 @@ export default function HopperPoliceReportQuiz({
   };
 
   const handleFinalSubmit = () => {
+    if (isPaused) {
+      say?.("HAWKINS COMMAND: TOURNAMENT PAUSED BY ADMINISTRATOR");
+      sfx("err");
+      return;
+    }
+    if (!allQuestionsDone) {
+      sfx("err");
+      return;
+    }
     sfx("ok");
     const completeAnswers: Record<number, string> = { ...selectedAnswers };
     for (let i = 0; i < totalQuestions; i++) {
       if (!completeAnswers[i]) {
-        completeAnswers[i] = "A";
+        completeAnswers[i] = "";
       }
     }
     setSelectedAnswers(completeAnswers);
@@ -189,7 +342,7 @@ export default function HopperPoliceReportQuiz({
       {/* ─── DESK ACCESSORIES (TOP ACTIONS TOOLBAR) ─── */}
       <div
         style={{
-          maxWidth: 960,
+          maxWidth: "min(1560px, 98vw)",
           margin: "0 auto 12px",
           display: "flex",
           alignItems: "center",
@@ -334,28 +487,6 @@ export default function HopperPoliceReportQuiz({
             <span>📁</span>
             <span>CASE BRIEFING</span>
           </button>
-
-          {/* Case Points Badge */}
-          <div
-            style={{
-              padding: "6px 12px",
-              background: "rgba(0,0,0,0.65)",
-              border: "1.5px solid rgba(255,180,84,0.4)",
-              borderRadius: 4,
-              color: "#ffb454",
-              fontFamily: "'Benguiat Bold', serif",
-              fontSize: 11.5,
-              fontWeight: 800,
-              letterSpacing: ".14em",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <span>+{points} PTS</span>
-            <span style={{ fontSize: 9.5, opacity: 0.75, fontFamily: "'Courier New', monospace" }}>[5 PTS/Q]</span>
-          </div>
         </div>
       </div>
 
@@ -364,7 +495,7 @@ export default function HopperPoliceReportQuiz({
         animate={error ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}}
         transition={{ duration: 0.55 }}
         style={{
-          maxWidth: 960,
+          maxWidth: "min(1560px, 98vw)",
           margin: "0 auto",
           background: "#f4eedf",
           backgroundImage:
@@ -442,26 +573,50 @@ export default function HopperPoliceReportQuiz({
               </span>
               {questions.map((q, idx) => {
                 const isCurrent = idx === currentIdx;
-                const isDone = !!selectedAnswers[idx];
+                const qSt = questionStates[idx];
+                const isSolved = qSt?.status === "solved";
+                const isFailed = qSt?.status === "failed";
+                const isUnlocked = isTabUnlocked(idx);
+
                 return (
                   <button
                     key={q.id || idx}
                     type="button"
+                    disabled={!isUnlocked}
                     onClick={() => {
+                      if (!isUnlocked) {
+                        sfx("err");
+                        return;
+                      }
                       sfx("click");
                       setCurrentIdx(idx);
                       setUnansweredPrompt(false);
                     }}
                     style={{
                       padding: "4px 10px",
-                      background: isCurrent ? "#b81d24" : isDone ? "#3e2f23" : "#f7f2e7",
-                      color: isCurrent || isDone ? "#fff" : "#2a221a",
-                      border: isCurrent ? "1.5px solid #8f1218" : "1px solid #b5a48b",
+                      background: isCurrent
+                        ? "#b81d24"
+                        : isSolved
+                        ? "#234d31"
+                        : isFailed
+                        ? "#4d2323"
+                        : isUnlocked
+                        ? "#f7f2e7"
+                        : "#ded6c4",
+                      color: isCurrent || isSolved || isFailed ? "#fff" : isUnlocked ? "#2a221a" : "#8c7e6c",
+                      border: isCurrent
+                        ? "1.5px solid #8f1218"
+                        : isSolved
+                        ? "1px solid #3d8053"
+                        : isFailed
+                        ? "1px solid #7d2a2a"
+                        : "1px solid #b5a48b",
                       borderRadius: 2,
                       fontSize: 11,
                       fontWeight: 900,
                       letterSpacing: ".08em",
-                      cursor: "pointer",
+                      cursor: isUnlocked ? "pointer" : "not-allowed",
+                      opacity: isUnlocked ? 1 : 0.6,
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 4,
@@ -469,26 +624,13 @@ export default function HopperPoliceReportQuiz({
                       whiteSpace: "nowrap",
                       transition: "all 0.12s ease",
                     }}
+                    title={!isUnlocked ? "Locked until preceding question is completed" : `Item ${idx + 1}`}
                   >
-                    <span>{isDone ? "✓" : `[${idx + 1}]`}</span>
+                    <span>{isSolved ? "✔" : isFailed ? "✕" : !isUnlocked ? "🔒" : `[${idx + 1}]`}</span>
                     <span>ITEM {idx + 1}</span>
                   </button>
                 );
               })}
-            </div>
-
-            <div
-              style={{
-                fontSize: 11,
-                color: "#544638",
-                fontWeight: 800,
-                letterSpacing: ".08em",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-                marginLeft: 8,
-              }}
-            >
-              COMPLETED: <b>{answeredCount}</b> / {totalQuestions} · <b>{answeredCount * 5}</b> / 50 PTS
             </div>
           </div>
         )}
@@ -530,20 +672,14 @@ export default function HopperPoliceReportQuiz({
             transition={{ duration: 0.2 }}
             style={{ marginBottom: 14 }}
           >
-            <div
-              style={{
-                fontSize: "clamp(14px, 1.4vw, 16.5px)",
-                lineHeight: 1.5,
-                color: "#18120d",
-                fontWeight: "bold",
-                background: "rgba(255, 255, 255, 0.45)",
-                padding: "10px 16px",
-                border: "1px solid #c9bda4",
-                borderRadius: 2,
-              }}
-            >
-              &quot;{currentQ.question}&quot;
-            </div>
+            {/* Specialized Question Formation by Stage */}
+            <QuestionTypeRenderer
+              question={currentQ}
+              selectedAnswer={currentSelectedOption}
+              onSelectOption={(optId) => handleOptionClick(optId)}
+              isVecnaMode={false}
+              disabled={isCurrentDone}
+            />
 
             {currentQ.hint && (() => {
               const currentHintKey = currentQ.id || `ch${chapterNumber}-q${currentIdx + 1}`;
@@ -552,8 +688,17 @@ export default function HopperPoliceReportQuiz({
 
               const handleUnlockHint = (e: React.MouseEvent) => {
                 e.stopPropagation();
+                if (isUnlocking) return;
+                if (score < 5) {
+                  alert("INSUFFICIENT SCORE: You need at least 5 points to unlock an Intel Clue.");
+                  return;
+                }
+                const confirmed = window.confirm(
+                  "Use this Intel Clue? It will deduct 5 points from your current score."
+                );
+                if (!confirmed) return;
                 setUnlockingHintKey(currentHintKey);
-                unlockHint(currentHintKey, 10);
+                unlockHint(currentHintKey, 5);
                 setTimeout(() => {
                   setUnlockingHintKey(null);
                 }, 400);
@@ -713,7 +858,7 @@ export default function HopperPoliceReportQuiz({
                           e.currentTarget.style.background = "#24130d";
                           e.currentTarget.style.color = "#ffd54f";
                         }}
-                        title="Unlock classified dossier clue for 10 points"
+                        title="Unlock classified dossier clue for 5 points (-5 PTS)"
                       >
                         <span>{isUnlocking ? "⚡ DECRYPTING..." : "🔒 UNLOCK CLUE"}</span>
                       </button>
@@ -722,104 +867,121 @@ export default function HopperPoliceReportQuiz({
                 </div>
               );
             })()}
+
+            {/* ─── ATTEMPTS & VERIFICATION CONSOLE (STRICT 2-TRY RULE) ─── */}
+            <div
+              style={{
+                marginTop: 18,
+                padding: "14px 18px",
+                background:
+                  currentQState.status === "solved"
+                    ? "rgba(38, 166, 91, 0.12)"
+                    : currentQState.status === "failed"
+                    ? "rgba(184, 29, 36, 0.12)"
+                    : currentQState.status === "wrong_first_try"
+                    ? "rgba(255, 140, 0, 0.14)"
+                    : "rgba(0, 0, 0, 0.05)",
+                border:
+                  currentQState.status === "solved"
+                    ? "2px solid #27ae60"
+                    : currentQState.status === "failed"
+                    ? "2px solid #b81d24"
+                    : currentQState.status === "wrong_first_try"
+                    ? "2px dashed #d35400"
+                    : "1.5px dashed #c9bda4",
+                borderRadius: 3,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              {/* Status & Attempts Counter */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <div
+                  style={{
+                    fontFamily: "'Benguiat Bold', 'ITC Benguiat', serif",
+                    fontSize: 12.5,
+                    fontWeight: 900,
+                    letterSpacing: ".1em",
+                    color:
+                      currentQState.status === "solved"
+                        ? "#1b7a41"
+                        : currentQState.status === "failed"
+                        ? "#9e151b"
+                        : currentQState.status === "wrong_first_try"
+                        ? "#b54900"
+                        : "#544638",
+                  }}
+                >
+                  {currentQState.status === "solved" && "✔ EVIDENCE VERIFIED ACCURATE · [+5 PTS AWARDED]"}
+                  {currentQState.status === "failed" && "✕ TESTIMONY REJECTED · QUESTION LOCKED · [0 PTS]"}
+                  {currentQState.status === "unanswered" && "ITEM PENDING CONFIRMATION"}
+                </div>
+                <div style={{ fontSize: 11, color: "#6e5d4d", fontFamily: "'Courier New', monospace" }}>
+                  {!isCurrentDone
+                    ? `Item pending: Question locked once verified`
+                    : currentQState.status === "solved"
+                    ? "Question completed: +5 PTS awarded. Next question unlocked."
+                    : "Question completed: 0 PTS awarded. Next question unlocked."}
+                </div>
+              </div>
+
+              {/* Action Button */}
+              {!isCurrentDone ? (
+                <button
+                  type="button"
+                  onClick={handleVerifyCurrentQuestion}
+                  style={{
+                    padding: "9px 22px",
+                    background: "#24130d",
+                    color: "#ffffff",
+                    border: "1.5px solid #8f2d24",
+                    borderRadius: 3,
+                    fontFamily: "'Benguiat Bold', 'ITC Benguiat', serif",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    letterSpacing: ".14em",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
+                    textTransform: "uppercase",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#8f1218";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "#24130d";
+                  }}
+                >
+                  <span>🔒</span>
+                  <span>SUBMIT LEVEL</span>
+                </button>
+              ) : (
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 900,
+                    letterSpacing: ".1em",
+                    color: currentQState.status === "solved" ? "#1b7a41" : "#9e151b",
+                    fontFamily: "'Courier New', monospace",
+                    border: `1.5px solid ${currentQState.status === "solved" ? "#27ae60" : "#b81d24"}`,
+                    padding: "6px 14px",
+                    borderRadius: 3,
+                    background: currentQState.status === "solved" ? "#e8f5e9" : "#ffebee",
+                  }}
+                >
+                  {currentQState.status === "solved" ? "✓ LEVEL CLEARED" : "✕ TESTIMONY REJECTED (0 PTS)"}
+                </div>
+              )}
+            </div>
           </motion.div>
         </AnimatePresence>
 
-        {/* ─── CLASSIFIED PROJECT OPTIONS (POLICE CHECKBOXES) ─── */}
-        <div style={{ marginBottom: 14 }}>
-          <div
-            style={{
-              fontSize: 10.5,
-              color: "#6e6051",
-              letterSpacing: ".12em",
-              marginBottom: 8,
-              textTransform: "uppercase",
-            }}
-          >
-            [SELECT APPLICABLE CLASSIFIED DOSSIER ENTRY BELOW]:
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {currentQ.options.map((opt) => {
-              const isSelected = currentSelectedOption === opt.id;
-              return (
-                <div
-                  key={opt.id}
-                  onClick={() => handleOptionClick(opt.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "8px 14px",
-                    background: isSelected ? "#e2d2bb" : "rgba(255,255,255,0.4)",
-                    border: isSelected ? "2px solid #b81d24" : "1px solid #c7bca7",
-                    borderRadius: 2,
-                    cursor: "pointer",
-                    transition: "all 0.14s ease",
-                    boxShadow: isSelected ? "inset 0 0 10px rgba(184, 29, 36, 0.08)" : "none",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 26,
-                      height: 26,
-                      border: isSelected ? "2px solid #b81d24" : "2px solid #4a3e33",
-                      background: isSelected ? "#b81d24" : "#f7f2e7",
-                      color: isSelected ? "#fff" : "transparent",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 15,
-                      fontWeight: 900,
-                      fontFamily: "'Courier New', monospace",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {isSelected ? "✓" : ""}
-                  </div>
-
-                  <div style={{ flex: 1, display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <span
-                      style={{
-                        fontWeight: 900,
-                        color: isSelected ? "#b81d24" : "#2d231b",
-                        fontSize: 15,
-                      }}
-                    >
-                      [{opt.id}]
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "clamp(13.5px, 1.4vw, 16px)",
-                        color: isSelected ? "#110b07" : "#30261e",
-                        fontWeight: isSelected ? 800 : 600,
-                        letterSpacing: ".02em",
-                      }}
-                    >
-                      {opt.text}
-                    </span>
-                  </div>
-
-                  {isSelected && (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        color: "#b81d24",
-                        fontWeight: 900,
-                        letterSpacing: ".15em",
-                        fontFamily: "'Benguiat Bold', serif",
-                        border: "1px solid #b81d24",
-                        padding: "2px 6px",
-                      }}
-                    >
-                      RECORDED
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
         {/* ─── UNANSWERED WARNING PROMPT ─── */}
         <AnimatePresence>
@@ -911,20 +1073,27 @@ export default function HopperPoliceReportQuiz({
                 <button
                   type="button"
                   onClick={handleNext}
+                  disabled={!isCurrentDone}
                   style={{
                     padding: "10px 18px",
-                    background: "#2e2118",
-                    color: "#fff",
-                    border: "1px solid #573a2e",
+                    background: isCurrentDone ? "#2e2118" : "#ded6c4",
+                    color: isCurrentDone ? "#fff" : "#8c7e6c",
+                    border: isCurrentDone ? "1px solid #573a2e" : "1px solid #b5a48b",
                     borderRadius: 3,
                     fontFamily: "'Benguiat Bold', serif",
                     fontSize: 12,
                     letterSpacing: ".1em",
-                    cursor: "pointer",
+                    cursor: isCurrentDone ? "pointer" : "not-allowed",
                     fontWeight: 800,
+                    opacity: isCurrentDone ? 1 : 0.6,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
                   }}
+                  title={!isCurrentDone ? "Confirm your answer for this item first before moving to next item" : "Next docket item"}
                 >
-                  NEXT ITEM ➔
+                  <span>NEXT ITEM</span>
+                  <span>{isCurrentDone ? "➔" : "🔒"}</span>
                 </button>
               )}
             </div>
@@ -936,31 +1105,37 @@ export default function HopperPoliceReportQuiz({
           <button
             type="button"
             onClick={handleFinalSubmit}
+            disabled={!allQuestionsDone || isPaused}
             style={{
               padding: "10px 26px",
-              background: "#b81d24",
+              background: isPaused ? "#443a34" : allQuestionsDone ? "#b81d24" : "#8c7b68",
               color: "#fff",
-              border: "1.5px solid #8f1218",
+              border: isPaused ? "1.5px solid #665245" : allQuestionsDone ? "1.5px solid #8f1218" : "1px solid #776a5a",
               borderRadius: 3,
               fontFamily: "'Benguiat Bold', 'ITC Benguiat', serif",
               fontWeight: 900,
               fontSize: "clamp(13px, 1.4vw, 16px)",
               letterSpacing: ".16em",
               textTransform: "uppercase",
-              cursor: "pointer",
-              boxShadow: "0 6px 16px rgba(184, 29, 36, 0.5), inset 0 0 10px rgba(0,0,0,0.25)",
+              cursor: allQuestionsDone && !isPaused ? "pointer" : "not-allowed",
+              opacity: allQuestionsDone && !isPaused ? 1 : 0.65,
+              boxShadow: allQuestionsDone && !isPaused
+                ? "0 6px 16px rgba(184, 29, 36, 0.5), inset 0 0 10px rgba(0,0,0,0.25)"
+                : "none",
               transition: "all 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#941319";
+              if (allQuestionsDone && !isPaused) e.currentTarget.style.background = "#941319";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#b81d24";
+              if (allQuestionsDone && !isPaused) e.currentTarget.style.background = "#b81d24";
             }}
           >
-            {allAnswered
-              ? "SUBMIT REPORT (+50 PTS) ➔"
-              : `SUBMIT REPORT [${answeredCount}/${totalQuestions} · +${answeredCount * 5} PTS] ➔`}
+            {isPaused
+              ? "TOURNAMENT PAUSED BY HAWKINS COMMAND"
+              : allQuestionsDone
+              ? "SUBMIT FINAL REPORT ➔"
+              : `COMPLETE ALL ITEMS TO SUBMIT [${doneCount}/${totalQuestions}]`}
           </button>
         </div>
       </motion.div>

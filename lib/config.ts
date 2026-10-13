@@ -69,6 +69,7 @@ export interface AuthSession {
   teamName: string;
   leaderName: string;
   teamId?: string;
+  token?: string;
 }
 
 export const SESSION_KEY = "hawkins-protocol:session";

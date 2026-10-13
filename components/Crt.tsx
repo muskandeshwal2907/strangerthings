@@ -4,8 +4,10 @@ import { useEffect, useRef } from "react";
 export default function Crt() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    const cv = ref.current!;
-    const ctx = cv.getContext("2d")!;
+    const cv = ref.current;
+    if (!cv) return;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
     const W = 320, H = 180;
     cv.width = W; cv.height = H;
     const img = ctx.createImageData(W, H);

@@ -17,64 +17,55 @@ export interface VecnaChapterCardData {
 export const VECNA_CHAPTER_DATA: VecnaChapterCardData[] = [
   {
     id: 1,
-    shortName: "TELEMETRY",
-    title: "MUNICIPAL TELEMETRY",
-    subtitle: "CIVIC DISTRICT · POWER SURGE",
-    category: "TELEMETRY BREACH",
+    shortName: "QUIZ",
+    title: "STAGE 1: QUIZ-TYPE QUESTIONS",
+    subtitle: "SERIES LORE & TECHNICAL FOUNDATIONS",
+    category: "SERIES KNOWLEDGE",
     points: 50,
     bgSrc: "/hawkins-town-bg.jpg",
   },
   {
     id: 2,
-    shortName: "VECTOR",
-    title: "PRECINCT RF VECTOR",
-    subtitle: "HAWKINS POLICE · HOPPER'S LOGS",
-    category: "VECTOR CORRELATION",
+    shortName: "CONNECTION",
+    title: "STAGE 2: CONNECTION QUESTIONS",
+    subtitle: "MATCH CLUES, LOCATIONS & ARTIFACTS",
+    category: "RELATIONSHIP MAPPING",
     points: 50,
     bgSrc: "/hawkins-police-bg.jpg",
   },
   {
     id: 3,
-    shortName: "ELECTROMAGNETIC",
-    title: "WALL FREQUENCIES",
-    subtitle: "BYERS HOUSE · CHRISTMAS LIGHTS",
-    category: "ELECTROMAGNETIC ENCODING",
+    shortName: "REARRANGE",
+    title: "STAGE 3: REARRANGE QUESTIONS",
+    subtitle: "SCRAMBLED WORDS, STATEMENTS & CODE",
+    category: "SEQUENCE RESTORATION",
     points: 50,
     bgSrc: "/hawkins-bg.jpg",
   },
   {
     id: 4,
-    shortName: "LOGIC",
-    title: "MAINFRAME OVERFLOW",
-    subtitle: "HAWKINS LAB · PARITY ROUTINE",
-    category: "LOGIC EXECUTION",
+    shortName: "CASE STUDY",
+    title: "STAGE 4: CASE STUDY QUESTIONS",
+    subtitle: "SITUATION REPORTS & FORENSIC EVIDENCE",
+    category: "INVESTIGATIVE ANALYSIS",
     points: 50,
     bgSrc: "/hawkins-lab-bg.jpg",
   },
   {
     id: 5,
-    shortName: "COORDINATE",
-    title: "DEEP WOODS RUNES",
-    subtitle: "ROANE COUNTY · TRAIL 7 MARKERS",
-    category: "COORDINATE CIPHER",
-    points: 50,
-    bgSrc: "/creel-bg.jpg",
-  },
-  {
-    id: 6,
-    shortName: "FREQUENCY",
-    title: "TOWER RADIOMETER",
-    subtitle: "EAST HILL · 5-PIN RESONANCE",
-    category: "FREQUENCY ALIGNMENT",
+    shortName: "RADIO",
+    title: "STAGE 5: RADIO TRANSMISSION",
+    subtitle: "MORSE, BINARY & RUSSIAN INTERCEPTS",
+    category: "SIGNAL DECODING",
     points: 50,
     bgSrc: "/hawkins-gate-bg.jpg",
   },
   {
-    id: 7,
-    shortName: "ROT13",
-    title: "HIVE MIND THRESHOLD",
-    subtitle: "UPSIDE DOWN · SUBJECT 001",
-    category: "ROT13 MIND DECRYPTION",
+    id: 6,
+    shortName: "LAB TASKS",
+    title: "STAGE 6: LAB-TYPE TASKS",
+    subtitle: "SYSTEM OPERATIONS, LOGIC & DATA",
+    category: "TECHNICAL EXPERIMENTS",
     points: 50,
     bgSrc: "/upsidedown-bg.jpg",
   },
@@ -193,7 +184,7 @@ export default function VecnaChaptersModal({
                     textShadow: "0 0 12px rgba(255, 45, 58, 0.6)",
                   }}
                 >
-                  VECNA EXPEDITION · ALL 7 CHAPTERS
+                  VECNA EXPEDITION · ALL 6 CHAPTERS
                 </h3>
               </div>
               <div
@@ -341,22 +332,6 @@ export default function VecnaChaptersModal({
                     >
                       TRIAL {ch.id}
                     </span>
-
-                    <span
-                      style={{
-                        padding: "3px 8px",
-                        background: "rgba(0, 0, 0, 0.75)",
-                        color: "#ffcdd2",
-                        fontFamily: '"Share Tech Mono", monospace',
-                        fontSize: "10.5px",
-                        fontWeight: "bold",
-                        letterSpacing: "0.08em",
-                        borderRadius: "3px",
-                        border: "1px solid rgba(255, 45, 58, 0.3)",
-                      }}
-                    >
-                      50 PTS
-                    </span>
                   </div>
 
                   {/* Center Content: Title & Subtitle */}
@@ -422,9 +397,6 @@ export default function VecnaChaptersModal({
                     >
                       <span style={{ color: isAllCleared ? "#81c784" : "#ffb3ba" }}>
                         {isAllCleared ? "✓ ALL CLEARED" : `CLEARED: ${clearedCount} / 10`}
-                      </span>
-                      <span style={{ color: "rgba(255, 180, 180, 0.6)" }}>
-                        {clearedCount * 5} / 50 PTS
                       </span>
                     </div>
 
