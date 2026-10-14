@@ -157,12 +157,23 @@ export const stageIndex = (s: StageId) => STAGE_ORDER.indexOf(s);
 export const totalScore = (b: Breakdown, penalty = 0) =>
   Math.round(b.tech + b.puzzle + b.clue + b.speed + b.story + b.teamwork - penalty);
 
+export interface InGameModalConfig {
+  title?: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  type?: "info" | "warning" | "danger" | "confirm";
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
 interface Ctx {
   s: GameState;
   hydrated: boolean;
   session: AuthSession | null;
   score: number;
   sabotage: Sabotage | null;
+  isPaused: boolean;
   cutscene: StageId | null;
   endCutscene: () => void;
   start: () => void;
@@ -181,7 +192,6 @@ interface Ctx {
     unlockedLocations?: Record<string, boolean>;
     storyProgress?: number;
   }) => void;
-  isPaused: boolean;
   register: (name: string, members: string[]) => void;
   logout: () => void;
   submit: (challengeId: string, text: string) => boolean;
@@ -221,6 +231,17 @@ interface Ctx {
   unlockHint: (hintKey: string, cost?: number) => boolean;
   isHintUnlocked: (hintKey: string) => boolean;
   spendPoints: (points: number, reason?: string) => void;
+  modal: InGameModalConfig | null;
+  showAlert: (
+    message: string,
+    options?: { title?: string; confirmLabel?: string; type?: "info" | "warning" | "danger" }
+  ) => void;
+  showConfirm: (
+    message: string,
+    onConfirm: () => void,
+    options?: { title?: string; confirmLabel?: string; cancelLabel?: string; type?: "warning" | "danger" | "confirm" }
+  ) => void;
+  closeModal: () => void;
 }
 
 const GameCtx = createContext<Ctx | null>(null);
@@ -254,6 +275,50 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return 1;
   });
   const [chapterModalOpen, setChapterModalOpen] = useState(false);
+  const [modal, setModal] = useState<InGameModalConfig | null>(null);
+
+  const closeModal = useCallback(() => {
+    setModal(null);
+  }, []);
+
+  const showAlert = useCallback(
+    (message: string, options?: { title?: string; confirmLabel?: string; type?: "info" | "warning" | "danger" }) => {
+      sfx(options?.type === "warning" || options?.type === "danger" ? "err" : "click");
+      setModal({
+        message,
+        title: options?.title || "HAWKINS TELEMETRY // NOTICE",
+        type: options?.type || "info",
+        confirmLabel: options?.confirmLabel || "ACKNOWLEDGE",
+        onConfirm: () => setModal(null),
+      });
+    },
+    []
+  );
+
+  const showConfirm = useCallback(
+    (
+      message: string,
+      onConfirm: () => void,
+      options?: { title?: string; confirmLabel?: string; cancelLabel?: string; type?: "warning" | "danger" | "confirm" }
+    ) => {
+      sfx("type");
+      setModal({
+        message,
+        title: options?.title || "SECURITY PROTOCOL CONFIRMATION",
+        type: options?.type || "confirm",
+        confirmLabel: options?.confirmLabel || "CONFIRM",
+        cancelLabel: options?.cancelLabel || "CANCEL",
+        onConfirm: () => {
+          setModal(null);
+          onConfirm();
+        },
+        onCancel: () => {
+          setModal(null);
+        },
+      });
+    },
+    []
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -924,17 +989,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
     sfx("ok");
     setS((p) => {
-      // Idempotency: if already completed, do not award points again!
-      if (p.completedTasks.includes(taskId)) {
+      const prevPoints = p.taskScores?.[taskId] ?? 0;
+      // Idempotency: if already completed and recorded with equal or higher score, skip
+      if (p.completedTasks.includes(taskId) && prevPoints >= points && points > 0) {
         return p;
       }
 
-      const prevPoints = p.taskScores?.[taskId] ?? 0;
       const pointDelta = points - prevPoints;
 
       const taskDef = STORY_TASKS[taskId];
       const category = taskDef?.category || "puzzle";
-      const nextCompleted = [...p.completedTasks, taskId];
+      const nextCompleted = p.completedTasks.includes(taskId) ? p.completedTasks : [...p.completedTasks, taskId];
       const nextClues = { ...p.clues };
 
       if (taskDef?.storyClue) {
@@ -982,16 +1047,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
       const taskScoresSum = Object.values(nextTaskScores).reduce((a, b) => a + (b || 0), 0);
       const computedTotalScore = alreadyAwarded
-        ? (p.team?.score ?? totalScore(nextBreakdown, p.penalty))
+        ? Math.max(p.team?.score ?? 0, p.team?.totalScore ?? 0, taskScoresSum, totalScore(nextBreakdown, p.penalty))
         : Math.max(
             totalScore(nextBreakdown, p.penalty),
-            taskScoresSum
+            taskScoresSum,
+            (p.team?.score || 0) + Math.max(0, pointDelta)
           );
 
       const nextTeam = p.team
         ? {
             ...p.team,
             score: computedTotalScore,
+            totalScore: computedTotalScore,
             completedTasks: nextCompleted,
           }
         : p.team;
@@ -1440,15 +1507,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       s,
       hydrated,
       session,
-      score:
-        typeof s.team?.totalScore === "number"
-          ? s.team.totalScore
-          : typeof s.team?.score === "number"
-          ? s.team.score
-          : Math.max(
-              totalScore(s.breakdown, s.penalty),
-              Object.values(s.taskScores || {}).reduce((a, b) => a + (b || 0), 0)
-            ),
+      score: Math.max(
+        typeof s.team?.totalScore === "number" ? s.team.totalScore : 0,
+        typeof s.team?.score === "number" ? s.team.score : 0,
+        totalScore(s.breakdown, s.penalty),
+        Object.values(s.taskScores || {}).reduce((a, b) => a + (b || 0), 0)
+      ),
       isPaused: Boolean(s.isPaused),
       sabotage,
       cutscene,
@@ -1494,6 +1558,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       unlockHint,
       isHintUnlocked,
       spendPoints,
+      modal,
+      showAlert,
+      showConfirm,
+      closeModal,
     }),
     [
       s,
@@ -1536,6 +1604,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       unlockHint,
       isHintUnlocked,
       spendPoints,
+      modal,
+      showAlert,
+      showConfirm,
+      closeModal,
     ]
   );
 

@@ -42,10 +42,11 @@ const LOCATION_NAMES: Record<LocationId, string> = {
 };
 
 export default function Hud() {
-  const { s, score, jump, reset, logout, radiometerPinCount, viewMode, setViewMode, activeChapterId, setChapterModalOpen } = useGame();
+  const { s, score, jump, reset, logout, radiometerPinCount, viewMode, setViewMode, activeChapterId, setChapterModalOpen, showConfirm } = useGame();
   const [dev, setDev] = useState(false);
   const [showClueLog, setShowClueLog] = useState(false);
   const [isScrolledDown, setIsScrolledDown] = useState(false);
+  const isQuestionSection = viewMode === "location";
 
   useEffect(() => {
     setDev(new URLSearchParams(window.location.search).get("dev") === "1");
@@ -72,36 +73,39 @@ export default function Hud() {
 
   return (
     <>
-      {/* Floating Pill Top HUD Navigation Bar (Auto-hides on scroll down) */}
+      {/* Top HUD Navigation Bar (Embedded for question section, Floating pill for board) */}
       <div
-        style={{
-          position: "fixed",
-          top: 14,
-          left: "clamp(14px, 2.5vw, 28px)",
-          right: "clamp(14px, 2.5vw, 28px)",
-          maxWidth: 1440,
-          margin: "0 auto",
-          height: 66,
-          background: "linear-gradient(180deg, rgba(14, 3, 7, 0.94) 0%, rgba(6, 1, 3, 0.97) 100%)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderRadius: 12,
-          border: "1.5px solid rgba(220, 24, 38, 0.75)",
-          boxShadow:
-            "0 0 24px rgba(220, 24, 38, 0.3), inset 0 0 16px rgba(220, 24, 38, 0.08), 0 10px 35px rgba(0, 0, 0, 0.95)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 clamp(16px, 2.5vw, 32px)",
-          boxSizing: "border-box",
-          zIndex: 800,
-          overflow: "hidden",
-          transform: isScrolledDown ? "translateY(-140%)" : "translateY(0)",
-          opacity: isScrolledDown ? 0 : 1,
-          pointerEvents: isScrolledDown ? "none" : "auto",
-          transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease",
-        }}
-      >
+            style={{
+              position: "fixed",
+              top: isQuestionSection ? 0 : 14,
+              left: isQuestionSection ? 0 : "clamp(14px, 2.5vw, 28px)",
+              right: isQuestionSection ? 0 : "clamp(14px, 2.5vw, 28px)",
+              width: isQuestionSection ? "100%" : undefined,
+              maxWidth: isQuestionSection ? "100%" : 1440,
+              margin: "0 auto",
+              height: isQuestionSection ? 64 : 66,
+              background: "linear-gradient(180deg, rgba(14, 3, 7, 0.96) 0%, rgba(6, 1, 3, 0.98) 100%)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              borderRadius: isQuestionSection ? 0 : 12,
+              border: isQuestionSection ? "none" : "1.5px solid rgba(220, 24, 38, 0.75)",
+              borderBottom: isQuestionSection ? "1.5px solid rgba(220, 24, 38, 0.85)" : undefined,
+              boxShadow: isQuestionSection
+                ? "0 4px 20px rgba(0, 0, 0, 0.8), 0 1px 12px rgba(220, 24, 38, 0.25)"
+                : "0 0 24px rgba(220, 24, 38, 0.3), inset 0 0 16px rgba(220, 24, 38, 0.08), 0 10px 35px rgba(0, 0, 0, 0.95)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 clamp(16px, 2.5vw, 32px)",
+              boxSizing: "border-box",
+              zIndex: 800,
+              overflow: "hidden",
+              transform: !isQuestionSection && isScrolledDown ? "translateY(-140%)" : "translateY(0)",
+              opacity: !isQuestionSection && isScrolledDown ? 0 : 1,
+              pointerEvents: !isQuestionSection && isScrolledDown ? "none" : "auto",
+              transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, border-radius 0.2s ease, top 0.2s ease",
+            }}
+          >
         {/* Subtle Background Left Red Constellation Watermark */}
         <div
           style={{
@@ -311,9 +315,16 @@ export default function Hud() {
               e.currentTarget.style.boxShadow = "0 0 14px rgba(220, 24, 38, 0.2)";
             }}
             onClick={() => {
-              if (confirm("Log out of Hawkins Protocol and return to login screen?")) {
-                logout();
-              }
+              showConfirm(
+                "Terminate active Hawkins Protocol terminal session and return to squad authorization?",
+                () => logout(),
+                {
+                  title: "TERMINATE ACTIVE SESSION",
+                  confirmLabel: "CONFIRM LOGOUT",
+                  cancelLabel: "RESUME MISSION",
+                  type: "danger",
+                }
+              );
             }}
           >
             LOGOUT
