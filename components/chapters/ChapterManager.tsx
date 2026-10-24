@@ -716,6 +716,160 @@ function ChapterCompletionView({
   isLastEpisode?: boolean;
   onViewDossier: () => void;
 }) {
+  const { s } = useGame();
+  const teamId = s?.team?.id || "anon";
+
+  const cfg = STAGE_QUIZ_CONFIGS[chapter.id];
+  const questions = cfg?.questions || [];
+
+  const [report, setReport] = useState<{
+    items: { num: number; isCorrect: boolean }[];
+    correctNums: number[];
+    wrongNums: number[];
+  }>(() => {
+    if (typeof window === "undefined" || !questions.length) {
+      return { items: [], correctNums: [], wrongNums: [] };
+    }
+
+    let storedResults: Record<number, any> = {};
+    let storedAnswers: Record<number, string> = {};
+
+    try {
+      const teamKey = `hawkins_quiz_results_ch${chapter.id}_${teamId}`;
+      const anonKey = `hawkins_quiz_results_ch${chapter.id}_anon`;
+      let resRaw = localStorage.getItem(teamKey) || localStorage.getItem(anonKey);
+      if (!resRaw) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(`hawkins_quiz_results_ch${chapter.id}_`)) {
+            resRaw = localStorage.getItem(k);
+            if (resRaw) break;
+          }
+        }
+      }
+      if (resRaw) storedResults = JSON.parse(resRaw);
+    } catch {}
+
+    try {
+      const teamKey = `hawkins_quiz_answers_ch${chapter.id}_${teamId}`;
+      const anonKey = `hawkins_quiz_answers_ch${chapter.id}_anon`;
+      let ansRaw = localStorage.getItem(teamKey) || localStorage.getItem(anonKey);
+      if (!ansRaw) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(`hawkins_quiz_answers_ch${chapter.id}_`)) {
+            ansRaw = localStorage.getItem(k);
+            if (ansRaw) break;
+          }
+        }
+      }
+      if (ansRaw) storedAnswers = JSON.parse(ansRaw);
+    } catch {}
+
+    const hasStoredResults = Object.keys(storedResults).length > 0;
+    const hasStoredAnswers = Object.keys(storedAnswers).length > 0;
+
+    const correctNums: number[] = [];
+    const wrongNums: number[] = [];
+    const items = questions.map((q, idx) => {
+      const num = q.itemNumber || idx + 1;
+      let isCorrect = false;
+
+      if (storedResults[idx] && typeof storedResults[idx].isCorrect === "boolean") {
+        isCorrect = Boolean(storedResults[idx].isCorrect);
+      } else if (storedAnswers[idx] !== undefined && q.correctAnswerId) {
+        isCorrect = String(storedAnswers[idx]).trim().toLowerCase() === String(q.correctAnswerId).trim().toLowerCase();
+      } else if (!hasStoredResults && !hasStoredAnswers) {
+        // Fallback for solved chapters without local question cache
+        isCorrect = true;
+      } else {
+        isCorrect = false;
+      }
+
+      if (isCorrect) {
+        correctNums.push(num);
+      } else {
+        wrongNums.push(num);
+      }
+
+      return { num, isCorrect };
+    });
+
+    return { items, correctNums, wrongNums };
+  });
+
+  useEffect(() => {
+    if (!questions.length) return;
+
+    let storedResults: Record<number, any> = {};
+    let storedAnswers: Record<number, string> = {};
+
+    try {
+      const teamKey = `hawkins_quiz_results_ch${chapter.id}_${teamId}`;
+      const anonKey = `hawkins_quiz_results_ch${chapter.id}_anon`;
+      let resRaw = localStorage.getItem(teamKey) || localStorage.getItem(anonKey);
+      if (!resRaw) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(`hawkins_quiz_results_ch${chapter.id}_`)) {
+            resRaw = localStorage.getItem(k);
+            if (resRaw) break;
+          }
+        }
+      }
+      if (resRaw) storedResults = JSON.parse(resRaw);
+    } catch {}
+
+    try {
+      const teamKey = `hawkins_quiz_answers_ch${chapter.id}_${teamId}`;
+      const anonKey = `hawkins_quiz_answers_ch${chapter.id}_anon`;
+      let ansRaw = localStorage.getItem(teamKey) || localStorage.getItem(anonKey);
+      if (!ansRaw) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(`hawkins_quiz_answers_ch${chapter.id}_`)) {
+            ansRaw = localStorage.getItem(k);
+            if (ansRaw) break;
+          }
+        }
+      }
+      if (ansRaw) storedAnswers = JSON.parse(ansRaw);
+    } catch {}
+
+    const hasStoredResults = Object.keys(storedResults).length > 0;
+    const hasStoredAnswers = Object.keys(storedAnswers).length > 0;
+
+    const correctNums: number[] = [];
+    const wrongNums: number[] = [];
+    const items = questions.map((q, idx) => {
+      const num = q.itemNumber || idx + 1;
+      let isCorrect = false;
+
+      if (storedResults[idx] && typeof storedResults[idx].isCorrect === "boolean") {
+        isCorrect = Boolean(storedResults[idx].isCorrect);
+      } else if (storedAnswers[idx] !== undefined && q.correctAnswerId) {
+        isCorrect = String(storedAnswers[idx]).trim().toLowerCase() === String(q.correctAnswerId).trim().toLowerCase();
+      } else if (!hasStoredResults && !hasStoredAnswers) {
+        isCorrect = true;
+      } else {
+        isCorrect = false;
+      }
+
+      if (isCorrect) {
+        correctNums.push(num);
+      } else {
+        wrongNums.push(num);
+      }
+
+      return { num, isCorrect };
+    });
+
+    setReport({ items, correctNums, wrongNums });
+  }, [chapter.id, teamId, questions]);
+
+  const totalQuestions = questions.length;
+  const accuracyPct = totalQuestions > 0 ? Math.round((report.correctNums.length / totalQuestions) * 100) : 100;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -785,7 +939,7 @@ function ChapterCompletionView({
           border: "2px solid #ff2d3a",
           borderRadius: 4,
           padding: "26px 28px",
-          marginBottom: 32,
+          marginBottom: 28,
         }}
       >
         <div
@@ -815,6 +969,289 @@ function ChapterCompletionView({
           {chapter.completionLoreText}
         </p>
       </div>
+
+      {/* ── QUESTIONS AUDIT REPORT (CORRECT VS WRONG NUMBERS) ── */}
+      {totalQuestions > 0 && (
+        <div
+          style={{
+            background: "#080204",
+            border: "1.5px solid #ff2d3a",
+            borderRadius: 4,
+            padding: "24px 28px",
+            marginBottom: 32,
+            boxShadow: "0 0 20px rgba(255, 45, 58, 0.12), inset 0 0 16px rgba(0,0,0,0.85)",
+          }}
+        >
+          {/* Report Top Row */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: "1px dashed rgba(255, 45, 58, 0.35)",
+              paddingBottom: 14,
+              marginBottom: 20,
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: 11,
+                  letterSpacing: ".22em",
+                  color: "#ff858d",
+                  fontFamily: "var(--font-term)",
+                  textTransform: "uppercase",
+                  marginBottom: 4,
+                }}
+              >
+                MISSION DEBRIEF // TELEMETRY AUDIT
+              </div>
+              <div
+                style={{
+                  fontSize: 16,
+                  fontWeight: 900,
+                  color: "#ffffff",
+                  letterSpacing: ".14em",
+                  fontFamily: "var(--font-term)",
+                  textTransform: "uppercase",
+                }}
+              >
+                CHAPTER {chapter.id} QUESTIONS REPORT
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(0, 0, 0, 0.7)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                padding: "6px 14px",
+                borderRadius: 3,
+                fontFamily: "var(--font-mono)",
+                letterSpacing: ".1em",
+              }}
+            >
+              <span style={{ fontSize: 11.5, color: "rgba(255,255,255,0.6)" }}>
+                ACCURACY:
+              </span>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: "bold",
+                  color: accuracyPct === 100 ? "#4ade80" : accuracyPct >= 50 ? "#ffd54f" : "#f87171",
+                }}
+              >
+                {report.correctNums.length} / {totalQuestions} ({accuracyPct}%)
+              </span>
+            </div>
+          </div>
+
+          {/* Sequential Question Status Overview */}
+          <div style={{ marginBottom: 20 }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: "rgba(255, 255, 255, 0.55)",
+                letterSpacing: ".16em",
+                textTransform: "uppercase",
+                marginBottom: 10,
+                fontFamily: "var(--font-mono)",
+              }}
+            >
+              QUESTION STATUS OVERVIEW:
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8,
+              }}
+            >
+              {report.items.map((item) => (
+                <div
+                  key={item.num}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 12px",
+                    borderRadius: 3,
+                    background: item.isCorrect
+                      ? "rgba(34, 197, 94, 0.12)"
+                      : "rgba(239, 68, 68, 0.12)",
+                    border: item.isCorrect
+                      ? "1.5px solid #22c55e"
+                      : "1.5px solid #ef4444",
+                    boxShadow: item.isCorrect
+                      ? "0 0 8px rgba(34, 197, 94, 0.25)"
+                      : "0 0 8px rgba(239, 68, 68, 0.25)",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                  title={`Question ${item.num}: ${item.isCorrect ? "Correct" : "Incorrect"}`}
+                >
+                  <span
+                    style={{
+                      fontSize: 12.5,
+                      fontWeight: "bold",
+                      color: item.isCorrect ? "#86efac" : "#fca5a5",
+                      letterSpacing: ".06em",
+                    }}
+                  >
+                    Q{item.num < 10 ? `0${item.num}` : item.num}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 900,
+                      color: item.isCorrect ? "#22c55e" : "#ef4444",
+                    }}
+                  >
+                    {item.isCorrect ? "✓" : "✗"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Correct vs Wrong Breakdown Cards */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: 16,
+            }}
+          >
+            {/* CORRECT QUESTIONS CARD */}
+            <div
+              style={{
+                background: "rgba(20, 83, 45, 0.18)",
+                border: "1.5px solid rgba(34, 197, 94, 0.5)",
+                borderRadius: 4,
+                padding: "14px 18px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBottom: 10,
+                  fontSize: 12,
+                  fontWeight: 900,
+                  letterSpacing: ".14em",
+                  color: "#4ade80",
+                  fontFamily: "var(--font-term)",
+                  textTransform: "uppercase",
+                }}
+              >
+                <span>✓</span>
+                <span>CORRECT QUESTIONS ({report.correctNums.length})</span>
+              </div>
+
+              {report.correctNums.length > 0 ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {report.correctNums.map((num) => (
+                    <span
+                      key={num}
+                      style={{
+                        background: "#15803d",
+                        color: "#ffffff",
+                        fontWeight: 800,
+                        fontSize: 12.5,
+                        padding: "4px 10px",
+                        borderRadius: 3,
+                        fontFamily: "var(--font-mono)",
+                        letterSpacing: ".08em",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.35)",
+                      }}
+                    >
+                      Question {num}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "rgba(255, 255, 255, 0.45)",
+                    fontFamily: "var(--font-mono)",
+                    fontStyle: "italic",
+                  }}
+                >
+                  None
+                </div>
+              )}
+            </div>
+
+            {/* WRONG QUESTIONS CARD */}
+            <div
+              style={{
+                background: "rgba(127, 29, 29, 0.18)",
+                border: "1.5px solid rgba(239, 68, 68, 0.5)",
+                borderRadius: 4,
+                padding: "14px 18px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBottom: 10,
+                  fontSize: 12,
+                  fontWeight: 900,
+                  letterSpacing: ".14em",
+                  color: "#f87171",
+                  fontFamily: "var(--font-term)",
+                  textTransform: "uppercase",
+                }}
+              >
+                <span>✗</span>
+                <span>WRONG QUESTIONS ({report.wrongNums.length})</span>
+              </div>
+
+              {report.wrongNums.length > 0 ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {report.wrongNums.map((num) => (
+                    <span
+                      key={num}
+                      style={{
+                        background: "#b91c1c",
+                        color: "#ffffff",
+                        fontWeight: 800,
+                        fontSize: 12.5,
+                        padding: "4px 10px",
+                        borderRadius: 3,
+                        fontFamily: "var(--font-mono)",
+                        letterSpacing: ".08em",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.35)",
+                      }}
+                    >
+                      Question {num}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#4ade80",
+                    fontFamily: "var(--font-mono)",
+                    fontWeight: "bold",
+                    letterSpacing: ".08em",
+                  }}
+                >
+                  ★ PERFECT SCORE · ALL QUESTIONS CORRECT
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div
         style={{
@@ -1056,8 +1493,43 @@ export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = 
 
     // Calculate actual points earned from this chapter's questions (respecting 10 vs 5 pts per attempt)
     let sectionPointsEarned = 0;
+    const teamId = s.team?.id || "anon";
+
+    // Ensure submitted answers are stored
     try {
-      const stored = localStorage.getItem(`hawkins_quiz_results_ch${chapterId}_${s.team?.id || "anon"}`);
+      localStorage.setItem(`hawkins_quiz_answers_ch${chapterId}_${teamId}`, JSON.stringify(answers));
+    } catch {}
+
+    // Evaluate and persist question results so Chapter Completion report has complete accurate data
+    try {
+      let currentResults: Record<number, any> = {};
+      const stored = localStorage.getItem(`hawkins_quiz_results_ch${chapterId}_${teamId}`);
+      if (stored) {
+        try {
+          currentResults = JSON.parse(stored);
+        } catch {}
+      }
+      questions.forEach((q, idx) => {
+        if (!currentResults[idx] || typeof currentResults[idx].isCorrect !== "boolean") {
+          const userAns = answers[idx];
+          const isCorrect = Boolean(
+            userAns &&
+            q.correctAnswerId &&
+            String(userAns).trim().toLowerCase() === String(q.correctAnswerId).trim().toLowerCase()
+          );
+          currentResults[idx] = {
+            isCorrect,
+            isLocked: true,
+            pointsAwarded: isCorrect ? 10 : 0,
+            message: isCorrect ? "VERIFIED [+10 PTS]" : "INCORRECT [0 PTS]",
+          };
+        }
+      });
+      localStorage.setItem(`hawkins_quiz_results_ch${chapterId}_${teamId}`, JSON.stringify(currentResults));
+    } catch {}
+
+    try {
+      const stored = localStorage.getItem(`hawkins_quiz_results_ch${chapterId}_${teamId}`);
       if (stored) {
         const parsed = JSON.parse(stored);
         questions.forEach((_, idx) => {
@@ -1175,10 +1647,10 @@ export default function ChapterManager({ onBackToBoard }: ChapterManagerProps = 
         {isCurrentSolved ? (
           <ChapterCompletionView
             chapter={currentChapter}
-            isLastEpisode={currentChapter.id === 7}
+            isLastEpisode={currentChapter.id >= CHAPTERS[CHAPTERS.length - 1].id}
             onNextEpisode={() => {
               sfx("ok");
-              if (currentChapter.id < 7) {
+              if (currentChapter.id < CHAPTERS[CHAPTERS.length - 1].id) {
                 setActiveChapterId((currentChapter.id + 1) as ChapterId);
               } else {
                 handleBackToBoard();
